@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "872715867979",
+    "project_id": "dev-vaultapp",
+    "storage_bucket": "dev-vaultapp.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:872715867979:android:b705436009174393db7ace",
+        "android_client_info": {
+          "package_name": "com.vault.dev"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "872715867979-rmth3jpbic8jorgksr6i9r6j83vjqpdo.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCh5BE4bBehSGkrO3y8LVhO_ymwT12zUjk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "872715867979-rmth3jpbic8jorgksr6i9r6j83vjqpdo.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "872715867979-r9b7b05lutnkblrstufbrh00aaqehgb8.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.vault.dev"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

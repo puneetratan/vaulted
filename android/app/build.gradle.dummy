@@ -1,0 +1,10 @@
+// Dummy build.gradle for iOS-only packages
+apply plugin: 'com.android.library'
+
+android {
+    compileSdkVersion 33
+    namespace "com.RNAppleAuthentication"
+}
+
+// Empty - this package is iOS-only and should not be built on Android
+
