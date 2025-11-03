@@ -448,7 +448,7 @@ PODS:
     - React-perflogger (= 0.72.6)
   - RNAppleAuthentication (2.4.1):
     - React-Core
-  - RNGestureHandler (2.29.0):
+  - RNGestureHandler (2.13.4):
     - RCT-Folly (= 2021.07.22.00)
     - React-Core
   - RNGoogleSignin (12.2.1):
@@ -712,7 +712,7 @@ SPEC CHECKSUMS:
   React-utils: fa59c9a3375fb6f4aeb66714fd3f7f76b43a9f16
   ReactCommon: dd03c17275c200496f346af93a7b94c53f3093a4
   RNAppleAuthentication: b2d8b5ccba86b5b1e55a1a2e858f7ac6d8a21816
-  RNGestureHandler: b9c5a8adf65cdd9bc89755a63d9bac6f93225153
+  RNGestureHandler: 6e46dde1f87e5f018a54fe5d40cd0e0b942b49ee
   RNGoogleSignin: 08dc4ba7eac2096c7fecfe109f0950fa4683c803
   RNReanimated: 5ec2c9f107adeaab2a071736a1614526bf712c14
   RNScreens: f3230dd008a7d0ce5c0a8bc78ff12cf2315bda24
