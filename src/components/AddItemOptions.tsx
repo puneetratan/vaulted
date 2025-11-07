@@ -105,13 +105,6 @@ const AddItemOptions = ({visible, onClose, onAddManually}: AddItemOptionsProps) 
       color: '#007AFF',
     },
     {
-      id: 'xls',
-      title: 'XLS Import',
-      icon: 'upload-file',
-      onPress: handleXLSImport,
-      color: '#34C759',
-    },
-    {
       id: 'image',
       title: 'Image Upload',
       icon: 'image',

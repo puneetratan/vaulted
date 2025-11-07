@@ -118,3 +118,84 @@ jest.mock('react-native-barcode-mask', () => ({
   BarcodeMask: 'BarcodeMask',
 }));
 
+// Mock Firebase services
+jest.mock('../src/services/firebase', () => ({
+  db: null,
+  initializeFirestore: jest.fn(() => ({})),
+  storage: null,
+  initializeStorage: jest.fn(() => ({
+    ref: jest.fn(() => ({
+      putFile: jest.fn(),
+      getDownloadURL: jest.fn(),
+    })),
+  })),
+  auth: {
+    currentUser: {
+      uid: 'test-uid',
+      email: 'test@example.com',
+      displayName: 'Test User',
+    },
+  },
+  default: {},
+}));
+
+// Mock firebase/firestore
+jest.mock('firebase/firestore', () => ({
+  getFirestore: jest.fn(() => ({})),
+  collection: jest.fn(),
+  doc: jest.fn(),
+  getDoc: jest.fn(),
+  setDoc: jest.fn(),
+  updateDoc: jest.fn(),
+  addDoc: jest.fn(),
+  query: jest.fn(),
+  where: jest.fn(),
+  orderBy: jest.fn(),
+  getDocs: jest.fn(),
+  startAfter: jest.fn(),
+  limit: jest.fn(() => ({})),
+  serverTimestamp: jest.fn(() => ({})),
+  deleteDoc: jest.fn(),
+}));
+
+jest.mock('firebase/storage', () => ({
+  getStorage: jest.fn(() => ({})),
+  ref: jest.fn(() => ({})),
+  uploadBytes: jest.fn(),
+  uploadBytesResumable: jest.fn(),
+  getDownloadURL: jest.fn(),
+  deleteObject: jest.fn(),
+}));
+
+// Mock @react-native-firebase/firestore
+jest.mock('@react-native-firebase/firestore', () => ({
+  default: () => ({
+    collection: jest.fn(() => ({
+      doc: jest.fn(() => ({
+        get: jest.fn(),
+        set: jest.fn(),
+        update: jest.fn(),
+        add: jest.fn(),
+      })),
+      add: jest.fn(),
+      where: jest.fn(() => ({
+        orderBy: jest.fn(() => ({
+          get: jest.fn(),
+        })),
+      })),
+    })),
+    FieldValue: {
+      serverTimestamp: jest.fn(() => ({})),
+    },
+  }),
+}));
+
+jest.mock('@react-native-firebase/storage', () => ({
+  default: () => ({
+    ref: jest.fn(() => ({
+      putFile: jest.fn(),
+      getDownloadURL: jest.fn(),
+    })),
+  }),
+}));
+

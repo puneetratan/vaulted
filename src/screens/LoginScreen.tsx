@@ -7,19 +7,13 @@ import {
   Platform,
   Alert,
   Image,
+  ActivityIndicator,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {RootStackParamList} from '../navigation/AppNavigator';
-import {
-  GoogleSignin,
-  statusCodes,
-} from '@react-native-google-signin/google-signin';
-import appleAuth, {
-  AppleButton,
-  AppleAuthRequestOperation,
-  AppleAuthRequestScope,
-} from '@invertase/react-native-apple-authentication';
+import {useAuth} from '../contexts/AuthContext';
+import {AppleButton} from '@invertase/react-native-apple-authentication';
 
 type LoginScreenNavigationProp = StackNavigationProp<
   RootStackParamList,
@@ -28,53 +22,41 @@ type LoginScreenNavigationProp = StackNavigationProp<
 
 const LoginScreen = () => {
   const navigation = useNavigation<LoginScreenNavigationProp>();
+  const {signInWithGoogle, signInWithApple, loading: authLoading} = useAuth();
   const [loading, setLoading] = useState(false);
 
-  const signInWithGoogle = async () => {
+  const handleGoogleSignIn = async () => {
     try {
       setLoading(true);
-      await GoogleSignin.hasPlayServices();
-      const userInfo = await GoogleSignin.signIn();
-      if (userInfo) {
-        navigation.replace('Dashboard');
-      }
+      await signInWithGoogle();
+      // Navigation is handled automatically by AppNavigator based on auth state
     } catch (error: any) {
       console.error('Google Sign-In Error:', error);
-      console.error('Error details:', JSON.stringify(error, null, 2));
       
-      if (error.code === statusCodes.SIGN_IN_CANCELLED) {
-        Alert.alert('Error', 'User cancelled the login flow');
-      } else if (error.code === statusCodes.IN_PROGRESS) {
-        Alert.alert('Error', 'Sign in is in progress already');
-      } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-        Alert.alert('Error', 'Play services not available');
+      if (error.code === 'auth/cancelled-popup-request' || error.code === 'auth/popup-closed-by-user') {
+        Alert.alert('Error', 'Sign in was cancelled');
+      } else if (error.message?.includes('DEVELOPER_ERROR')) {
+        Alert.alert('Error', 'Please check your Firebase configuration');
       } else {
         const errorMessage = error.message || error.toString() || 'Unknown error';
         Alert.alert('Error', `Something went wrong with Google Sign In: ${errorMessage}`);
-        console.error('Full error object:', error);
       }
     } finally {
       setLoading(false);
     }
   };
 
-  const signInWithApple = async () => {
+  const handleAppleSignIn = async () => {
     try {
       setLoading(true);
-      const appleAuthRequestResponse = await appleAuth.performRequest({
-        requestedOperation: AppleAuthRequestOperation.LOGIN,
-        requestedScopes: [
-          AppleAuthRequestScope.EMAIL,
-          AppleAuthRequestScope.FULL_NAME,
-        ],
-      });
-
-      if (appleAuthRequestResponse.identityToken) {
-        navigation.replace('Dashboard');
-      }
+      await signInWithApple();
+      // Navigation is handled automatically by AppNavigator based on auth state
     } catch (error: any) {
-      if (error.code === appleAuth.Error.CANCELED) {
-        Alert.alert('Error', 'User cancelled the login flow');
+      console.error('Apple Sign-In Error:', error);
+      
+      if (error.code === 'apple.com/auth/canceled' || error.code === 'auth/cancelled-popup-request') {
+        // User cancelled, don't show error
+        return;
       } else {
         Alert.alert('Error', 'Something went wrong with Apple Sign In');
       }
@@ -82,6 +64,8 @@ const LoginScreen = () => {
       setLoading(false);
     }
   };
+
+  const isLoading = loading || authLoading;
 
   return (
     <View style={styles.container}>
@@ -106,18 +90,22 @@ const LoginScreen = () => {
 
         <View style={styles.buttonContainer}>
           <TouchableOpacity
-            style={[styles.button, styles.googleButton]}
-            onPress={signInWithGoogle}
-            disabled={loading}>
-            <Text style={styles.buttonText}>Sign in with Google</Text>
+            style={[styles.button, styles.googleButton, isLoading && styles.buttonDisabled]}
+            onPress={handleGoogleSignIn}
+            disabled={isLoading}>
+            {isLoading ? (
+              <ActivityIndicator color="#FFFFFF" />
+            ) : (
+              <Text style={styles.buttonText}>Sign in with Google</Text>
+            )}
           </TouchableOpacity>
 
           {Platform.OS === 'ios' && (
             <AppleButton
               buttonStyle={AppleButton.Style.WHITE}
               buttonType={AppleButton.Type.SIGN_IN}
-              style={styles.appleButton}
-              onPress={signInWithApple}
+              style={[styles.appleButton, isLoading && styles.buttonDisabled]}
+              onPress={handleAppleSignIn}
             />
           )}
         </View>
@@ -189,6 +177,9 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+  },
+  buttonDisabled: {
+    opacity: 0.6,
   },
 });
 

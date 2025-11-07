@@ -12,6 +12,8 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import {Platform} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import {useAuth} from '../contexts/AuthContext';
+import {getUserData, updateUserData} from '../services/userService';
 import ShoeSizeModal from '../components/ShoeSizeModal';
 import DashboardTabs from '../components/DashboardTabs';
 // Use web-compatible versions on web
@@ -24,7 +26,8 @@ const HamburgerMenu = Platform.OS === 'web'
 
 const DashboardScreen = () => {
   const navigation = useNavigation();
-  const [showShoeSizeModal, setShowShoeSizeModal] = useState(true);
+  const {logout, user} = useAuth();
+  const [showShoeSizeModal, setShowShoeSizeModal] = useState(false);
   const [shoeSize, setShoeSize] = useState('');
   const [showAddItemOptions, setShowAddItemOptions] = useState(false);
   const [showHamburgerMenu, setShowHamburgerMenu] = useState(false);
@@ -33,12 +36,43 @@ const DashboardScreen = () => {
   const [showSearchBar, setShowSearchBar] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const handleShoeSizeSubmit = () => {
+  // Check if user has shoe size saved when component loads
+  useEffect(() => {
+    const checkShoeSize = async () => {
+      if (user?.uid) {
+        try {
+          const userData = await getUserData(user.uid);
+          if (!userData?.shoeSize) {
+            setShowShoeSizeModal(true);
+          }
+        } catch (error) {
+          console.error('Error checking shoe size:', error);
+        }
+      }
+    };
+
+    checkShoeSize();
+  }, [user]);
+
+  const handleShoeSizeSubmit = async () => {
     if (shoeSize.trim() === '') {
       Alert.alert('Error', 'Please enter your shoe size');
       return;
     }
-    setShowShoeSizeModal(false);
+
+    if (!user?.uid) {
+      Alert.alert('Error', 'User not authenticated');
+      return;
+    }
+
+    try {
+      await updateUserData(user.uid, { shoeSize: shoeSize.trim() });
+      setShowShoeSizeModal(false);
+      Alert.alert('Success', 'Shoe size saved successfully!');
+    } catch (error: any) {
+      console.error('Error saving shoe size:', error);
+      Alert.alert('Error', 'Failed to save shoe size. Please try again.');
+    }
   };
 
   const handleExport = () => {
@@ -141,12 +175,13 @@ const DashboardScreen = () => {
             {
               text: 'Sign Out',
               style: 'destructive',
-              onPress: () => {
-                // Navigate back to login screen
-                navigation.reset({
-                  index: 0,
-                  routes: [{name: 'Login'}],
-                });
+              onPress: async () => {
+                try {
+                  await logout();
+                  // Navigation is handled automatically by AppNavigator based on auth state
+                } catch (error) {
+                  Alert.alert('Error', 'Failed to sign out. Please try again.');
+                }
               },
             },
           ],

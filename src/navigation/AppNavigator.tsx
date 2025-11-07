@@ -1,7 +1,8 @@
-import React from 'react';
+import React, {useEffect, useRef} from 'react';
 import {NavigationContainer} from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack';
-import {Platform} from 'react-native';
+import {Platform, View, ActivityIndicator, StyleSheet} from 'react-native';
+import {useAuth} from '../contexts/AuthContext';
 import SplashScreen from '../screens/SplashScreen';
 // Use web-compatible versions on web
 const LoginScreen = Platform.OS === 'web' 
@@ -48,10 +49,50 @@ export type RootStackParamList = {
 const Stack = createStackNavigator<RootStackParamList>();
 
 const AppNavigator = () => {
+  const {isAuthenticated, loading} = useAuth();
+  const navigationRef = React.useRef<any>(null);
+
+  // Handle navigation when auth state changes (after initial load)
+  const isInitialMount = React.useRef(true);
+  
+  useEffect(() => {
+    // Skip navigation reset on initial mount (initialRouteName handles it)
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    
+    // Only navigate when auth state changes after initial load
+    if (!loading && navigationRef.current?.isReady()) {
+      if (isAuthenticated) {
+        // User is authenticated, navigate to Dashboard
+        navigationRef.current.reset({
+          index: 0,
+          routes: [{name: 'Dashboard'}],
+        });
+      } else {
+        // User is not authenticated, navigate to Login
+        navigationRef.current.reset({
+          index: 0,
+          routes: [{name: 'Login'}],
+        });
+      }
+    }
+  }, [isAuthenticated, loading]);
+
+  // Show loading screen while checking auth state
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#007AFF" />
+      </View>
+    );
+  }
+
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={navigationRef}>
       <Stack.Navigator
-        initialRouteName="Splash"
+        initialRouteName={isAuthenticated ? 'Dashboard' : 'Login'}
         screenOptions={{
           headerShown: false,
         }}>
@@ -87,6 +128,15 @@ const AppNavigator = () => {
     </NavigationContainer>
   );
 };
+
+const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+});
 
 export default AppNavigator;
 

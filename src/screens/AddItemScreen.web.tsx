@@ -8,21 +8,83 @@ import {
   Alert,
   ScrollView,
   Image,
+  ActivityIndicator,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {useNavigation} from '@react-navigation/native';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import {saveInventoryItem} from '../services/inventoryService';
+import {initializeStorage} from '../services/firebase';
+import {ref, uploadBytes, getDownloadURL} from 'firebase/storage';
+import {useAuth} from '../contexts/AuthContext';
 
 const AddItemScreen = () => {
   const navigation = useNavigation();
+  const {user} = useAuth();
   
   const [name, setName] = useState('');
   const [brand, setBrand] = useState('');
   const [size, setSize] = useState('');
   const [color, setColor] = useState('');
   const [value, setValue] = useState('');
-  const [imageUrl, setImageUrl] = useState<string | undefined>(undefined);
+  const [imagePreview, setImagePreview] = useState<string | undefined>(undefined);
+  const [imageFile, setImageFile] = useState<{blob: Blob; name: string; type: string} | undefined>(undefined);
   const [barcode, setBarcode] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const MAX_IMAGE_BYTES = 8 * 1024 * 1024; // 8MB limit
+  const MAX_IMAGE_DIMENSION = 800;
+  const IMAGE_QUALITY = 0.6;
+
+  const resizeImage = (file: File): Promise<{dataUrl: string; blob: Blob; type: string}> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const img = new Image();
+        img.onload = () => {
+          let {width, height} = img;
+          if (width > height) {
+            if (width > MAX_IMAGE_DIMENSION) {
+              height = (height * MAX_IMAGE_DIMENSION) / width;
+              width = MAX_IMAGE_DIMENSION;
+            }
+          } else {
+            if (height > MAX_IMAGE_DIMENSION) {
+              width = (width * MAX_IMAGE_DIMENSION) / height;
+              height = MAX_IMAGE_DIMENSION;
+            }
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            reject(new Error('Failed to get canvas context'));
+            return;
+          }
+          ctx.drawImage(img, 0, 0, width, height);
+          const mimeType = file.type || 'image/jpeg';
+          canvas.toBlob(
+            blob => {
+              if (!blob) {
+                reject(new Error('Failed to process image'));
+                return;
+              }
+              const dataUrl = canvas.toDataURL(mimeType, IMAGE_QUALITY);
+              resolve({dataUrl, blob, type: mimeType});
+            },
+            mimeType,
+            IMAGE_QUALITY,
+          );
+        };
+        img.onerror = reject;
+        img.src = reader.result as string;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
 
   const handleImagePicker = () => {
     // Web implementation - use HTML5 file input
@@ -32,17 +94,29 @@ const AddItemScreen = () => {
     input.onchange = (event: any) => {
       const file = event.target.files[0];
       if (file) {
-        const reader = new FileReader();
-        reader.onload = (e: any) => {
-          setImageUrl(e.target.result);
-        };
-        reader.readAsDataURL(file);
+        resizeImage(file)
+          .then(({dataUrl, blob, type}) => {
+            const byteSize = blob.size;
+            if (byteSize > MAX_IMAGE_BYTES) {
+              Alert.alert(
+                'Image Too Large',
+                'Please select a smaller image (less than 8MB).',
+              );
+              return;
+            }
+            const fileName = file.name || `image_${Date.now()}.jpg`;
+            setImagePreview(dataUrl);
+            setImageFile({blob, name: fileName, type});
+          })
+          .catch(() => {
+            Alert.alert('Error', 'Failed to process image. Please try again.');
+          });
       }
     };
     input.click();
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     // Validation
     if (!name.trim()) {
       Alert.alert('Error', 'Please enter item name');
@@ -61,39 +135,83 @@ const AddItemScreen = () => {
       return;
     }
 
-    // TODO: Save item to storage/database
-    const newItem = {
-      id: Date.now().toString(),
-      name: name.trim(),
-      brand: brand.trim(),
-      size: size.trim(),
-      color: color.trim(),
-      value: parseFloat(value),
-      imageUrl,
-      barcode: barcode.trim(),
-    };
+    if (!user) {
+      Alert.alert('Error', 'You must be logged in to add items');
+      return;
+    }
 
-    Alert.alert(
-      'Success',
-      'Item added successfully',
-      [
-        {
-          text: 'OK',
-          onPress: () => {
-            // Reset form
-            setName('');
-            setBrand('');
-            setSize('');
-            setColor('');
-            setValue('');
-            setImageUrl(undefined);
-            setBarcode('');
-            // Navigate back
-            navigation.goBack();
+    setLoading(true);
+
+    try {
+      let uploadedImageUrl: string | undefined;
+
+      if (imageFile) {
+        try {
+          const storageInstance = initializeStorage();
+          if (!storageInstance) {
+            throw new Error('Storage not initialized');
+          }
+
+          const timestamp = Date.now();
+          const storagePath = `inventory/${user.uid}/${timestamp}_${imageFile.name}`;
+          const storageRef = ref(storageInstance, storagePath);
+          await uploadBytes(storageRef, imageFile.blob, {
+            contentType: imageFile.type,
+          });
+          uploadedImageUrl = await getDownloadURL(storageRef);
+        } catch (uploadError) {
+          console.error('Image upload error:', uploadError);
+          Alert.alert('Error', 'Failed to upload image. Please try again.');
+          setLoading(false);
+          return;
+        }
+      }
+
+      const itemData = {
+        name: name.trim(),
+        brand: brand.trim(),
+        size: size.trim(),
+        color: color.trim() || undefined,
+        value: parseFloat(value),
+        imageUrl: uploadedImageUrl || undefined,
+        barcode: barcode.trim() || undefined,
+        userId: user.uid,
+      };
+
+      // Save to Firestore
+      await saveInventoryItem(itemData);
+
+      Alert.alert(
+        'Success',
+        'Item added successfully',
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              // Reset form
+              setName('');
+              setBrand('');
+              setSize('');
+              setColor('');
+              setValue('');
+              setImagePreview(undefined);
+              setImageFile(undefined);
+              setBarcode('');
+              // Navigate back
+              navigation.goBack();
+            },
           },
-        },
-      ],
-    );
+        ],
+      );
+    } catch (error: any) {
+      console.error('Error saving item:', error);
+      Alert.alert(
+        'Error',
+        error.message || 'Failed to save item. Please try again.',
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -113,8 +231,8 @@ const AddItemScreen = () => {
           <TouchableOpacity
             style={styles.imagePicker}
             onPress={handleImagePicker}>
-            {imageUrl ? (
-              <Image source={{uri: imageUrl}} style={styles.imagePreview} />
+            {imagePreview ? (
+              <Image source={{uri: imagePreview}} style={styles.imagePreview} />
             ) : (
               <View style={styles.imagePlaceholder}>
                 <Icon name="add-photo-alternate" size={48} color="#CCCCCC" />
@@ -122,10 +240,13 @@ const AddItemScreen = () => {
               </View>
             )}
           </TouchableOpacity>
-          {imageUrl && (
+          {imagePreview && (
             <TouchableOpacity
               style={styles.removeImageButton}
-              onPress={() => setImageUrl(undefined)}>
+              onPress={() => {
+                setImagePreview(undefined);
+                setImageFile(undefined);
+              }}>
               <Icon name="close" size={20} color="#FFFFFF" />
             </TouchableOpacity>
           )}
@@ -205,8 +326,15 @@ const AddItemScreen = () => {
 
       {/* Save Button */}
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-          <Text style={styles.saveButtonText}>Save Item</Text>
+        <TouchableOpacity
+          style={[styles.saveButton, loading && styles.saveButtonDisabled]}
+          onPress={handleSave}
+          disabled={loading}>
+          {loading ? (
+            <ActivityIndicator color="#FFFFFF" />
+          ) : (
+            <Text style={styles.saveButtonText}>Save Item</Text>
+          )}
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -325,6 +453,9 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 18,
     fontWeight: '600',
+  },
+  saveButtonDisabled: {
+    opacity: 0.6,
   },
 });
 

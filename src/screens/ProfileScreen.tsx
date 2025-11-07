@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   View,
   Text,
@@ -6,13 +6,81 @@ import {
   TouchableOpacity,
   ScrollView,
   Platform,
+  Image,
+  Alert,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import {useAuth} from '../contexts/AuthContext';
+import {getUserData, updateUserData} from '../services/userService';
+import ShoeSizeModal from '../components/ShoeSizeModal';
 
 const ProfileScreen = () => {
   const navigation = useNavigation();
+  const {user, logout} = useAuth();
+  const [shoeSize, setShoeSize] = useState<string | undefined>(undefined);
+  const [showShoeSizeModal, setShowShoeSizeModal] = useState(false);
+  const [editShoeSize, setEditShoeSize] = useState('');
+  
+  // Get user information from Firebase Auth
+  const displayName = user?.displayName || 'User';
+  const email = user?.email || '';
+  const photoURL = user?.photoURL || null;
+
+  // Fetch user profile data including shoe size
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (user?.uid) {
+        try {
+          const userData = await getUserData(user.uid);
+          if (userData?.shoeSize) {
+            setShoeSize(userData.shoeSize);
+          }
+        } catch (error) {
+          console.error('Error fetching user data:', error);
+        }
+      }
+    };
+
+    fetchUserData();
+  }, [user]);
+
+  const handleEditShoeSize = () => {
+    setEditShoeSize(shoeSize || '');
+    setShowShoeSizeModal(true);
+  };
+
+  const handleShoeSizeSubmit = async () => {
+    if (editShoeSize.trim() === '') {
+      Alert.alert('Error', 'Please enter your shoe size');
+      return;
+    }
+
+    if (!user?.uid) {
+      Alert.alert('Error', 'User not authenticated');
+      return;
+    }
+
+    try {
+      await updateUserData(user.uid, { shoeSize: editShoeSize.trim() });
+      setShoeSize(editShoeSize.trim());
+      setShowShoeSizeModal(false);
+      Alert.alert('Success', 'Shoe size updated successfully!');
+    } catch (error: any) {
+      console.error('Error saving shoe size:', error);
+      Alert.alert('Error', 'Failed to save shoe size. Please try again.');
+    }
+  };
+  
+  const handleLogout = async () => {
+    try {
+      await logout();
+      // Navigation will be handled automatically by AppNavigator when auth state changes
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -31,10 +99,17 @@ const ProfileScreen = () => {
         {/* Profile Avatar Section */}
         <View style={styles.avatarSection}>
           <View style={styles.avatarContainer}>
-            <Icon name="account-circle" size={100} color="#007AFF" />
+            {photoURL ? (
+              <Image
+                source={{uri: photoURL}}
+                style={styles.avatarImage}
+              />
+            ) : (
+              <Icon name="account-circle" size={100} color="#007AFF" />
+            )}
           </View>
-          <Text style={styles.userName}>John Doe</Text>
-          <Text style={styles.userEmail}>john.doe@example.com</Text>
+          <Text style={styles.userName}>{displayName}</Text>
+          <Text style={styles.userEmail}>{email}</Text>
         </View>
 
         {/* Profile Information */}
@@ -45,7 +120,7 @@ const ProfileScreen = () => {
             <Icon name="person" size={20} color="#666666" style={styles.infoIcon} />
             <View style={styles.infoContent}>
               <Text style={styles.infoLabel}>Full Name</Text>
-              <Text style={styles.infoValue}>John Doe</Text>
+              <Text style={styles.infoValue}>{displayName}</Text>
             </View>
           </View>
 
@@ -53,16 +128,21 @@ const ProfileScreen = () => {
             <Icon name="email" size={20} color="#666666" style={styles.infoIcon} />
             <View style={styles.infoContent}>
               <Text style={styles.infoLabel}>Email</Text>
-              <Text style={styles.infoValue}>john.doe@example.com</Text>
+              <Text style={styles.infoValue}>{email || 'Not provided'}</Text>
             </View>
           </View>
 
           <View style={styles.infoRow}>
-            <Icon name="phone" size={20} color="#666666" style={styles.infoIcon} />
+            <Icon name="directions-walk" size={20} color="#666666" style={styles.infoIcon} />
             <View style={styles.infoContent}>
-              <Text style={styles.infoLabel}>Phone</Text>
-              <Text style={styles.infoValue}>+1 (555) 123-4567</Text>
+              <Text style={styles.infoLabel}>Shoe Size</Text>
+              <Text style={styles.infoValue}>{shoeSize || 'Not set'}</Text>
             </View>
+            <TouchableOpacity
+              onPress={handleEditShoeSize}
+              style={styles.editButton}>
+              <Icon name="edit" size={20} color="#007AFF" />
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -70,15 +150,11 @@ const ProfileScreen = () => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Account Settings</Text>
           
-          <TouchableOpacity style={styles.settingsItem}>
-            <Icon name="edit" size={24} color="#007AFF" />
-            <Text style={styles.settingsText}>Edit Profile</Text>
-            <Icon name="chevron-right" size={24} color="#CCCCCC" />
-          </TouchableOpacity>
+          
 
           <TouchableOpacity style={styles.settingsItem}>
             <Icon name="lock" size={24} color="#007AFF" />
-            <Text style={styles.settingsText}>Change Password</Text>
+            <Text style={styles.settingsText}>Delete Account</Text>
             <Icon name="chevron-right" size={24} color="#CCCCCC" />
           </TouchableOpacity>
 
@@ -88,7 +164,26 @@ const ProfileScreen = () => {
             <Icon name="chevron-right" size={24} color="#CCCCCC" />
           </TouchableOpacity>
         </View>
+
+        {/* Logout Section */}
+        <View style={styles.section}>
+          <TouchableOpacity 
+            style={[styles.settingsItem, styles.logoutItem]}
+            onPress={handleLogout}>
+            <Icon name="logout" size={24} color="#FF3B30" />
+            <Text style={[styles.settingsText, styles.logoutText]}>Logout</Text>
+            <Icon name="chevron-right" size={24} color="#CCCCCC" />
+          </TouchableOpacity>
+        </View>
       </View>
+
+      {/* Shoe Size Edit Modal */}
+      <ShoeSizeModal
+        visible={showShoeSizeModal}
+        shoeSize={editShoeSize}
+        onShoeSizeChange={setEditShoeSize}
+        onSubmit={handleShoeSizeSubmit}
+      />
       </ScrollView>
     </SafeAreaView>
   );
@@ -135,6 +230,13 @@ const styles = StyleSheet.create({
   },
   avatarContainer: {
     marginBottom: 16,
+    overflow: 'hidden',
+  },
+  avatarImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#E0E0E0',
   },
   userName: {
     fontSize: 24,
@@ -192,6 +294,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#000000',
     marginLeft: 16,
+  },
+  logoutItem: {
+    borderBottomWidth: 0,
+  },
+  logoutText: {
+    color: '#FF3B30',
+    fontWeight: '600',
+  },
+  editButton: {
+    padding: 8,
+    marginLeft: 8,
   },
 });
 

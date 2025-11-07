@@ -8,31 +8,42 @@ import {
   Alert,
   ScrollView,
   Image,
+  ActivityIndicator,
   Platform,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {useNavigation} from '@react-navigation/native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {launchImageLibrary, ImagePickerResponse} from 'react-native-image-picker';
+import {saveInventoryItem} from '../services/inventoryService';
+import {initializeStorage} from '../services/firebase';
+import {useAuth} from '../contexts/AuthContext';
 
 const AddItemScreen = () => {
   const navigation = useNavigation();
+  const {user} = useAuth();
   
   const [name, setName] = useState('');
   const [brand, setBrand] = useState('');
   const [size, setSize] = useState('');
   const [color, setColor] = useState('');
   const [value, setValue] = useState('');
-  const [imageUrl, setImageUrl] = useState<string | undefined>(undefined);
+  const [imagePreview, setImagePreview] = useState<string | undefined>(undefined);
+  const [imageAsset, setImageAsset] = useState<{uri: string; name?: string; type?: string} | undefined>(undefined);
   const [barcode, setBarcode] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleImagePicker = () => {
+  const MAX_IMAGE_BYTES = 8 * 1024 * 1024; // 8MB limit
+
+  const handleImagePicker = async () => {
     launchImageLibrary(
       {
         mediaType: 'photo',
-        quality: 0.8,
+        quality: 0.6,
+        maxWidth: 800,
+        maxHeight: 800,
       },
-      (response: ImagePickerResponse) => {
+      async (response: ImagePickerResponse) => {
         if (response.didCancel) {
           return;
         }
@@ -41,13 +52,35 @@ const AddItemScreen = () => {
           return;
         }
         if (response.assets && response.assets[0]) {
-          setImageUrl(response.assets[0].uri);
+          const asset = response.assets[0];
+          const fileSize = asset.fileSize ?? 0;
+          if (fileSize > MAX_IMAGE_BYTES) {
+            Alert.alert(
+              'Image Too Large',
+              'Please select a smaller image (less than 8MB).',
+            );
+            return;
+          }
+          if (!asset.uri) {
+            Alert.alert('Error', 'Unable to process image. Please try again.');
+            return;
+          }
+
+          const fileName = asset.fileName ?? `image_${Date.now()}.jpg`;
+          const type = asset.type ?? 'image/jpeg';
+
+          setImageAsset({
+            uri: asset.uri,
+            name: fileName,
+            type,
+          });
+          setImagePreview(asset.uri);
         }
       },
     );
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     // Validation
     if (!name.trim()) {
       Alert.alert('Error', 'Please enter item name');
@@ -66,39 +99,115 @@ const AddItemScreen = () => {
       return;
     }
 
-    // TODO: Save item to storage/database
-    const newItem = {
-      id: Date.now().toString(),
-      name: name.trim(),
-      brand: brand.trim(),
-      size: size.trim(),
-      color: color.trim(),
-      value: parseFloat(value),
-      imageUrl,
-      barcode: barcode.trim(),
-    };
+    if (!user) {
+      Alert.alert('Error', 'You must be logged in to add items');
+      return;
+    }
 
-    Alert.alert(
-      'Success',
-      'Item added successfully',
-      [
-        {
-          text: 'OK',
-          onPress: () => {
-            // Reset form
-            setName('');
-            setBrand('');
-            setSize('');
-            setColor('');
-            setValue('');
-            setImageUrl(undefined);
-            setBarcode('');
-            // Navigate back
-            navigation.goBack();
+    setLoading(true);
+
+    try {
+      let uploadedImageUrl: string | undefined;
+
+      if (imageAsset) {
+        try {
+          const storageInstance = initializeStorage();
+          if (!storageInstance) {
+            throw new Error('Storage not initialized');
+          }
+
+          const timestamp = Date.now();
+          const fileName = imageAsset.name ?? `image_${timestamp}.jpg`;
+          const storagePath = `inventory/${user.uid}/${timestamp}_${fileName}`;
+
+          if (Platform.OS === 'web') {
+            const { ref, uploadBytes, getDownloadURL } = await import('firebase/storage');
+            const response = await fetch(imageAsset.uri);
+            const blob = await response.blob();
+            const storageRef = ref(storageInstance, storagePath);
+            await uploadBytes(storageRef, blob, {
+              contentType: imageAsset.type ?? 'image/jpeg',
+            });
+            uploadedImageUrl = await getDownloadURL(storageRef);
+          } else {
+            if (storageInstance.ref) {
+              const storageRef = storageInstance.ref(storagePath);
+              let fileUri = imageAsset.uri;
+              if (Platform.OS === 'ios' && fileUri.startsWith('file://')) {
+                fileUri = fileUri.replace('file://', '');
+              }
+              await storageRef.putFile(fileUri, {
+                contentType: imageAsset.type ?? 'image/jpeg',
+              });
+              uploadedImageUrl = await storageRef.getDownloadURL();
+            } else {
+              const { ref, uploadBytes, getDownloadURL } = await import('firebase/storage');
+              const response = await fetch(imageAsset.uri);
+              const blob = await response.blob();
+              const storageRef = ref(storageInstance, storagePath);
+              await uploadBytes(storageRef, blob, {
+                contentType: imageAsset.type ?? 'image/jpeg',
+              });
+              uploadedImageUrl = await getDownloadURL(storageRef);
+            }
+          }
+        } catch (uploadError) {
+          console.error('Image upload error:', uploadError);
+          const errorMessage =
+            uploadError?.code === 'storage/unauthorized'
+              ? 'You do not have permission to upload images. Please check your Storage security rules.'
+              : uploadError?.message || 'Failed to upload image. Please try again.';
+          Alert.alert('Error', errorMessage);
+          setLoading(false);
+          return;
+        }
+      }
+
+      const itemData = {
+        name: name.trim(),
+        brand: brand.trim(),
+        size: size.trim(),
+        color: color.trim() || undefined,
+        value: parseFloat(value),
+        imageUrl: uploadedImageUrl || undefined,
+        barcode: barcode.trim() || undefined,
+        userId: user.uid,
+      };
+
+      // Save to Firestore
+      await saveInventoryItem(itemData);
+
+      Alert.alert(
+        'Success',
+        'Item added successfully',
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              // Reset form
+              setName('');
+              setBrand('');
+              setSize('');
+              setColor('');
+              setValue('');
+              setImagePreview(undefined);
+              setImageAsset(undefined);
+              setBarcode('');
+              // Navigate back
+              navigation.goBack();
+            },
           },
-        },
-      ],
-    );
+        ],
+      );
+    } catch (error: any) {
+      console.error('Error saving item:', error);
+      Alert.alert(
+        'Error',
+        error.message || 'Failed to save item. Please try again.',
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -118,8 +227,8 @@ const AddItemScreen = () => {
           <TouchableOpacity
             style={styles.imagePicker}
             onPress={handleImagePicker}>
-            {imageUrl ? (
-              <Image source={{uri: imageUrl}} style={styles.imagePreview} />
+            {imagePreview ? (
+              <Image source={{uri: imagePreview}} style={styles.imagePreview} />
             ) : (
               <View style={styles.imagePlaceholder}>
                 <Icon name="add-photo-alternate" size={48} color="#CCCCCC" />
@@ -127,10 +236,13 @@ const AddItemScreen = () => {
               </View>
             )}
           </TouchableOpacity>
-          {imageUrl && (
+          {imagePreview && (
             <TouchableOpacity
               style={styles.removeImageButton}
-              onPress={() => setImageUrl(undefined)}>
+              onPress={() => {
+                setImagePreview(undefined);
+                setImageAsset(undefined);
+              }}>
               <Icon name="close" size={20} color="#FFFFFF" />
             </TouchableOpacity>
           )}
@@ -210,8 +322,15 @@ const AddItemScreen = () => {
 
       {/* Save Button */}
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-          <Text style={styles.saveButtonText}>Save Item</Text>
+        <TouchableOpacity
+          style={[styles.saveButton, loading && styles.saveButtonDisabled]}
+          onPress={handleSave}
+          disabled={loading}>
+          {loading ? (
+            <ActivityIndicator color="#FFFFFF" />
+          ) : (
+            <Text style={styles.saveButtonText}>Save Item</Text>
+          )}
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -330,6 +449,9 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 18,
     fontWeight: '600',
+  },
+  saveButtonDisabled: {
+    opacity: 0.6,
   },
 });
 
