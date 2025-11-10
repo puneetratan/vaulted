@@ -29,9 +29,14 @@ interface ShoeItem {
   id: string;
   name: string;
   brand: string;
+  silhouette: string;
+  styleId: string;
   size: string;
   color: string;
   cost: number;
+  retailValue?: number;
+  quantity: number;
+  releaseDate?: string;
   imageUrl?: string;
 }
 

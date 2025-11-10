@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -17,6 +17,8 @@ import {saveInventoryItem} from '../services/inventoryService';
 import {initializeStorage} from '../services/firebase';
 import {ref, uploadBytes, getDownloadURL} from 'firebase/storage';
 import {useAuth} from '../contexts/AuthContext';
+import {getUserData} from '../services/userService';
+import {Picker} from '@react-native-picker/picker';
 
 const AddItemScreen = () => {
   const navigation = useNavigation();
@@ -24,13 +26,40 @@ const AddItemScreen = () => {
   
   const [name, setName] = useState('');
   const [brand, setBrand] = useState('');
+  const [silhouette, setSilhouette] = useState('');
+  const [styleId, setStyleId] = useState('');
   const [size, setSize] = useState('');
+  const [quantity, setQuantity] = useState('1');
   const [color, setColor] = useState('');
-  const [value, setValue] = useState('');
+  const [retailValue, setRetailValue] = useState('');
+  const [releaseDate, setReleaseDate] = useState('');
   const [imagePreview, setImagePreview] = useState<string | undefined>(undefined);
   const [imageFile, setImageFile] = useState<{blob: Blob; name: string; type: string} | undefined>(undefined);
   const [barcode, setBarcode] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    let isActive = true;
+    const loadUserProfile = async () => {
+      if (!user?.uid) {
+        return;
+      }
+      try {
+        const profile = await getUserData(user.uid);
+        if (isActive && !size && profile?.shoeSize) {
+          setSize(String(profile.shoeSize));
+        }
+      } catch (profileError) {
+        console.warn('Failed to load user profile for prefill (web):', profileError);
+      }
+    };
+
+    loadUserProfile();
+    return () => {
+      isActive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.uid]);
 
   const MAX_IMAGE_BYTES = 8 * 1024 * 1024; // 8MB limit
   const MAX_IMAGE_DIMENSION = 800;
@@ -126,12 +155,37 @@ const AddItemScreen = () => {
       Alert.alert('Error', 'Please enter brand');
       return;
     }
+    if (!silhouette.trim()) {
+      Alert.alert('Error', 'Please enter silhouette');
+      return;
+    }
+    if (!styleId.trim()) {
+      Alert.alert('Error', 'Please enter style ID');
+      return;
+    }
     if (!size.trim()) {
       Alert.alert('Error', 'Please enter size');
       return;
     }
-    if (!value.trim() || isNaN(parseFloat(value))) {
-      Alert.alert('Error', 'Please enter a valid value');
+    if (!retailValue.trim() || isNaN(parseFloat(retailValue))) {
+      Alert.alert('Error', 'Please enter a valid retail value');
+      return;
+    }
+    if (!releaseDate.trim()) {
+      Alert.alert('Error', 'Please enter release date');
+      return;
+    }
+
+    const releaseDateTrimmed = releaseDate.trim();
+    const releaseDateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!releaseDateRegex.test(releaseDateTrimmed)) {
+      Alert.alert('Error', 'Release date must be in YYYY-MM-DD format');
+      return;
+    }
+
+    const quantityValue = parseInt(quantity, 10);
+    if (!quantity || Number.isNaN(quantityValue) || quantityValue <= 0) {
+      Alert.alert('Error', 'Please select a valid quantity');
       return;
     }
 
@@ -170,9 +224,14 @@ const AddItemScreen = () => {
       const itemData = {
         name: name.trim(),
         brand: brand.trim(),
+        silhouette: silhouette.trim(),
+        styleId: styleId.trim(),
         size: size.trim(),
         color: color.trim() || undefined,
-        value: parseFloat(value),
+        quantity: quantityValue,
+        value: parseFloat(retailValue),
+        retailValue: parseFloat(retailValue),
+        releaseDate: releaseDateTrimmed,
         imageUrl: uploadedImageUrl || undefined,
         barcode: barcode.trim() || undefined,
         userId: user.uid,
@@ -191,12 +250,16 @@ const AddItemScreen = () => {
               // Reset form
               setName('');
               setBrand('');
+              setSilhouette('');
+              setStyleId('');
               setSize('');
               setColor('');
-              setValue('');
+              setRetailValue('');
               setImagePreview(undefined);
               setImageFile(undefined);
               setBarcode('');
+              setQuantity('1');
+              setReleaseDate('');
               // Navigate back
               navigation.goBack();
             },
@@ -277,6 +340,28 @@ const AddItemScreen = () => {
           </View>
 
           <View style={styles.inputGroup}>
+            <Text style={styles.label}>Silhouette *</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter silhouette"
+              value={silhouette}
+              onChangeText={setSilhouette}
+              placeholderTextColor="#999999"
+            />
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Style ID *</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter style ID"
+              value={styleId}
+              onChangeText={setStyleId}
+              placeholderTextColor="#999999"
+            />
+          </View>
+
+          <View style={styles.inputGroup}>
             <Text style={styles.label}>Size *</Text>
             <TextInput
               style={styles.input}
@@ -286,6 +371,24 @@ const AddItemScreen = () => {
               placeholderTextColor="#999999"
               keyboardType="numeric"
             />
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Quantity *</Text>
+            <View style={styles.pickerContainer}>
+              <Picker
+                selectedValue={quantity}
+                onValueChange={value => setQuantity(String(value))}
+                style={styles.picker}
+                itemStyle={styles.pickerItem}>
+                {Array.from({length: 20}, (_, index) => {
+                  const value = String(index + 1);
+                  return (
+                    <Picker.Item label={value} value={value} key={value} />
+                  );
+                })}
+              </Picker>
+            </View>
           </View>
 
           <View style={styles.inputGroup}>
@@ -300,14 +403,25 @@ const AddItemScreen = () => {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Value (Cost) *</Text>
+            <Text style={styles.label}>Retail Value *</Text>
             <TextInput
               style={styles.input}
-              placeholder="Enter value"
-              value={value}
-              onChangeText={setValue}
+              placeholder="Enter retail value"
+              value={retailValue}
+              onChangeText={setRetailValue}
               placeholderTextColor="#999999"
               keyboardType="decimal-pad"
+            />
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Release Date *</Text>
+            <TextInput
+              style={styles.input}
+              type="date"
+              value={releaseDate}
+              onChangeText={setReleaseDate}
+              onChange={event => setReleaseDate(event.nativeEvent.text)}
             />
           </View>
 
@@ -434,6 +548,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#000000',
     backgroundColor: '#FFFFFF',
+  },
+  pickerContainer: {
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 8,
+    overflow: 'hidden',
+    backgroundColor: '#FFFFFF',
+  },
+  picker: {
+    height: 48,
+    color: '#000000',
+  },
+  pickerItem: {
+    fontSize: 16,
   },
   footer: {
     paddingHorizontal: 16,

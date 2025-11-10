@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useMemo, useState} from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,8 @@ import {
   Image,
   ActivityIndicator,
   Platform,
+  Modal,
+  Pressable,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {useNavigation} from '@react-navigation/native';
@@ -18,6 +20,9 @@ import {launchImageLibrary, ImagePickerResponse} from 'react-native-image-picker
 import {saveInventoryItem} from '../services/inventoryService';
 import {initializeStorage} from '../services/firebase';
 import {useAuth} from '../contexts/AuthContext';
+import {getUserData} from '../services/userService';
+import {Picker} from '@react-native-picker/picker';
+import DateTimePicker, {DateTimePickerEvent} from '@react-native-community/datetimepicker';
 
 const AddItemScreen = () => {
   const navigation = useNavigation();
@@ -25,13 +30,60 @@ const AddItemScreen = () => {
   
   const [name, setName] = useState('');
   const [brand, setBrand] = useState('');
+  const [silhouette, setSilhouette] = useState('');
+  const [styleId, setStyleId] = useState('');
   const [size, setSize] = useState('');
+  const [quantity, setQuantity] = useState('1');
   const [color, setColor] = useState('');
-  const [value, setValue] = useState('');
+  const [retailValue, setRetailValue] = useState('');
+  const [releaseDate, setReleaseDate] = useState('');
+  const [releaseDatePickerVisible, setReleaseDatePickerVisible] = useState(false);
+  const [releaseDatePickerValue, setReleaseDatePickerValue] = useState<Date | null>(null);
   const [imagePreview, setImagePreview] = useState<string | undefined>(undefined);
   const [imageAsset, setImageAsset] = useState<{uri: string; name?: string; type?: string} | undefined>(undefined);
   const [barcode, setBarcode] = useState('');
   const [loading, setLoading] = useState(false);
+  const [quantityModalVisible, setQuantityModalVisible] = useState(false);
+
+  useEffect(() => {
+    let isActive = true;
+    const loadUserProfile = async () => {
+      if (!user?.uid) {
+        return;
+      }
+      try {
+        const profile = await getUserData(user.uid);
+        if (isActive && !size && profile?.shoeSize) {
+          setSize(String(profile.shoeSize));
+        }
+        if (isActive && profile?.releaseDate) {
+          setReleaseDate(profile.releaseDate);
+        }
+      } catch (profileError) {
+        console.warn('Failed to load user profile for prefill:', profileError);
+      }
+    };
+
+    loadUserProfile();
+    return () => {
+      isActive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.uid]);
+
+  const formattedReleaseDate = useMemo(() => {
+    if (releaseDate) {
+      const date = new Date(releaseDate);
+      if (!Number.isNaN(date.getTime())) {
+        return date.toLocaleDateString(undefined, {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+        });
+      }
+    }
+    return 'Select date';
+  }, [releaseDate]);
 
   const MAX_IMAGE_BYTES = 8 * 1024 * 1024; // 8MB limit
 
@@ -90,12 +142,37 @@ const AddItemScreen = () => {
       Alert.alert('Error', 'Please enter brand');
       return;
     }
+    if (!silhouette.trim()) {
+      Alert.alert('Error', 'Please enter silhouette');
+      return;
+    }
+    if (!styleId.trim()) {
+      Alert.alert('Error', 'Please enter style ID');
+      return;
+    }
     if (!size.trim()) {
       Alert.alert('Error', 'Please enter size');
       return;
     }
-    if (!value.trim() || isNaN(parseFloat(value))) {
-      Alert.alert('Error', 'Please enter a valid value');
+    if (!retailValue.trim() || isNaN(parseFloat(retailValue))) {
+      Alert.alert('Error', 'Please enter a valid retail value');
+      return;
+    }
+    if (!releaseDate.trim()) {
+      Alert.alert('Error', 'Please enter release date');
+      return;
+    }
+
+    const releaseDateTrimmed = releaseDate.trim();
+    const releaseDateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!releaseDateRegex.test(releaseDateTrimmed)) {
+      Alert.alert('Error', 'Release date must be in YYYY-MM-DD format');
+      return;
+    }
+
+    const quantityValue = parseInt(quantity, 10);
+    if (!quantity || Number.isNaN(quantityValue) || quantityValue <= 0) {
+      Alert.alert('Error', 'Please select a valid quantity');
       return;
     }
 
@@ -151,7 +228,7 @@ const AddItemScreen = () => {
               uploadedImageUrl = await getDownloadURL(storageRef);
             }
           }
-        } catch (uploadError) {
+        } catch (uploadError: any) {
           console.error('Image upload error:', uploadError);
           const errorMessage =
             uploadError?.code === 'storage/unauthorized'
@@ -166,9 +243,14 @@ const AddItemScreen = () => {
       const itemData = {
         name: name.trim(),
         brand: brand.trim(),
+        silhouette: silhouette.trim(),
+        styleId: styleId.trim(),
         size: size.trim(),
         color: color.trim() || undefined,
-        value: parseFloat(value),
+        quantity: quantityValue,
+        value: parseFloat(retailValue),
+        retailValue: parseFloat(retailValue),
+        releaseDate: releaseDateTrimmed,
         imageUrl: uploadedImageUrl || undefined,
         barcode: barcode.trim() || undefined,
         userId: user.uid,
@@ -187,12 +269,17 @@ const AddItemScreen = () => {
               // Reset form
               setName('');
               setBrand('');
+              setSilhouette('');
+              setStyleId('');
               setSize('');
               setColor('');
-              setValue('');
+              setRetailValue('');
               setImagePreview(undefined);
               setImageAsset(undefined);
               setBarcode('');
+              setQuantity('1');
+              setReleaseDate('');
+              setReleaseDatePickerValue(null);
               // Navigate back
               navigation.goBack();
             },
@@ -273,6 +360,28 @@ const AddItemScreen = () => {
           </View>
 
           <View style={styles.inputGroup}>
+            <Text style={styles.label}>Silhouette *</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter silhouette"
+              value={silhouette}
+              onChangeText={setSilhouette}
+              placeholderTextColor="#999999"
+            />
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Style ID *</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter style ID"
+              value={styleId}
+              onChangeText={setStyleId}
+              placeholderTextColor="#999999"
+            />
+          </View>
+
+          <View style={styles.inputGroup}>
             <Text style={styles.label}>Size *</Text>
             <TextInput
               style={styles.input}
@@ -282,6 +391,67 @@ const AddItemScreen = () => {
               placeholderTextColor="#999999"
               keyboardType="numeric"
             />
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Quantity *</Text>
+            {Platform.OS === 'ios' ? (
+              <>
+                <TouchableOpacity
+                  style={styles.selectInput}
+                  onPress={() => setQuantityModalVisible(true)}>
+                  <Text style={styles.selectInputText}>{quantity}</Text>
+                  <Icon name="arrow-drop-down" size={24} color="#666666" />
+                </TouchableOpacity>
+                <Modal
+                  visible={quantityModalVisible}
+                  animationType="slide"
+                  transparent
+                  onRequestClose={() => setQuantityModalVisible(false)}>
+                  <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                      <View style={styles.modalHeader}>
+                        <TouchableOpacity onPress={() => setQuantityModalVisible(false)}>
+                          <Text style={styles.modalActionText}>Cancel</Text>
+                        </TouchableOpacity>
+                        <Text style={styles.modalTitle}>Select Quantity</Text>
+                        <TouchableOpacity onPress={() => setQuantityModalVisible(false)}>
+                          <Text style={styles.modalActionText}>Done</Text>
+                        </TouchableOpacity>
+                      </View>
+                      <Picker
+                        selectedValue={quantity}
+                        onValueChange={value => setQuantity(String(value))}
+                        style={styles.modalPicker}
+                        itemStyle={styles.pickerItem}>
+                        {Array.from({length: 20}, (_, index) => {
+                          const value = String(index + 1);
+                          return (
+                            <Picker.Item label={value} value={value} key={value} />
+                          );
+                        })}
+                      </Picker>
+                    </View>
+                  </View>
+                </Modal>
+              </>
+            ) : (
+              <View style={styles.pickerContainer}>
+                <Picker
+                  selectedValue={quantity}
+                  onValueChange={value => setQuantity(String(value))}
+                  style={styles.picker}
+                  itemStyle={styles.pickerItem}
+                  mode={Platform.OS === 'android' ? 'dropdown' : undefined}>
+                  {Array.from({length: 20}, (_, index) => {
+                    const value = String(index + 1);
+                    return (
+                      <Picker.Item label={value} value={value} key={value} />
+                    );
+                  })}
+                </Picker>
+              </View>
+            )}
           </View>
 
           <View style={styles.inputGroup}>
@@ -296,15 +466,112 @@ const AddItemScreen = () => {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Value (Cost) *</Text>
+            <Text style={styles.label}>Retail Value *</Text>
             <TextInput
               style={styles.input}
-              placeholder="Enter value"
-              value={value}
-              onChangeText={setValue}
+              placeholder="Enter retail value"
+              value={retailValue}
+              onChangeText={setRetailValue}
               placeholderTextColor="#999999"
               keyboardType="decimal-pad"
             />
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Release Date *</Text>
+            {Platform.OS === 'ios' ? (
+              <>
+                <TouchableOpacity
+                  style={styles.selectInput}
+                  onPress={() => {
+                    const initialDate = releaseDate
+                      ? new Date(releaseDate)
+                      : new Date();
+                    setReleaseDatePickerValue(
+                      Number.isNaN(initialDate.getTime()) ? new Date() : initialDate,
+                    );
+                    setReleaseDatePickerVisible(true);
+                  }}>
+                  <Text style={styles.selectInputText}>{formattedReleaseDate}</Text>
+                  <Icon name="event" size={22} color="#666666" />
+                </TouchableOpacity>
+                <Modal
+                  visible={releaseDatePickerVisible}
+                  transparent
+                  animationType="slide"
+                  onRequestClose={() => setReleaseDatePickerVisible(false)}>
+                  <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                      <View style={styles.modalHeader}>
+                        <TouchableOpacity onPress={() => setReleaseDatePickerVisible(false)}>
+                          <Text style={styles.modalActionText}>Cancel</Text>
+                        </TouchableOpacity>
+                        <Text style={styles.modalTitle}>Release Date</Text>
+                        <TouchableOpacity
+                          onPress={() => {
+                            if (releaseDatePickerValue) {
+                              const isoDate = releaseDatePickerValue.toISOString().split('T')[0];
+                              setReleaseDate(isoDate);
+                            }
+                            setReleaseDatePickerVisible(false);
+                          }}>
+                          <Text style={styles.modalActionText}>Done</Text>
+                        </TouchableOpacity>
+                      </View>
+                      <DateTimePicker
+                        value={
+                          releaseDatePickerValue ??
+                          (releaseDate ? new Date(releaseDate) : new Date())
+                        }
+                        mode="date"
+                        display="spinner"
+                        onChange={(_: DateTimePickerEvent, selectedDate?: Date) => {
+                          if (selectedDate) {
+                            setReleaseDatePickerValue(selectedDate);
+                          }
+                        }}
+                      />
+                    </View>
+                  </View>
+                </Modal>
+              </>
+            ) : (
+              <Pressable
+                style={styles.selectInput}
+                onPress={() => {
+                  const initialDate = releaseDate
+                    ? new Date(releaseDate)
+                    : new Date();
+                  setReleaseDatePickerValue(
+                    Number.isNaN(initialDate.getTime()) ? new Date() : initialDate,
+                  );
+                  setReleaseDatePickerVisible(true);
+                }}>
+                <Text style={styles.selectInputText}>{formattedReleaseDate}</Text>
+                <Icon name="event" size={22} color="#666666" />
+                {releaseDatePickerVisible && (
+                  <DateTimePicker
+                    value={
+                      releaseDatePickerValue ??
+                      (releaseDate ? new Date(releaseDate) : new Date())
+                    }
+                    mode="date"
+                    display="calendar"
+                    onChange={(event: DateTimePickerEvent, selectedDate?: Date) => {
+                      if (event.type === 'dismissed') {
+                        setReleaseDatePickerVisible(false);
+                        return;
+                      }
+                      if (selectedDate) {
+                        const isoDate = selectedDate.toISOString().split('T')[0];
+                        setReleaseDate(isoDate);
+                        setReleaseDatePickerVisible(false);
+                      }
+                    }}
+                  />
+                )}
+              </Pressable>
+            )}
           </View>
 
           <View style={styles.inputGroup}>
@@ -429,6 +696,70 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     fontSize: 16,
     color: '#000000',
+    backgroundColor: '#FFFFFF',
+  },
+  selectInput: {
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#FFFFFF',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  selectInputText: {
+    fontSize: 16,
+    color: '#000000',
+  },
+  pickerContainer: {
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 8,
+    overflow: 'hidden',
+    backgroundColor: '#FFFFFF',
+    height: 48,
+  },
+  picker: {
+    color: '#000000',
+    height: 48,
+  },
+  pickerItem: {
+    fontSize: 16,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    paddingBottom: Platform.OS === 'ios' ? 24 : 16,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+  },
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#000000',
+  },
+  modalActionText: {
+    fontSize: 16,
+    color: '#007AFF',
+    fontWeight: '600',
+  },
+  modalPicker: {
+    height: 216,
     backgroundColor: '#FFFFFF',
   },
   footer: {

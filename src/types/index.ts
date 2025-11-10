@@ -12,6 +12,7 @@ export interface ShoeItem {
   brand: string;
   size: number;
   value: number;
+  quantity?: number;
   imageUrl?: string;
   barcode?: string;
 }

@@ -14,9 +14,14 @@ interface ShoeItem {
   id: string;
   name: string;
   brand: string;
+  silhouette: string;
+  styleId: string;
   size: string;
   color: string;
   cost: number;
+  retailValue: number;
+  releaseDate?: string;
+  quantity: number;
   imageUrl?: string;
 }
 
@@ -39,15 +44,32 @@ const DashboardTabs = ({searchQuery = ''}: DashboardTabsProps) => {
 const PAGE_SIZE = 20;
 
   const mapInventoryToShoe = (items: InventoryItem[]): ShoeItem[] =>
-    items.map((item, index) => ({
-      id: item.id ?? `${index}`,
-      name: item.name ?? 'Unnamed Item',
-      brand: item.brand ?? 'Unknown Brand',
-      size: item.size?.toString() ?? 'N/A',
-      color: item.color ?? 'Unknown',
-      cost: typeof item.value === 'number' ? item.value : Number(item.value) || 0,
-      imageUrl: item.imageUrl,
-    }));
+    items.map((item, index) => {
+      const parsedQuantity = typeof item.quantity === 'number'
+        ? item.quantity
+        : Number(item.quantity);
+
+      const quantity = Number.isFinite(parsedQuantity) && parsedQuantity > 0 ? Math.floor(parsedQuantity) : 1;
+      const value = typeof item.value === 'number' ? item.value : Number(item.value) || 0;
+      const retail = typeof item.retailValue === 'number'
+        ? item.retailValue
+        : Number(item.retailValue ?? value) || value;
+
+      return {
+        id: item.id ?? `${index}`,
+        name: item.name ?? 'Unnamed Item',
+        brand: item.brand ?? 'Unknown Brand',
+        silhouette: item.silhouette ?? 'Unknown',
+        styleId: item.styleId ?? 'N/A',
+        size: item.size?.toString() ?? 'N/A',
+        color: item.color ?? 'Unknown',
+        cost: value,
+        retailValue: retail,
+        releaseDate: item.releaseDate ?? undefined,
+        quantity,
+        imageUrl: item.imageUrl,
+      };
+    });
 
   const fetchInventory = useCallback(async () => {
     setLoading(true);
@@ -202,11 +224,26 @@ const PAGE_SIZE = 20;
                   <View style={styles.shoeInfo}>
                     <Text style={styles.shoeName}>{shoe.name}</Text>
                     <Text style={styles.shoeBrand}>{shoe.brand}</Text>
-                    <View style={styles.shoeDetails}>
-                      <Text style={styles.shoeDetailText}>Size: {shoe.size}</Text>
-                      <Text style={styles.shoeDetailText}>Color: {shoe.color}</Text>
-                      <Text style={styles.shoeCost}>${shoe.cost}</Text>
+                    <View style={styles.shoeMetaRow}>
+                      <View style={styles.shoeDetails}>
+                        <Text style={styles.shoeDetailText}>Silhouette: {shoe.silhouette}</Text>
+                        <Text style={styles.shoeDetailText}>Style ID: {shoe.styleId}</Text>
+                        <Text style={styles.shoeDetailText}>Size: {shoe.size}</Text>
+                        <Text style={styles.shoeDetailText}>Color: {shoe.color}</Text>
+                        {shoe.releaseDate ? (
+                          <Text style={styles.shoeDetailText}>Release: {shoe.releaseDate}</Text>
+                        ) : null}
+                      </View>
+                      <View style={styles.quantityBadge}>
+                        <Text style={styles.quantityBadgeText}>Qty: {shoe.quantity}</Text>
+                      </View>
                     </View>
+                    <Text style={styles.shoeCost}>
+                      Retail: $
+                      {typeof shoe.retailValue === 'number'
+                        ? shoe.retailValue.toFixed(2)
+                        : '--'}
+                    </Text>
                   </View>
                   <View style={styles.arrowContainer}>
                     {deletingId === shoe.id ? (
@@ -424,6 +461,7 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 12,
     justifyContent: 'space-between',
+    paddingRight: 16,
   },
   arrowContainer: {
     justifyContent: 'center',
@@ -486,10 +524,15 @@ const styles = StyleSheet.create({
     color: '#007AFF',
     marginBottom: 8,
   },
+  shoeMetaRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    marginTop: 4,
+  },
   shoeDetails: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginTop: 4,
   },
   shoeDetailText: {
     fontSize: 13,
@@ -497,11 +540,25 @@ const styles = StyleSheet.create({
     marginRight: 12,
     marginBottom: 4,
   },
+  quantityBadge: {
+    backgroundColor: '#E3F2FD',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    marginTop: 4,
+    // marginLeft: 30,
+    alignSelf: 'flex-start',
+  },
+  quantityBadgeText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#007AFF',
+  },
   shoeCost: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#000000',
-    marginTop: 4,
+    marginTop: 8,
   },
   brandCard: {
     flexDirection: 'row',

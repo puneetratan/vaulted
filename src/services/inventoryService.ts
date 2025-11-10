@@ -7,8 +7,13 @@ export interface InventoryItem {
   name: string;
   brand: string;
   size: string;
+  quantity?: number;
   color?: string;
   value: number;
+  retailValue?: number;
+  silhouette?: string;
+  styleId?: string;
+  releaseDate?: string;
   imageUrl?: string;
   barcode?: string;
   userId: string;
@@ -50,6 +55,36 @@ export const saveInventoryItem = async (item: Omit<InventoryItem, 'id' | 'create
         cleanItem[key] = item[key as keyof typeof item];
       }
     });
+
+    const quantityValue = Number(cleanItem.quantity ?? 1);
+    cleanItem.quantity = Number.isFinite(quantityValue) && quantityValue > 0 ? Math.floor(quantityValue) : 1;
+
+    if (cleanItem.retailValue !== undefined) {
+      const retailValueNum = Number(cleanItem.retailValue);
+      cleanItem.retailValue = Number.isFinite(retailValueNum) ? retailValueNum : undefined;
+    }
+
+    if (cleanItem.value === undefined && cleanItem.retailValue !== undefined) {
+      cleanItem.value = cleanItem.retailValue;
+    } else if (cleanItem.value !== undefined) {
+      const valueNum = Number(cleanItem.value);
+      cleanItem.value = Number.isFinite(valueNum) ? valueNum : 0;
+      if (cleanItem.retailValue === undefined) {
+        cleanItem.retailValue = cleanItem.value;
+      }
+    }
+
+    if (cleanItem.styleId) {
+      cleanItem.styleId = String(cleanItem.styleId).trim();
+    }
+
+    if (cleanItem.silhouette) {
+      cleanItem.silhouette = String(cleanItem.silhouette).trim();
+    }
+
+    if (cleanItem.releaseDate) {
+      cleanItem.releaseDate = String(cleanItem.releaseDate).trim();
+    }
 
     const itemData = {
       ...cleanItem,
@@ -117,6 +152,9 @@ export const getInventoryItemsPage = async (
       const items = querySnapshot.docs.map((doc: any) => ({
         id: doc.id,
         ...doc.data(),
+        quantity: doc.data()?.quantity ?? 1,
+        retailValue: doc.data()?.retailValue ?? doc.data()?.value ?? 0,
+        value: doc.data()?.value ?? doc.data()?.retailValue ?? 0,
       })) as InventoryItem[];
 
       const lastDocSnapshot = querySnapshot.docs.length > 0 ? querySnapshot.docs[querySnapshot.docs.length - 1] : null;
@@ -142,6 +180,9 @@ export const getInventoryItemsPage = async (
       const items = querySnapshot.docs.map((doc: any) => ({
         id: doc.id,
         ...doc.data(),
+        quantity: doc.data()?.quantity ?? 1,
+        retailValue: doc.data()?.retailValue ?? doc.data()?.value ?? 0,
+        value: doc.data()?.value ?? doc.data()?.retailValue ?? 0,
       })) as InventoryItem[];
 
       const lastDocSnapshot = querySnapshot.docs.length > 0 ? querySnapshot.docs[querySnapshot.docs.length - 1] : null;
@@ -160,6 +201,95 @@ export const getInventoryItemsPage = async (
 export const getInventoryItems = async (): Promise<InventoryItem[]> => {
   const {items} = await getInventoryItemsPage();
   return items;
+};
+
+// Update existing inventory item
+export const updateInventoryItem = async (
+  itemId: string,
+  updates: Partial<Omit<InventoryItem, 'id' | 'userId' | 'createdAt' | 'updatedAt'>>,
+): Promise<void> => {
+  try {
+    const user = auth.currentUser;
+    if (!user) {
+      throw new Error('User must be authenticated to update inventory items');
+    }
+
+    if (!itemId) {
+      throw new Error('A valid item identifier is required to update inventory items');
+    }
+
+    const firestoreDb = db || initializeFirestore();
+    if (!firestoreDb) {
+      throw new Error('Firestore database is not initialized. Please check your Firebase configuration.');
+    }
+
+    const isWebSDK = !firestoreDb.collection || typeof firestoreDb.collection !== 'function';
+
+    const cleanUpdates: any = {};
+    Object.keys(updates).forEach((key) => {
+      const value = updates[key as keyof typeof updates];
+      if (value !== undefined) {
+        cleanUpdates[key] = value;
+      }
+    });
+
+    if (cleanUpdates.quantity !== undefined) {
+      const parsedQuantity = Number(cleanUpdates.quantity);
+      cleanUpdates.quantity = Number.isFinite(parsedQuantity) && parsedQuantity > 0
+        ? Math.floor(parsedQuantity)
+        : 1;
+    }
+
+    if (cleanUpdates.retailValue !== undefined) {
+      const parsedRetail = Number(cleanUpdates.retailValue);
+      cleanUpdates.retailValue = Number.isFinite(parsedRetail) ? parsedRetail : undefined;
+    }
+
+    if (cleanUpdates.value !== undefined) {
+      const parsedValue = Number(cleanUpdates.value);
+      cleanUpdates.value = Number.isFinite(parsedValue) ? parsedValue : 0;
+      if (cleanUpdates.retailValue === undefined) {
+        cleanUpdates.retailValue = cleanUpdates.value;
+      }
+    } else if (cleanUpdates.retailValue !== undefined && cleanUpdates.value === undefined) {
+      cleanUpdates.value = cleanUpdates.retailValue;
+    }
+
+    if (cleanUpdates.styleId !== undefined && cleanUpdates.styleId !== null) {
+      const trimmed = String(cleanUpdates.styleId).trim();
+      cleanUpdates.styleId = trimmed.length ? trimmed : undefined;
+    }
+
+    if (cleanUpdates.silhouette !== undefined && cleanUpdates.silhouette !== null) {
+      const trimmed = String(cleanUpdates.silhouette).trim();
+      cleanUpdates.silhouette = trimmed.length ? trimmed : undefined;
+    }
+
+    if (cleanUpdates.releaseDate !== undefined && cleanUpdates.releaseDate !== null) {
+      const trimmed = String(cleanUpdates.releaseDate).trim();
+      cleanUpdates.releaseDate = trimmed.length ? trimmed : undefined;
+    }
+
+    if (Object.keys(cleanUpdates).length === 0) {
+      return;
+    }
+
+    const serverTimestampWeb = () => require('firebase/firestore').serverTimestamp();
+    const serverTimestampNative = () => require('@react-native-firebase/firestore').default.FieldValue.serverTimestamp();
+
+    cleanUpdates.updatedAt = isWebSDK ? serverTimestampWeb() : serverTimestampNative();
+
+    if (isWebSDK) {
+      const { doc, updateDoc } = require('firebase/firestore');
+      const itemRef = doc(firestoreDb, 'inventory', itemId);
+      await updateDoc(itemRef, cleanUpdates);
+    } else {
+      await firestoreDb.collection('inventory').doc(itemId).update(cleanUpdates);
+    }
+  } catch (error: any) {
+    console.error('Error updating inventory item:', error);
+    throw new Error(`Failed to update inventory item: ${error.message}`);
+  }
 };
 
 // Delete inventory item and optional image from Firebase

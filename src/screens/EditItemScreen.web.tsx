@@ -8,17 +8,25 @@ import {
   Alert,
   ScrollView,
   Image,
+  ActivityIndicator,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {useNavigation, useRoute, RouteProp} from '@react-navigation/native';
+import {updateInventoryItem} from '../services/inventoryService';
+import {Picker} from '@react-native-picker/picker';
 
 interface ShoeItem {
   id: string;
   name: string;
   brand: string;
+  silhouette: string;
+  styleId: string;
   size: string;
   color: string;
   cost: number;
+  retailValue?: number;
+  quantity?: number;
+  releaseDate?: string;
   imageUrl?: string;
 }
 
@@ -34,25 +42,60 @@ const EditItemScreen = () => {
   
   const [name, setName] = useState(item?.name || '');
   const [brand, setBrand] = useState(item?.brand || '');
+  const [silhouette, setSilhouette] = useState(item?.silhouette || '');
+  const [styleId, setStyleId] = useState(item?.styleId || '');
   const [size, setSize] = useState(item?.size || '');
   const [color, setColor] = useState(item?.color || '');
   const [cost, setCost] = useState(item?.cost.toString() || '');
+  const [retailValue, setRetailValue] = useState(
+    item?.retailValue !== undefined
+      ? item.retailValue.toString()
+      : item?.cost.toString() || ''
+  );
+  const [releaseDate, setReleaseDate] = useState(item?.releaseDate || '');
   const [imageUrl, setImageUrl] = useState(item?.imageUrl || '');
+  const [quantity, setQuantity] = useState(item?.quantity?.toString() || '1');
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (item) {
       setName(item.name);
       setBrand(item.brand);
+      setSilhouette(item.silhouette);
+      setStyleId(item.styleId);
       setSize(item.size);
       setColor(item.color);
       setCost(item.cost.toString());
+      setRetailValue(
+        item.retailValue !== undefined
+          ? item.retailValue.toString()
+          : item.cost.toString()
+      );
+      setReleaseDate(item.releaseDate || '');
       setImageUrl(item.imageUrl || '');
+      setQuantity(item.quantity?.toString() || '1');
     }
   }, [item]);
 
   const handleSubmit = () => {
+    if (!item?.id) {
+      Alert.alert('Error', 'Unable to determine which item to update.');
+      return;
+    }
+
     // Validate inputs
-    if (!name.trim() || !brand.trim() || !size.trim() || !color.trim() || !cost.trim()) {
+    if (
+      !name.trim() ||
+      !brand.trim() ||
+      !silhouette.trim() ||
+      !styleId.trim() ||
+      !size.trim() ||
+      !color.trim() ||
+      !cost.trim() ||
+      !retailValue.trim() ||
+      !releaseDate.trim() ||
+      !quantity.trim()
+    ) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
@@ -63,10 +106,52 @@ const EditItemScreen = () => {
       return;
     }
 
-    // Here you would typically update the item in your data store
-    Alert.alert('Success', 'Item updated successfully', [
-      {text: 'OK', onPress: () => navigation.goBack()},
-    ]);
+    const quantityNum = parseInt(quantity, 10);
+    if (Number.isNaN(quantityNum) || quantityNum <= 0) {
+      Alert.alert('Error', 'Please enter a valid quantity');
+      return;
+    }
+
+    const retailValueNum = parseFloat(retailValue);
+    if (Number.isNaN(retailValueNum) || retailValueNum < 0) {
+      Alert.alert('Error', 'Please enter a valid retail value');
+      return;
+    }
+
+    const releaseDateTrimmed = releaseDate.trim();
+    const releaseDateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!releaseDateRegex.test(releaseDateTrimmed)) {
+      Alert.alert('Error', 'Release date must be in YYYY-MM-DD format');
+      return;
+    }
+
+    const payload = {
+      name: name.trim(),
+      brand: brand.trim(),
+      silhouette: silhouette.trim(),
+      styleId: styleId.trim(),
+      size: size.trim(),
+      color: color.trim(),
+      value: costNum,
+      retailValue: retailValueNum,
+      releaseDate: releaseDateTrimmed,
+      quantity: quantityNum,
+      imageUrl: imageUrl?.trim() || undefined,
+    };
+
+    setSubmitting(true);
+
+    updateInventoryItem(item.id, payload)
+      .then(() => {
+        Alert.alert('Success', 'Item updated successfully', [
+          {text: 'OK', onPress: () => navigation.goBack()},
+        ]);
+      })
+      .catch((error: any) => {
+        const message = error?.message || 'Failed to update item. Please try again.';
+        Alert.alert('Error', message);
+      })
+      .finally(() => setSubmitting(false));
   };
 
   const handleDelete = () => {
@@ -166,6 +251,26 @@ const EditItemScreen = () => {
             />
           </View>
 
+        <View style={styles.field}>
+          <Text style={styles.label}>Silhouette</Text>
+          <TextInput
+            style={styles.input}
+            value={silhouette}
+            onChangeText={setSilhouette}
+            placeholder="Enter silhouette"
+          />
+        </View>
+
+        <View style={styles.field}>
+          <Text style={styles.label}>Style ID</Text>
+          <TextInput
+            style={styles.input}
+            value={styleId}
+            onChangeText={setStyleId}
+            placeholder="Enter style ID"
+          />
+        </View>
+
           <View style={styles.field}>
             <Text style={styles.label}>Size</Text>
             <TextInput
@@ -176,6 +281,22 @@ const EditItemScreen = () => {
               keyboardType="numeric"
             />
           </View>
+
+        <View style={styles.field}>
+          <Text style={styles.label}>Quantity</Text>
+          <View style={styles.pickerContainer}>
+            <Picker
+              selectedValue={quantity}
+              onValueChange={value => setQuantity(String(value))}
+              style={styles.picker}
+              itemStyle={styles.pickerItem}>
+              {Array.from({length: 20}, (_, index) => {
+                const value = String(index + 1);
+                return <Picker.Item label={value} value={value} key={value} />;
+              })}
+            </Picker>
+          </View>
+        </View>
 
           <View style={styles.field}>
             <Text style={styles.label}>Color</Text>
@@ -197,28 +318,58 @@ const EditItemScreen = () => {
               keyboardType="numeric"
             />
           </View>
+
+        <View style={styles.field}>
+          <Text style={styles.label}>Retail Value</Text>
+          <TextInput
+            style={styles.input}
+            value={retailValue}
+            onChangeText={setRetailValue}
+            placeholder="Enter retail value"
+            keyboardType="numeric"
+          />
+        </View>
+
+        <View style={styles.field}>
+          <Text style={styles.label}>Release Date</Text>
+          <TextInput
+            style={styles.input}
+            type="date"
+            value={releaseDate}
+            onChangeText={setReleaseDate}
+            onChange={event => setReleaseDate(event.nativeEvent.text)}
+            placeholder="Enter release date"
+          />
+        </View>
         </View>
       </ScrollView>
 
       {/* Action Buttons */}
       <View style={styles.actions}>
         <TouchableOpacity
-          style={[styles.button, styles.deleteButton]}
-          onPress={handleDelete}>
+          style={[styles.button, styles.deleteButton, submitting && styles.buttonDisabled]}
+          onPress={handleDelete}
+          disabled={submitting}>
           <Icon name="delete" size={24} color="#FFFFFF" />
           <Text style={styles.deleteButtonText}>Delete</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.button, styles.cancelButton]}
-          onPress={handleCancel}>
+          style={[styles.button, styles.cancelButton, submitting && styles.buttonDisabled]}
+          onPress={handleCancel}
+          disabled={submitting}>
           <Text style={styles.cancelButtonText}>Cancel</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.button, styles.submitButton]}
-          onPress={handleSubmit}>
-          <Text style={styles.submitButtonText}>Save Changes</Text>
+          style={[styles.button, styles.submitButton, submitting && styles.buttonDisabled]}
+          onPress={handleSubmit}
+          disabled={submitting}>
+          {submitting ? (
+            <ActivityIndicator color="#FFFFFF" />
+          ) : (
+            <Text style={styles.submitButtonText}>Save Changes</Text>
+          )}
         </TouchableOpacity>
       </View>
     </View>
@@ -317,6 +468,21 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E0E0E0',
   },
+  pickerContainer: {
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 8,
+    overflow: 'hidden',
+    backgroundColor: '#FFFFFF',
+    height: 48,
+  },
+  picker: {
+    height: 48,
+    color: '#000000',
+  },
+  pickerItem: {
+    fontSize: 16,
+  },
   actions: {
     flexDirection: 'row',
     padding: 16,
@@ -331,6 +497,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginHorizontal: 4,
+  },
+  buttonDisabled: {
+    opacity: 0.6,
   },
   deleteButton: {
     backgroundColor: '#FF3B30',

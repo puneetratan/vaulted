@@ -5,7 +5,7 @@ require Pod::Executable.execute_command('node', ['-p',
     {paths: [process.argv[1]]},
   )', __dir__]).strip
 
-platform :ios, '15.0'
+platform :ios, '17.0'
 prepare_react_native_project!
 
 # If you are using a `react-native-flipper` your iOS build will fail when `NO_FLIPPER=1` is set.
@@ -23,8 +23,11 @@ flipper_config = FlipperConfiguration.disabled
 # This is required for Firebase to work properly with React Native
 use_frameworks! :linkage => :static
 
+require_relative '../node_modules/@react-native-community/cli-platform-ios/native_modules'
+
 target 'VaultTemp' do
   config = use_native_modules!
+  # pod 'Firebase/Core', :modular_headers => true
 
   # Flags change depending on the env values.
   flags = get_default_flags()
@@ -89,6 +92,18 @@ target 'VaultTemp' do
       config[:reactNativePath],
       :mac_catalyst_enabled => false
     )
+    installer.pods_project.targets.each do |target|
+      target.build_configurations.each do |config|
+        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
+      end
+      if target.name == 'RNScreens'
+        target.build_configurations.each do |config|
+          config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
+        end  
+      end
+    end
     __apply_Xcode_12_5_M1_post_install_workaround(installer)
+    
   end
 end
+
