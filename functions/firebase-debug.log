@@ -517,3 +517,565 @@ Issues? Report them at https://github.com/firebase/firebase-tools/issues and att
 [info] shutdown requested via /__/quitquitquit
 
 [info] ✔  functions: Loaded functions definitions from source: exportInventoryToExcel. {"metadata":{"emulator":{"name":"functions"},"message":"Loaded functions definitions from source: exportInventoryToExcel."}}
+[debug] [2025-11-14T02:57:33.350Z] File /Users/puneet/workspace/vault-app/functions/index.js changed, reloading triggers {"metadata":{"emulator":{"name":"functions"},"message":"File /Users/puneet/workspace/vault-app/functions/index.js changed, reloading triggers"}}
+[debug] [2025-11-14T02:57:33.652Z] File /Users/puneet/workspace/vault-app/functions/index.js changed, reloading triggers {"metadata":{"emulator":{"name":"functions"},"message":"File /Users/puneet/workspace/vault-app/functions/index.js changed, reloading triggers"}}
+[debug] [2025-11-14T02:57:34.653Z] Validating nodejs source
+[warn] ⚠  functions: package.json indicates an outdated version of firebase-functions. Please upgrade using npm install --save firebase-functions@latest in your functions directory. 
+[warn] ⚠  functions: Please note that there will be breaking changes when you upgrade. 
+[debug] [2025-11-14T02:57:35.684Z] > [functions] package.json contents: {
+  "name": "functions",
+  "description": "Cloud Functions for Firebase",
+  "scripts": {
+    "serve": "firebase emulators:start --only functions",
+    "shell": "firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "16"
+  },
+  "main": "index.js",
+  "dependencies": {
+    "exceljs": "^4.4.0",
+    "firebase-admin": "^9.8.0",
+    "firebase-functions": "^3.14.1",
+    "nodemailer": "^7.0.10"
+  },
+  "devDependencies": {
+    "firebase-functions-test": "^0.2.0"
+  },
+  "private": true
+}
+[debug] [2025-11-14T02:57:35.685Z] Building nodejs source
+[debug] [2025-11-14T02:57:35.685Z] Failed to find version of module node: reached end of search path /Users/puneet/workspace/vault-app/functions/node_modules
+[warn] ⚠  functions: Your requested "node" version "16" doesn't match your global version "24". Using node@24 from host. 
+[info] i  functions: You are using a version of firebase-functions SDK (3.24.1) that does not have support for the newest Firebase Extensions features. Please update firebase-functions SDK to >=5.1.0 to use them correctly 
+[debug] [2025-11-14T02:57:35.686Z] Could not find functions.yaml. Must use http discovery
+[debug] [2025-11-14T02:57:35.687Z] Found firebase-functions binary at '/Users/puneet/workspace/vault-app/functions/node_modules/.bin/firebase-functions'
+[info] Serving at port 8065
+
+[debug] [2025-11-14T02:57:36.377Z] Got response from /__/functions.yaml {"endpoints":{"exportInventoryToExcel":{"platform":"gcfv1","labels":{},"callableTrigger":{},"entryPoint":"exportInventoryToExcel"}},"specVersion":"v1alpha1","requiredAPIs":[]}
+[info] shutdown requested via /__/quitquitquit
+
+[info] ✔  functions: Loaded functions definitions from source: exportInventoryToExcel. {"metadata":{"emulator":{"name":"functions"},"message":"Loaded functions definitions from source: exportInventoryToExcel."}}
+[debug] [2025-11-14T03:01:25.019Z] File /Users/puneet/workspace/vault-app/functions/index.js changed, reloading triggers {"metadata":{"emulator":{"name":"functions"},"message":"File /Users/puneet/workspace/vault-app/functions/index.js changed, reloading triggers"}}
+[debug] [2025-11-14T03:01:26.025Z] Validating nodejs source
+[warn] ⚠  functions: package.json indicates an outdated version of firebase-functions. Please upgrade using npm install --save firebase-functions@latest in your functions directory. 
+[warn] ⚠  functions: Please note that there will be breaking changes when you upgrade. 
+[debug] [2025-11-14T03:01:26.997Z] > [functions] package.json contents: {
+  "name": "functions",
+  "description": "Cloud Functions for Firebase",
+  "scripts": {
+    "serve": "firebase emulators:start --only functions",
+    "shell": "firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "16"
+  },
+  "main": "index.js",
+  "dependencies": {
+    "exceljs": "^4.4.0",
+    "firebase-admin": "^9.8.0",
+    "firebase-functions": "^3.14.1",
+    "nodemailer": "^7.0.10"
+  },
+  "devDependencies": {
+    "firebase-functions-test": "^0.2.0"
+  },
+  "private": true
+}
+[debug] [2025-11-14T03:01:26.997Z] Building nodejs source
+[debug] [2025-11-14T03:01:26.998Z] Failed to find version of module node: reached end of search path /Users/puneet/workspace/vault-app/functions/node_modules
+[warn] ⚠  functions: Your requested "node" version "16" doesn't match your global version "24". Using node@24 from host. 
+[info] i  functions: You are using a version of firebase-functions SDK (3.24.1) that does not have support for the newest Firebase Extensions features. Please update firebase-functions SDK to >=5.1.0 to use them correctly 
+[debug] [2025-11-14T03:01:26.999Z] Could not find functions.yaml. Must use http discovery
+[debug] [2025-11-14T03:01:27.002Z] Found firebase-functions binary at '/Users/puneet/workspace/vault-app/functions/node_modules/.bin/firebase-functions'
+[info] Serving at port 8777
+
+[debug] [2025-11-14T03:01:27.838Z] Got response from /__/functions.yaml {"endpoints":{"exportInventoryToExcel":{"platform":"gcfv1","labels":{},"callableTrigger":{},"entryPoint":"exportInventoryToExcel"}},"specVersion":"v1alpha1","requiredAPIs":[]}
+[info] shutdown requested via /__/quitquitquit
+
+[info] ✔  functions: Loaded functions definitions from source: exportInventoryToExcel. {"metadata":{"emulator":{"name":"functions"},"message":"Loaded functions definitions from source: exportInventoryToExcel."}}
+[debug] [2025-11-14T03:01:45.075Z] File /Users/puneet/workspace/vault-app/functions/index.js changed, reloading triggers {"metadata":{"emulator":{"name":"functions"},"message":"File /Users/puneet/workspace/vault-app/functions/index.js changed, reloading triggers"}}
+[debug] [2025-11-14T03:01:46.076Z] Validating nodejs source
+[warn] ⚠  functions: package.json indicates an outdated version of firebase-functions. Please upgrade using npm install --save firebase-functions@latest in your functions directory. 
+[warn] ⚠  functions: Please note that there will be breaking changes when you upgrade. 
+[debug] [2025-11-14T03:01:47.113Z] > [functions] package.json contents: {
+  "name": "functions",
+  "description": "Cloud Functions for Firebase",
+  "scripts": {
+    "serve": "firebase emulators:start --only functions",
+    "shell": "firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "16"
+  },
+  "main": "index.js",
+  "dependencies": {
+    "exceljs": "^4.4.0",
+    "firebase-admin": "^9.8.0",
+    "firebase-functions": "^3.14.1",
+    "nodemailer": "^7.0.10"
+  },
+  "devDependencies": {
+    "firebase-functions-test": "^0.2.0"
+  },
+  "private": true
+}
+[debug] [2025-11-14T03:01:47.113Z] Building nodejs source
+[debug] [2025-11-14T03:01:47.113Z] Failed to find version of module node: reached end of search path /Users/puneet/workspace/vault-app/functions/node_modules
+[warn] ⚠  functions: Your requested "node" version "16" doesn't match your global version "24". Using node@24 from host. 
+[info] i  functions: You are using a version of firebase-functions SDK (3.24.1) that does not have support for the newest Firebase Extensions features. Please update firebase-functions SDK to >=5.1.0 to use them correctly 
+[debug] [2025-11-14T03:01:47.114Z] Could not find functions.yaml. Must use http discovery
+[debug] [2025-11-14T03:01:47.115Z] Found firebase-functions binary at '/Users/puneet/workspace/vault-app/functions/node_modules/.bin/firebase-functions'
+[info] Serving at port 8176
+
+[debug] [2025-11-14T03:01:48.043Z] Got response from /__/functions.yaml {"endpoints":{"exportInventoryToExcel":{"platform":"gcfv1","labels":{},"callableTrigger":{},"entryPoint":"exportInventoryToExcel"}},"specVersion":"v1alpha1","requiredAPIs":[]}
+[debug] [2025-11-14T03:01:48.640Z] File /Users/puneet/workspace/vault-app/functions/index.js changed, reloading triggers {"metadata":{"emulator":{"name":"functions"},"message":"File /Users/puneet/workspace/vault-app/functions/index.js changed, reloading triggers"}}
+[debug] [2025-11-14T03:01:49.645Z] Validating nodejs source
+[warn] ⚠  functions: package.json indicates an outdated version of firebase-functions. Please upgrade using npm install --save firebase-functions@latest in your functions directory. 
+[warn] ⚠  functions: Please note that there will be breaking changes when you upgrade. 
+[debug] [2025-11-14T03:01:50.773Z] > [functions] package.json contents: {
+  "name": "functions",
+  "description": "Cloud Functions for Firebase",
+  "scripts": {
+    "serve": "firebase emulators:start --only functions",
+    "shell": "firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "16"
+  },
+  "main": "index.js",
+  "dependencies": {
+    "exceljs": "^4.4.0",
+    "firebase-admin": "^9.8.0",
+    "firebase-functions": "^3.14.1",
+    "nodemailer": "^7.0.10"
+  },
+  "devDependencies": {
+    "firebase-functions-test": "^0.2.0"
+  },
+  "private": true
+}
+[debug] [2025-11-14T03:01:50.773Z] Building nodejs source
+[debug] [2025-11-14T03:01:50.773Z] Failed to find version of module node: reached end of search path /Users/puneet/workspace/vault-app/functions/node_modules
+[warn] ⚠  functions: Your requested "node" version "16" doesn't match your global version "24". Using node@24 from host. 
+[info] i  functions: You are using a version of firebase-functions SDK (3.24.1) that does not have support for the newest Firebase Extensions features. Please update firebase-functions SDK to >=5.1.0 to use them correctly 
+[debug] [2025-11-14T03:01:50.774Z] Could not find functions.yaml. Must use http discovery
+[debug] [2025-11-14T03:01:50.775Z] Found firebase-functions binary at '/Users/puneet/workspace/vault-app/functions/node_modules/.bin/firebase-functions'
+[info] Serving at port 8614
+
+[debug] [2025-11-14T03:01:51.341Z] Got response from /__/functions.yaml {"endpoints":{"exportInventoryToExcel":{"platform":"gcfv1","labels":{},"callableTrigger":{},"entryPoint":"exportInventoryToExcel"}},"specVersion":"v1alpha1","requiredAPIs":[]}
+[info] shutdown requested via /__/quitquitquit
+
+[info] ✔  functions: Loaded functions definitions from source: exportInventoryToExcel. {"metadata":{"emulator":{"name":"functions"},"message":"Loaded functions definitions from source: exportInventoryToExcel."}}
+[info] shutdown requested via /__/quitquitquit
+
+[info] ✔  functions: Loaded functions definitions from source: exportInventoryToExcel. {"metadata":{"emulator":{"name":"functions"},"message":"Loaded functions definitions from source: exportInventoryToExcel."}}
+[debug] [2025-11-14T03:02:35.280Z] File /Users/puneet/workspace/vault-app/functions/index.js changed, reloading triggers {"metadata":{"emulator":{"name":"functions"},"message":"File /Users/puneet/workspace/vault-app/functions/index.js changed, reloading triggers"}}
+[debug] [2025-11-14T03:02:36.281Z] Validating nodejs source
+[warn] ⚠  functions: package.json indicates an outdated version of firebase-functions. Please upgrade using npm install --save firebase-functions@latest in your functions directory. 
+[warn] ⚠  functions: Please note that there will be breaking changes when you upgrade. 
+[debug] [2025-11-14T03:02:37.234Z] > [functions] package.json contents: {
+  "name": "functions",
+  "description": "Cloud Functions for Firebase",
+  "scripts": {
+    "serve": "firebase emulators:start --only functions",
+    "shell": "firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "16"
+  },
+  "main": "index.js",
+  "dependencies": {
+    "exceljs": "^4.4.0",
+    "firebase-admin": "^9.8.0",
+    "firebase-functions": "^3.14.1",
+    "nodemailer": "^7.0.10"
+  },
+  "devDependencies": {
+    "firebase-functions-test": "^0.2.0"
+  },
+  "private": true
+}
+[debug] [2025-11-14T03:02:37.235Z] Building nodejs source
+[debug] [2025-11-14T03:02:37.235Z] Failed to find version of module node: reached end of search path /Users/puneet/workspace/vault-app/functions/node_modules
+[warn] ⚠  functions: Your requested "node" version "16" doesn't match your global version "24". Using node@24 from host. 
+[info] i  functions: You are using a version of firebase-functions SDK (3.24.1) that does not have support for the newest Firebase Extensions features. Please update firebase-functions SDK to >=5.1.0 to use them correctly 
+[debug] [2025-11-14T03:02:37.235Z] Could not find functions.yaml. Must use http discovery
+[debug] [2025-11-14T03:02:37.236Z] Found firebase-functions binary at '/Users/puneet/workspace/vault-app/functions/node_modules/.bin/firebase-functions'
+[info] Serving at port 8992
+
+[debug] [2025-11-14T03:02:37.994Z] Got response from /__/functions.yaml {"endpoints":{"exportInventoryToExcel":{"platform":"gcfv1","labels":{},"callableTrigger":{},"entryPoint":"exportInventoryToExcel"}},"specVersion":"v1alpha1","requiredAPIs":[]}
+[info] shutdown requested via /__/quitquitquit
+
+[info] ✔  functions: Loaded functions definitions from source: exportInventoryToExcel. {"metadata":{"emulator":{"name":"functions"},"message":"Loaded functions definitions from source: exportInventoryToExcel."}}
+[debug] [2025-11-14T03:02:46.297Z] [work-queue] {"queuedWork":["/dev-vaultapp/us-central1/exportInventoryToExcel-2025-11-14T03:02:46.297Z"],"queueLength":1,"runningWork":[],"workRunningCount":0}
+[debug] [2025-11-14T03:02:46.297Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":["/dev-vaultapp/us-central1/exportInventoryToExcel-2025-11-14T03:02:46.297Z"],"workRunningCount":1}
+[debug] [2025-11-14T03:02:46.297Z] Accepted request POST /dev-vaultapp/us-central1/exportInventoryToExcel --> us-central1-exportInventoryToExcel
+[debug] [2025-11-14T03:02:46.297Z] ID Token: eyJhbGciOiJSUzI1NiIsImtpZCI6IjM4MDI5MzRmZTBlZWM0NmE1ZWQwMDA2ZDE0YTFiYWIwMWUzNDUwODMiLCJ0eXAiOiJKV1QifQ.eyJuYW1lIjoiUHVuZWV0IFNoYXJtYSIsInBpY3R1cmUiOiJodHRwczovL2xoMy5nb29nbGV1c2VyY29udGVudC5jb20vYS9BQ2c4b2NJc2F3dWpkdk5qbjNhakVaMlVkWWdSS3BjYVRxbFZVSnlpR2JmT2FONU9hTExXekE9czk2LWMiLCJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vZGV2LXZhdWx0YXBwIiwiYXVkIjoiZGV2LXZhdWx0YXBwIiwiYXV0aF90aW1lIjoxNzYyODkwNDE0LCJ1c2VyX2lkIjoiUU5SeFJTMlFoYU9CTTVPcWhpSjlZOWxMWHR1MiIsInN1YiI6IlFOUnhSUzJRaGFPQk01T3FoaUo5WTlsTFh0dTIiLCJpYXQiOjE3NjMwODc0MjEsImV4cCI6MTc2MzA5MTAyMSwiZW1haWwiOiJwdW5lZXRyYXRhbjgzQGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJmaXJlYmFzZSI6eyJpZGVudGl0aWVzIjp7Imdvb2dsZS5jb20iOlsiMTE0NjE3NTIzMTQ4NzM2MDUzNzUxIl0sImVtYWlsIjpbInB1bmVldHJhdGFuODNAZ21haWwuY29tIl19LCJzaWduX2luX3Byb3ZpZGVyIjoiZ29vZ2xlLmNvbSJ9fQ.niHIfl4T4XjqGaFy8pPH1FncA5TYhIgpwKT0Ql0WQpBk4ZmJ4ZkiWClZQs-ahXzYiKS7dzDU6VvY5ArAvLqJeyaMqdXeOcAFJ8MweNmnu4QXPwTGEkbtg2xaIwTawS9X_jbHMR42k5XMChrzzC9QWEghKDECrPTJNeUErINtqsDj3HsUg97hUrVhtBhCz311Ca_8Ui3gVvsvbG5lQ1DQv6NpDIzSIP_Z5QBq7jFiI-MtXLotR3bywhcN46r1Hoqyu59oV-FNA4xBQKRmcQzIKPWuQhtAuUyYkfh2HUWNR8kvpbsypoYfyAcY0lTyWneqMsAv0kRy37cqgGkkRhZSLA
+[debug] [2025-11-14T03:02:46.300Z] [functions] Runtime ready! Sending request! {"metadata":{"emulator":{"name":"functions"},"message":"[functions] Runtime ready! Sending request!"}}
+[debug] [2025-11-14T03:02:46.300Z] [functions] Got req.url=/dev-vaultapp/us-central1/exportInventoryToExcel, mapping to path=/ {"metadata":{"emulator":{"name":"functions"},"message":"[functions] Got req.url=/dev-vaultapp/us-central1/exportInventoryToExcel, mapping to path=/"}}
+[debug] [2025-11-14T03:02:46.300Z] [worker-pool] Cleaned up workers for us-central1-exportInventoryToExcel: 1 --> 0 {"metadata":{"emulator":{"name":"functions"},"message":"[worker-pool] Cleaned up workers for us-central1-exportInventoryToExcel: 1 --> 0"}}
+[debug] [2025-11-14T03:02:46.302Z] [worker-pool] addWorker(us-central1-exportInventoryToExcel) {"metadata":{"emulator":{"name":"functions"},"message":"[worker-pool] addWorker(us-central1-exportInventoryToExcel)"}}
+[debug] [2025-11-14T03:02:46.302Z] [worker-pool] Adding worker with key us-central1-exportInventoryToExcel, total=1 {"metadata":{"emulator":{"name":"functions"},"message":"[worker-pool] Adding worker with key us-central1-exportInventoryToExcel, total=1"}}
+[debug] [2025-11-14T03:02:47.761Z] [runtime-status] [59328] Resolved module firebase-admin {"declared":true,"installed":true,"version":"9.12.0","resolution":"/Users/puneet/workspace/vault-app/functions/node_modules/firebase-admin/lib/index.js"} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"[runtime-status] [59328] Resolved module firebase-admin {\"declared\":true,\"installed\":true,\"version\":\"9.12.0\",\"resolution\":\"/Users/puneet/workspace/vault-app/functions/node_modules/firebase-admin/lib/index.js\"}"}}
+[debug] [2025-11-14T03:02:47.762Z] [runtime-status] [59328] Resolved module firebase-functions {"declared":true,"installed":true,"version":"3.24.1","resolution":"/Users/puneet/workspace/vault-app/functions/node_modules/firebase-functions/lib/index.js"} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"[runtime-status] [59328] Resolved module firebase-functions {\"declared\":true,\"installed\":true,\"version\":\"3.24.1\",\"resolution\":\"/Users/puneet/workspace/vault-app/functions/node_modules/firebase-functions/lib/index.js\"}"}}
+[debug] [2025-11-14T03:02:47.762Z] [runtime-status] [59328] Outgoing network have been stubbed. [{"name":"http","status":"mocked"},{"name":"http","status":"mocked"},{"name":"https","status":"mocked"},{"name":"https","status":"mocked"},{"name":"net","status":"mocked"}] {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"[runtime-status] [59328] Outgoing network have been stubbed. [{\"name\":\"http\",\"status\":\"mocked\"},{\"name\":\"http\",\"status\":\"mocked\"},{\"name\":\"https\",\"status\":\"mocked\"},{\"name\":\"https\",\"status\":\"mocked\"},{\"name\":\"net\",\"status\":\"mocked\"}]"}}
+[debug] [2025-11-14T03:02:47.763Z] [runtime-status] [59328] Resolved module firebase-functions {"declared":true,"installed":true,"version":"3.24.1","resolution":"/Users/puneet/workspace/vault-app/functions/node_modules/firebase-functions/lib/index.js"} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"[runtime-status] [59328] Resolved module firebase-functions {\"declared\":true,\"installed\":true,\"version\":\"3.24.1\",\"resolution\":\"/Users/puneet/workspace/vault-app/functions/node_modules/firebase-functions/lib/index.js\"}"}}
+[debug] [2025-11-14T03:02:47.788Z] [runtime-status] [59328] Checked functions.config() {"config":{}} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"[runtime-status] [59328] Checked functions.config() {\"config\":{}}"}}
+[debug] [2025-11-14T03:02:47.788Z] [runtime-status] [59328] firebase-functions has been stubbed. {"functionsResolution":{"declared":true,"installed":true,"version":"3.24.1","resolution":"/Users/puneet/workspace/vault-app/functions/node_modules/firebase-functions/lib/index.js"}} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"[runtime-status] [59328] firebase-functions has been stubbed. {\"functionsResolution\":{\"declared\":true,\"installed\":true,\"version\":\"3.24.1\",\"resolution\":\"/Users/puneet/workspace/vault-app/functions/node_modules/firebase-functions/lib/index.js\"}}"}}
+[debug] [2025-11-14T03:02:47.789Z] [runtime-status] [59328] Resolved module firebase-functions {"declared":true,"installed":true,"version":"3.24.1","resolution":"/Users/puneet/workspace/vault-app/functions/node_modules/firebase-functions/lib/index.js"} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"[runtime-status] [59328] Resolved module firebase-functions {\"declared\":true,\"installed\":true,\"version\":\"3.24.1\",\"resolution\":\"/Users/puneet/workspace/vault-app/functions/node_modules/firebase-functions/lib/index.js\"}"}}
+[debug] [2025-11-14T03:02:47.790Z] [runtime-status] [59328] Resolved module firebase-admin {"declared":true,"installed":true,"version":"9.12.0","resolution":"/Users/puneet/workspace/vault-app/functions/node_modules/firebase-admin/lib/index.js"} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"[runtime-status] [59328] Resolved module firebase-admin {\"declared\":true,\"installed\":true,\"version\":\"9.12.0\",\"resolution\":\"/Users/puneet/workspace/vault-app/functions/node_modules/firebase-admin/lib/index.js\"}"}}
+[debug] [2025-11-14T03:02:47.790Z] [runtime-status] [59328] Resolved module firebase-functions {"declared":true,"installed":true,"version":"3.24.1","resolution":"/Users/puneet/workspace/vault-app/functions/node_modules/firebase-functions/lib/index.js"} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"[runtime-status] [59328] Resolved module firebase-functions {\"declared\":true,\"installed\":true,\"version\":\"3.24.1\",\"resolution\":\"/Users/puneet/workspace/vault-app/functions/node_modules/firebase-functions/lib/index.js\"}"}}
+[debug] [2025-11-14T03:02:47.790Z] [runtime-status] [59328] firebase-admin has been stubbed. {"adminResolution":{"declared":true,"installed":true,"version":"9.12.0","resolution":"/Users/puneet/workspace/vault-app/functions/node_modules/firebase-admin/lib/index.js"}} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"[runtime-status] [59328] firebase-admin has been stubbed. {\"adminResolution\":{\"declared\":true,\"installed\":true,\"version\":\"9.12.0\",\"resolution\":\"/Users/puneet/workspace/vault-app/functions/node_modules/firebase-admin/lib/index.js\"}}"}}
+[debug] [2025-11-14T03:02:47.965Z] [runtime-status] [59328] initializeApp(DEFAULT) {"storageBucket":"dev-vaultapp.firebasestorage.app","databaseURL":"https://dev-vaultapp-default-rtdb.firebaseio.com","projectId":"dev-vaultapp"} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"[runtime-status] [59328] initializeApp(DEFAULT) {\"storageBucket\":\"dev-vaultapp.firebasestorage.app\",\"databaseURL\":\"https://dev-vaultapp-default-rtdb.firebaseio.com\",\"projectId\":\"dev-vaultapp\"}"}}
+[debug] [2025-11-14T03:02:47.979Z] [runtime-status] [59328] Functions runtime initialized. {"cwd":"/Users/puneet/workspace/vault-app/functions","node_version":"24.11.0"} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"[runtime-status] [59328] Functions runtime initialized. {\"cwd\":\"/Users/puneet/workspace/vault-app/functions\",\"node_version\":\"24.11.0\"}"}}
+[debug] [2025-11-14T03:02:47.980Z] [runtime-status] [59328] Listening to port: /var/folders/vr/q2wscbn14310myb7dqcsssqm0000gn/T/fire_emu_49a3925f6a6d42cb.sock {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"[runtime-status] [59328] Listening to port: /var/folders/vr/q2wscbn14310myb7dqcsssqm0000gn/T/fire_emu_49a3925f6a6d42cb.sock"}}
+[debug] [2025-11-14T03:02:48.019Z] [worker-us-central1-exportInventoryToExcel-a9f0bc54-c6c1-40bc-a33e-45b83597cd59]: IDLE {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"[worker-us-central1-exportInventoryToExcel-a9f0bc54-c6c1-40bc-a33e-45b83597cd59]: IDLE"}}
+[debug] [2025-11-14T03:02:48.019Z] [worker-pool] submitRequest(triggerId=us-central1-exportInventoryToExcel) {"metadata":{"emulator":{"name":"functions"},"message":"[worker-pool] submitRequest(triggerId=us-central1-exportInventoryToExcel)"}}
+[info] i  functions: Beginning execution of "us-central1-exportInventoryToExcel" {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"Beginning execution of \"us-central1-exportInventoryToExcel\""}}
+[debug] [2025-11-14T03:02:48.019Z] [worker-us-central1-exportInventoryToExcel-a9f0bc54-c6c1-40bc-a33e-45b83597cd59]: BUSY {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"[worker-us-central1-exportInventoryToExcel-a9f0bc54-c6c1-40bc-a33e-45b83597cd59]: BUSY"}}
+[info] >  {"verifications":{"app":"MISSING","auth":"MISSING"},"logging.googleapis.com/labels":{"firebase-log-type":"callable-request-verification"},"severity":"INFO","message":"Callable request verification passed"} {"user":{"verifications":{"app":"MISSING","auth":"MISSING"},"logging.googleapis.com/labels":{"firebase-log-type":"callable-request-verification"},"severity":"INFO","message":"Callable request verification passed"},"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"\u001b[90m> \u001b[39m {\"verifications\":{\"app\":\"MISSING\",\"auth\":\"MISSING\"},\"logging.googleapis.com/labels\":{\"firebase-log-type\":\"callable-request-verification\"},\"severity\":\"INFO\",\"message\":\"Callable request verification passed\"}"}}
+[debug] [2025-11-14T03:02:48.033Z] [runtime-status] [59328] Callable functions auth override {"key":"x-callable-context-auth","value":"%7B%22uid%22%3A%22QNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%22%2C%22token%22%3A%7B%22name%22%3A%22Puneet%20Sharma%22%2C%22picture%22%3A%22https%3A%2F%2Flh3.googleusercontent.com%2Fa%2FACg8ocIsawujdvNjn3ajEZ2UdYgRKpcaTqlVUJyiGbfOaN5OaLLWzA%3Ds96-c%22%2C%22iss%22%3A%22https%3A%2F%2Fsecuretoken.google.com%2Fdev-vaultapp%22%2C%22aud%22%3A%22dev-vaultapp%22%2C%22auth_time%22%3A1762890414%2C%22user_id%22%3A%22QNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%22%2C%22sub%22%3A%22QNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%22%2C%22iat%22%3A1763087421%2C%22exp%22%3A1763091021%2C%22email%22%3A%22puneetratan83%40gmail.com%22%2C%22email_verified%22%3Atrue%2C%22firebase%22%3A%7B%22identities%22%3A%7B%22google.com%22%3A%5B%22114617523148736053751%22%5D%2C%22email%22%3A%5B%22puneetratan83%40gmail.com%22%5D%7D%2C%22sign_in_provider%22%3A%22google.com%22%7D%2C%22uid%22%3A%22QNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%22%7D%7D"} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"[runtime-status] [59328] Callable functions auth override {\"key\":\"x-callable-context-auth\",\"value\":\"%7B%22uid%22%3A%22QNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%22%2C%22token%22%3A%7B%22name%22%3A%22Puneet%20Sharma%22%2C%22picture%22%3A%22https%3A%2F%2Flh3.googleusercontent.com%2Fa%2FACg8ocIsawujdvNjn3ajEZ2UdYgRKpcaTqlVUJyiGbfOaN5OaLLWzA%3Ds96-c%22%2C%22iss%22%3A%22https%3A%2F%2Fsecuretoken.google.com%2Fdev-vaultapp%22%2C%22aud%22%3A%22dev-vaultapp%22%2C%22auth_time%22%3A1762890414%2C%22user_id%22%3A%22QNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%22%2C%22sub%22%3A%22QNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%22%2C%22iat%22%3A1763087421%2C%22exp%22%3A1763091021%2C%22email%22%3A%22puneetratan83%40gmail.com%22%2C%22email_verified%22%3Atrue%2C%22firebase%22%3A%7B%22identities%22%3A%7B%22google.com%22%3A%5B%22114617523148736053751%22%5D%2C%22email%22%3A%5B%22puneetratan83%40gmail.com%22%5D%7D%2C%22sign_in_provider%22%3A%22google.com%22%7D%2C%22uid%22%3A%22QNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%22%7D%7D\"}"}}
+[warn] ⚠  Google API requested!
+   - URL: "https://oauth2.googleapis.com/token"
+   - Be careful, this may be a production service. {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"Google API requested!\n   - URL: \"https://oauth2.googleapis.com/token\"\n   - Be careful, this may be a production service."}}
+[info] >  Image Download URL: https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762990177149_D32F153E-F9F1-438F-959A-143854B3E65A.png?alt=media&token=722bbe3c-3d8e-4a28-810c-43a9c760de44 {"user":"Image Download URL: https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762990177149_D32F153E-F9F1-438F-959A-143854B3E65A.png?alt=media&token=722bbe3c-3d8e-4a28-810c-43a9c760de44","metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"\u001b[90m> \u001b[39m Image Download URL: https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762990177149_D32F153E-F9F1-438F-959A-143854B3E65A.png?alt=media&token=722bbe3c-3d8e-4a28-810c-43a9c760de44"}}
+[warn] ⚠  Google API requested!
+   - URL: "https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762990177149_D32F153E-F9F1-438F-959A-143854B3E65A.png?alt=media&token=722bbe3c-3d8e-4a28-810c-43a9c760de44"
+   - Be careful, this may be a production service. {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"Google API requested!\n   - URL: \"https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762990177149_D32F153E-F9F1-438F-959A-143854B3E65A.png?alt=media&token=722bbe3c-3d8e-4a28-810c-43a9c760de44\"\n   - Be careful, this may be a production service."}}
+[info] >  Fetching image-1: https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762990177149_D32F153E-F9F1-438F-959A-143854B3E65A.png?alt=media&token=722bbe3c-3d8e-4a28-810c-43a9c760de44 {"user":"Fetching image-1: https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762990177149_D32F153E-F9F1-438F-959A-143854B3E65A.png?alt=media&token=722bbe3c-3d8e-4a28-810c-43a9c760de44","metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"\u001b[90m> \u001b[39m Fetching image-1: https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762990177149_D32F153E-F9F1-438F-959A-143854B3E65A.png?alt=media&token=722bbe3c-3d8e-4a28-810c-43a9c760de44"}}
+[info] >  Response status-2: 200 {"user":"Response status-2: 200","metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"\u001b[90m> \u001b[39m Response status-2: 200"}}
+[info] >  Content-Type-3: image/png {"user":"Content-Type-3: image/png","metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"\u001b[90m> \u001b[39m Content-Type-3: image/png"}}
+[info] >  Image Download URL: https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762990365882_3B9D69A3-D96A-46CD-8E6A-0E536A848B90.png?alt=media&token=5a03f7d8-c995-446b-a0eb-d6e35ef349eb {"user":"Image Download URL: https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762990365882_3B9D69A3-D96A-46CD-8E6A-0E536A848B90.png?alt=media&token=5a03f7d8-c995-446b-a0eb-d6e35ef349eb","metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"\u001b[90m> \u001b[39m Image Download URL: https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762990365882_3B9D69A3-D96A-46CD-8E6A-0E536A848B90.png?alt=media&token=5a03f7d8-c995-446b-a0eb-d6e35ef349eb"}}
+[warn] ⚠  Google API requested!
+   - URL: "https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762990365882_3B9D69A3-D96A-46CD-8E6A-0E536A848B90.png?alt=media&token=5a03f7d8-c995-446b-a0eb-d6e35ef349eb"
+   - Be careful, this may be a production service. {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"Google API requested!\n   - URL: \"https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762990365882_3B9D69A3-D96A-46CD-8E6A-0E536A848B90.png?alt=media&token=5a03f7d8-c995-446b-a0eb-d6e35ef349eb\"\n   - Be careful, this may be a production service."}}
+[info] >  Fetching image-1: https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762990365882_3B9D69A3-D96A-46CD-8E6A-0E536A848B90.png?alt=media&token=5a03f7d8-c995-446b-a0eb-d6e35ef349eb {"user":"Fetching image-1: https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762990365882_3B9D69A3-D96A-46CD-8E6A-0E536A848B90.png?alt=media&token=5a03f7d8-c995-446b-a0eb-d6e35ef349eb","metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"\u001b[90m> \u001b[39m Fetching image-1: https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762990365882_3B9D69A3-D96A-46CD-8E6A-0E536A848B90.png?alt=media&token=5a03f7d8-c995-446b-a0eb-d6e35ef349eb"}}
+[info] >  Response status-2: 200 {"user":"Response status-2: 200","metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"\u001b[90m> \u001b[39m Response status-2: 200"}}
+[info] >  Content-Type-3: image/png {"user":"Content-Type-3: image/png","metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"\u001b[90m> \u001b[39m Content-Type-3: image/png"}}
+[info] >  Image Download URL: https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762741744369_2A54C40F-D65C-4A07-AF90-6144EC7855E2.png?alt=media&token=5d68e77c-666f-4be0-9aee-a3b6e2b03fb6 {"user":"Image Download URL: https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762741744369_2A54C40F-D65C-4A07-AF90-6144EC7855E2.png?alt=media&token=5d68e77c-666f-4be0-9aee-a3b6e2b03fb6","metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"\u001b[90m> \u001b[39m Image Download URL: https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762741744369_2A54C40F-D65C-4A07-AF90-6144EC7855E2.png?alt=media&token=5d68e77c-666f-4be0-9aee-a3b6e2b03fb6"}}
+[warn] ⚠  Google API requested!
+   - URL: "https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762741744369_2A54C40F-D65C-4A07-AF90-6144EC7855E2.png?alt=media&token=5d68e77c-666f-4be0-9aee-a3b6e2b03fb6"
+   - Be careful, this may be a production service. {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"Google API requested!\n   - URL: \"https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762741744369_2A54C40F-D65C-4A07-AF90-6144EC7855E2.png?alt=media&token=5d68e77c-666f-4be0-9aee-a3b6e2b03fb6\"\n   - Be careful, this may be a production service."}}
+[info] >  Fetching image-1: https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762741744369_2A54C40F-D65C-4A07-AF90-6144EC7855E2.png?alt=media&token=5d68e77c-666f-4be0-9aee-a3b6e2b03fb6 {"user":"Fetching image-1: https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762741744369_2A54C40F-D65C-4A07-AF90-6144EC7855E2.png?alt=media&token=5d68e77c-666f-4be0-9aee-a3b6e2b03fb6","metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"\u001b[90m> \u001b[39m Fetching image-1: https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762741744369_2A54C40F-D65C-4A07-AF90-6144EC7855E2.png?alt=media&token=5d68e77c-666f-4be0-9aee-a3b6e2b03fb6"}}
+[info] >  Response status-2: 200 {"user":"Response status-2: 200","metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"\u001b[90m> \u001b[39m Response status-2: 200"}}
+[info] >  Content-Type-3: image/png {"user":"Content-Type-3: image/png","metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"\u001b[90m> \u001b[39m Content-Type-3: image/png"}}
+[info] >  Image Download URL: https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762990267663_829119B2-6DA1-4C82-87F7-71DD3DFD893F.png?alt=media&token=7fc9f240-adbe-4321-88bf-44e06ba0a141 {"user":"Image Download URL: https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762990267663_829119B2-6DA1-4C82-87F7-71DD3DFD893F.png?alt=media&token=7fc9f240-adbe-4321-88bf-44e06ba0a141","metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"\u001b[90m> \u001b[39m Image Download URL: https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762990267663_829119B2-6DA1-4C82-87F7-71DD3DFD893F.png?alt=media&token=7fc9f240-adbe-4321-88bf-44e06ba0a141"}}
+[warn] ⚠  Google API requested!
+   - URL: "https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762990267663_829119B2-6DA1-4C82-87F7-71DD3DFD893F.png?alt=media&token=7fc9f240-adbe-4321-88bf-44e06ba0a141"
+   - Be careful, this may be a production service. {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"Google API requested!\n   - URL: \"https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762990267663_829119B2-6DA1-4C82-87F7-71DD3DFD893F.png?alt=media&token=7fc9f240-adbe-4321-88bf-44e06ba0a141\"\n   - Be careful, this may be a production service."}}
+[info] >  Fetching image-1: https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762990267663_829119B2-6DA1-4C82-87F7-71DD3DFD893F.png?alt=media&token=7fc9f240-adbe-4321-88bf-44e06ba0a141 {"user":"Fetching image-1: https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762990267663_829119B2-6DA1-4C82-87F7-71DD3DFD893F.png?alt=media&token=7fc9f240-adbe-4321-88bf-44e06ba0a141","metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"\u001b[90m> \u001b[39m Fetching image-1: https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762990267663_829119B2-6DA1-4C82-87F7-71DD3DFD893F.png?alt=media&token=7fc9f240-adbe-4321-88bf-44e06ba0a141"}}
+[info] >  Response status-2: 200 {"user":"Response status-2: 200","metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"\u001b[90m> \u001b[39m Response status-2: 200"}}
+[info] >  Content-Type-3: image/png {"user":"Content-Type-3: image/png","metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"\u001b[90m> \u001b[39m Content-Type-3: image/png"}}
+[info] >  Image Download URL: https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762979487542_6B1BEB55-D697-4662-9DFC-E6373D963301.png?alt=media&token=4926d31d-96f6-44dd-9a20-00fe28413d59 {"user":"Image Download URL: https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762979487542_6B1BEB55-D697-4662-9DFC-E6373D963301.png?alt=media&token=4926d31d-96f6-44dd-9a20-00fe28413d59","metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"\u001b[90m> \u001b[39m Image Download URL: https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762979487542_6B1BEB55-D697-4662-9DFC-E6373D963301.png?alt=media&token=4926d31d-96f6-44dd-9a20-00fe28413d59"}}
+[warn] ⚠  Google API requested!
+   - URL: "https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762979487542_6B1BEB55-D697-4662-9DFC-E6373D963301.png?alt=media&token=4926d31d-96f6-44dd-9a20-00fe28413d59"
+   - Be careful, this may be a production service. {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"Google API requested!\n   - URL: \"https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762979487542_6B1BEB55-D697-4662-9DFC-E6373D963301.png?alt=media&token=4926d31d-96f6-44dd-9a20-00fe28413d59\"\n   - Be careful, this may be a production service."}}
+[info] >  Fetching image-1: https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762979487542_6B1BEB55-D697-4662-9DFC-E6373D963301.png?alt=media&token=4926d31d-96f6-44dd-9a20-00fe28413d59 {"user":"Fetching image-1: https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762979487542_6B1BEB55-D697-4662-9DFC-E6373D963301.png?alt=media&token=4926d31d-96f6-44dd-9a20-00fe28413d59","metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"\u001b[90m> \u001b[39m Fetching image-1: https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762979487542_6B1BEB55-D697-4662-9DFC-E6373D963301.png?alt=media&token=4926d31d-96f6-44dd-9a20-00fe28413d59"}}
+[info] >  Response status-2: 200 {"user":"Response status-2: 200","metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"\u001b[90m> \u001b[39m Response status-2: 200"}}
+[info] >  Content-Type-3: image/png {"user":"Content-Type-3: image/png","metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"\u001b[90m> \u001b[39m Content-Type-3: image/png"}}
+[debug] [2025-11-14T03:03:01.900Z] Finishing up request with event=pause {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"Finishing up request with event=pause"}}
+[info] i  functions: Finished "us-central1-exportInventoryToExcel" in 13881.010605ms {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"Finished \"us-central1-exportInventoryToExcel\" in 13881.010605ms"}}
+[debug] [2025-11-14T03:03:01.900Z] [worker-us-central1-exportInventoryToExcel-a9f0bc54-c6c1-40bc-a33e-45b83597cd59]: IDLE {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"[worker-us-central1-exportInventoryToExcel-a9f0bc54-c6c1-40bc-a33e-45b83597cd59]: IDLE"}}
+[debug] [2025-11-14T03:03:01.901Z] Finishing up request with event=close {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"Finishing up request with event=close"}}
+[debug] [2025-11-14T03:03:01.901Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":[],"workRunningCount":0}
+[debug] [2025-11-14T03:06:04.444Z] File /Users/puneet/workspace/vault-app/functions/index.js changed, reloading triggers {"metadata":{"emulator":{"name":"functions"},"message":"File /Users/puneet/workspace/vault-app/functions/index.js changed, reloading triggers"}}
+[debug] [2025-11-14T03:06:05.445Z] Validating nodejs source
+[warn] ⚠  functions: package.json indicates an outdated version of firebase-functions. Please upgrade using npm install --save firebase-functions@latest in your functions directory. 
+[warn] ⚠  functions: Please note that there will be breaking changes when you upgrade. 
+[debug] [2025-11-14T03:06:06.434Z] > [functions] package.json contents: {
+  "name": "functions",
+  "description": "Cloud Functions for Firebase",
+  "scripts": {
+    "serve": "firebase emulators:start --only functions",
+    "shell": "firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "16"
+  },
+  "main": "index.js",
+  "dependencies": {
+    "exceljs": "^4.4.0",
+    "firebase-admin": "^9.8.0",
+    "firebase-functions": "^3.14.1",
+    "nodemailer": "^7.0.10"
+  },
+  "devDependencies": {
+    "firebase-functions-test": "^0.2.0"
+  },
+  "private": true
+}
+[debug] [2025-11-14T03:06:06.434Z] Building nodejs source
+[debug] [2025-11-14T03:06:06.434Z] Failed to find version of module node: reached end of search path /Users/puneet/workspace/vault-app/functions/node_modules
+[warn] ⚠  functions: Your requested "node" version "16" doesn't match your global version "24". Using node@24 from host. 
+[info] i  functions: You are using a version of firebase-functions SDK (3.24.1) that does not have support for the newest Firebase Extensions features. Please update firebase-functions SDK to >=5.1.0 to use them correctly 
+[debug] [2025-11-14T03:06:06.435Z] Could not find functions.yaml. Must use http discovery
+[debug] [2025-11-14T03:06:06.436Z] Found firebase-functions binary at '/Users/puneet/workspace/vault-app/functions/node_modules/.bin/firebase-functions'
+[info] Serving at port 8022
+
+[debug] [2025-11-14T03:06:06.913Z] Got response from /__/functions.yaml {"endpoints":{"exportInventoryToExcel":{"platform":"gcfv1","labels":{},"callableTrigger":{},"entryPoint":"exportInventoryToExcel"}},"specVersion":"v1alpha1","requiredAPIs":[]}
+[info] shutdown requested via /__/quitquitquit
+
+[info] ✔  functions: Loaded functions definitions from source: exportInventoryToExcel. {"metadata":{"emulator":{"name":"functions"},"message":"Loaded functions definitions from source: exportInventoryToExcel."}}
+[debug] [2025-11-14T03:06:10.928Z] [worker-pool] Shutting down IDLE worker (us-central1-exportInventoryToExcel) {"metadata":{"emulator":{"name":"functions"},"message":"[worker-pool] Shutting down IDLE worker (us-central1-exportInventoryToExcel)"}}
+[debug] [2025-11-14T03:06:10.928Z] [worker-us-central1-exportInventoryToExcel-a9f0bc54-c6c1-40bc-a33e-45b83597cd59]: FINISHING {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"[worker-us-central1-exportInventoryToExcel-a9f0bc54-c6c1-40bc-a33e-45b83597cd59]: FINISHING"}}
+[debug] [2025-11-14T03:06:10.942Z] [worker-us-central1-exportInventoryToExcel-a9f0bc54-c6c1-40bc-a33e-45b83597cd59]: exited {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"[worker-us-central1-exportInventoryToExcel-a9f0bc54-c6c1-40bc-a33e-45b83597cd59]: exited"}}
+[debug] [2025-11-14T03:06:10.942Z] [worker-us-central1-exportInventoryToExcel-a9f0bc54-c6c1-40bc-a33e-45b83597cd59]: FINISHED {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"[worker-us-central1-exportInventoryToExcel-a9f0bc54-c6c1-40bc-a33e-45b83597cd59]: FINISHED"}}
+[debug] [2025-11-14T03:06:34.384Z] File /Users/puneet/workspace/vault-app/functions/index.js changed, reloading triggers {"metadata":{"emulator":{"name":"functions"},"message":"File /Users/puneet/workspace/vault-app/functions/index.js changed, reloading triggers"}}
+[debug] [2025-11-14T03:06:35.384Z] Validating nodejs source
+[warn] ⚠  functions: package.json indicates an outdated version of firebase-functions. Please upgrade using npm install --save firebase-functions@latest in your functions directory. 
+[warn] ⚠  functions: Please note that there will be breaking changes when you upgrade. 
+[debug] [2025-11-14T03:06:36.085Z] > [functions] package.json contents: {
+  "name": "functions",
+  "description": "Cloud Functions for Firebase",
+  "scripts": {
+    "serve": "firebase emulators:start --only functions",
+    "shell": "firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "16"
+  },
+  "main": "index.js",
+  "dependencies": {
+    "exceljs": "^4.4.0",
+    "firebase-admin": "^9.8.0",
+    "firebase-functions": "^3.14.1",
+    "nodemailer": "^7.0.10"
+  },
+  "devDependencies": {
+    "firebase-functions-test": "^0.2.0"
+  },
+  "private": true
+}
+[debug] [2025-11-14T03:06:36.085Z] Building nodejs source
+[debug] [2025-11-14T03:06:36.085Z] Failed to find version of module node: reached end of search path /Users/puneet/workspace/vault-app/functions/node_modules
+[warn] ⚠  functions: Your requested "node" version "16" doesn't match your global version "24". Using node@24 from host. 
+[info] i  functions: You are using a version of firebase-functions SDK (3.24.1) that does not have support for the newest Firebase Extensions features. Please update firebase-functions SDK to >=5.1.0 to use them correctly 
+[debug] [2025-11-14T03:06:36.086Z] Could not find functions.yaml. Must use http discovery
+[debug] [2025-11-14T03:06:36.087Z] Found firebase-functions binary at '/Users/puneet/workspace/vault-app/functions/node_modules/.bin/firebase-functions'
+[info] Serving at port 8089
+
+[debug] [2025-11-14T03:06:36.539Z] Got response from /__/functions.yaml {"endpoints":{"exportInventoryToExcel":{"platform":"gcfv1","labels":{},"callableTrigger":{},"entryPoint":"exportInventoryToExcel"}},"specVersion":"v1alpha1","requiredAPIs":[]}
+[info] shutdown requested via /__/quitquitquit
+
+[info] ✔  functions: Loaded functions definitions from source: exportInventoryToExcel. {"metadata":{"emulator":{"name":"functions"},"message":"Loaded functions definitions from source: exportInventoryToExcel."}}
+[debug] [2025-11-14T03:06:41.007Z] File /Users/puneet/workspace/vault-app/functions/index.js changed, reloading triggers {"metadata":{"emulator":{"name":"functions"},"message":"File /Users/puneet/workspace/vault-app/functions/index.js changed, reloading triggers"}}
+[debug] [2025-11-14T03:06:42.009Z] Validating nodejs source
+[warn] ⚠  functions: package.json indicates an outdated version of firebase-functions. Please upgrade using npm install --save firebase-functions@latest in your functions directory. 
+[warn] ⚠  functions: Please note that there will be breaking changes when you upgrade. 
+[debug] [2025-11-14T03:06:42.694Z] > [functions] package.json contents: {
+  "name": "functions",
+  "description": "Cloud Functions for Firebase",
+  "scripts": {
+    "serve": "firebase emulators:start --only functions",
+    "shell": "firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "16"
+  },
+  "main": "index.js",
+  "dependencies": {
+    "exceljs": "^4.4.0",
+    "firebase-admin": "^9.8.0",
+    "firebase-functions": "^3.14.1",
+    "nodemailer": "^7.0.10"
+  },
+  "devDependencies": {
+    "firebase-functions-test": "^0.2.0"
+  },
+  "private": true
+}
+[debug] [2025-11-14T03:06:42.694Z] Building nodejs source
+[debug] [2025-11-14T03:06:42.694Z] Failed to find version of module node: reached end of search path /Users/puneet/workspace/vault-app/functions/node_modules
+[warn] ⚠  functions: Your requested "node" version "16" doesn't match your global version "24". Using node@24 from host. 
+[info] i  functions: You are using a version of firebase-functions SDK (3.24.1) that does not have support for the newest Firebase Extensions features. Please update firebase-functions SDK to >=5.1.0 to use them correctly 
+[debug] [2025-11-14T03:06:42.695Z] Could not find functions.yaml. Must use http discovery
+[debug] [2025-11-14T03:06:42.696Z] Found firebase-functions binary at '/Users/puneet/workspace/vault-app/functions/node_modules/.bin/firebase-functions'
+[info] Serving at port 8253
+
+[debug] [2025-11-14T03:06:43.096Z] Got response from /__/functions.yaml {"endpoints":{"exportInventoryToExcel":{"platform":"gcfv1","labels":{},"callableTrigger":{},"entryPoint":"exportInventoryToExcel"}},"specVersion":"v1alpha1","requiredAPIs":[]}
+[info] shutdown requested via /__/quitquitquit
+
+[info] ✔  functions: Loaded functions definitions from source: exportInventoryToExcel. {"metadata":{"emulator":{"name":"functions"},"message":"Loaded functions definitions from source: exportInventoryToExcel."}}
+[debug] [2025-11-14T03:07:03.431Z] [work-queue] {"queuedWork":["/dev-vaultapp/us-central1/exportInventoryToExcel-2025-11-14T03:07:03.431Z"],"queueLength":1,"runningWork":[],"workRunningCount":0}
+[debug] [2025-11-14T03:07:03.432Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":["/dev-vaultapp/us-central1/exportInventoryToExcel-2025-11-14T03:07:03.431Z"],"workRunningCount":1}
+[debug] [2025-11-14T03:07:03.432Z] Accepted request POST /dev-vaultapp/us-central1/exportInventoryToExcel --> us-central1-exportInventoryToExcel
+[debug] [2025-11-14T03:07:03.432Z] ID Token: eyJhbGciOiJSUzI1NiIsImtpZCI6IjM4MDI5MzRmZTBlZWM0NmE1ZWQwMDA2ZDE0YTFiYWIwMWUzNDUwODMiLCJ0eXAiOiJKV1QifQ.eyJuYW1lIjoiUHVuZWV0IFNoYXJtYSIsInBpY3R1cmUiOiJodHRwczovL2xoMy5nb29nbGV1c2VyY29udGVudC5jb20vYS9BQ2c4b2NJc2F3dWpkdk5qbjNhakVaMlVkWWdSS3BjYVRxbFZVSnlpR2JmT2FONU9hTExXekE9czk2LWMiLCJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vZGV2LXZhdWx0YXBwIiwiYXVkIjoiZGV2LXZhdWx0YXBwIiwiYXV0aF90aW1lIjoxNzYyODkwNDE0LCJ1c2VyX2lkIjoiUU5SeFJTMlFoYU9CTTVPcWhpSjlZOWxMWHR1MiIsInN1YiI6IlFOUnhSUzJRaGFPQk01T3FoaUo5WTlsTFh0dTIiLCJpYXQiOjE3NjMwODc0MjEsImV4cCI6MTc2MzA5MTAyMSwiZW1haWwiOiJwdW5lZXRyYXRhbjgzQGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJmaXJlYmFzZSI6eyJpZGVudGl0aWVzIjp7Imdvb2dsZS5jb20iOlsiMTE0NjE3NTIzMTQ4NzM2MDUzNzUxIl0sImVtYWlsIjpbInB1bmVldHJhdGFuODNAZ21haWwuY29tIl19LCJzaWduX2luX3Byb3ZpZGVyIjoiZ29vZ2xlLmNvbSJ9fQ.niHIfl4T4XjqGaFy8pPH1FncA5TYhIgpwKT0Ql0WQpBk4ZmJ4ZkiWClZQs-ahXzYiKS7dzDU6VvY5ArAvLqJeyaMqdXeOcAFJ8MweNmnu4QXPwTGEkbtg2xaIwTawS9X_jbHMR42k5XMChrzzC9QWEghKDECrPTJNeUErINtqsDj3HsUg97hUrVhtBhCz311Ca_8Ui3gVvsvbG5lQ1DQv6NpDIzSIP_Z5QBq7jFiI-MtXLotR3bywhcN46r1Hoqyu59oV-FNA4xBQKRmcQzIKPWuQhtAuUyYkfh2HUWNR8kvpbsypoYfyAcY0lTyWneqMsAv0kRy37cqgGkkRhZSLA
+[debug] [2025-11-14T03:07:03.434Z] [functions] Runtime ready! Sending request! {"metadata":{"emulator":{"name":"functions"},"message":"[functions] Runtime ready! Sending request!"}}
+[debug] [2025-11-14T03:07:03.434Z] [functions] Got req.url=/dev-vaultapp/us-central1/exportInventoryToExcel, mapping to path=/ {"metadata":{"emulator":{"name":"functions"},"message":"[functions] Got req.url=/dev-vaultapp/us-central1/exportInventoryToExcel, mapping to path=/"}}
+[debug] [2025-11-14T03:07:03.434Z] [worker-pool] Cleaned up workers for us-central1-exportInventoryToExcel: 1 --> 0 {"metadata":{"emulator":{"name":"functions"},"message":"[worker-pool] Cleaned up workers for us-central1-exportInventoryToExcel: 1 --> 0"}}
+[debug] [2025-11-14T03:07:03.436Z] [worker-pool] addWorker(us-central1-exportInventoryToExcel) {"metadata":{"emulator":{"name":"functions"},"message":"[worker-pool] addWorker(us-central1-exportInventoryToExcel)"}}
+[debug] [2025-11-14T03:07:03.436Z] [worker-pool] Adding worker with key us-central1-exportInventoryToExcel, total=1 {"metadata":{"emulator":{"name":"functions"},"message":"[worker-pool] Adding worker with key us-central1-exportInventoryToExcel, total=1"}}
+[debug] [2025-11-14T03:07:04.140Z] [runtime-status] [63401] Resolved module firebase-admin {"declared":true,"installed":true,"version":"9.12.0","resolution":"/Users/puneet/workspace/vault-app/functions/node_modules/firebase-admin/lib/index.js"} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"[runtime-status] [63401] Resolved module firebase-admin {\"declared\":true,\"installed\":true,\"version\":\"9.12.0\",\"resolution\":\"/Users/puneet/workspace/vault-app/functions/node_modules/firebase-admin/lib/index.js\"}"}}
+[debug] [2025-11-14T03:07:04.141Z] [runtime-status] [63401] Resolved module firebase-functions {"declared":true,"installed":true,"version":"3.24.1","resolution":"/Users/puneet/workspace/vault-app/functions/node_modules/firebase-functions/lib/index.js"} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"[runtime-status] [63401] Resolved module firebase-functions {\"declared\":true,\"installed\":true,\"version\":\"3.24.1\",\"resolution\":\"/Users/puneet/workspace/vault-app/functions/node_modules/firebase-functions/lib/index.js\"}"}}
+[debug] [2025-11-14T03:07:04.141Z] [runtime-status] [63401] Outgoing network have been stubbed. [{"name":"http","status":"mocked"},{"name":"http","status":"mocked"},{"name":"https","status":"mocked"},{"name":"https","status":"mocked"},{"name":"net","status":"mocked"}] {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"[runtime-status] [63401] Outgoing network have been stubbed. [{\"name\":\"http\",\"status\":\"mocked\"},{\"name\":\"http\",\"status\":\"mocked\"},{\"name\":\"https\",\"status\":\"mocked\"},{\"name\":\"https\",\"status\":\"mocked\"},{\"name\":\"net\",\"status\":\"mocked\"}]"}}
+[debug] [2025-11-14T03:07:04.142Z] [runtime-status] [63401] Resolved module firebase-functions {"declared":true,"installed":true,"version":"3.24.1","resolution":"/Users/puneet/workspace/vault-app/functions/node_modules/firebase-functions/lib/index.js"} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"[runtime-status] [63401] Resolved module firebase-functions {\"declared\":true,\"installed\":true,\"version\":\"3.24.1\",\"resolution\":\"/Users/puneet/workspace/vault-app/functions/node_modules/firebase-functions/lib/index.js\"}"}}
+[debug] [2025-11-14T03:07:04.166Z] [runtime-status] [63401] Checked functions.config() {"config":{}} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"[runtime-status] [63401] Checked functions.config() {\"config\":{}}"}}
+[debug] [2025-11-14T03:07:04.166Z] [runtime-status] [63401] firebase-functions has been stubbed. {"functionsResolution":{"declared":true,"installed":true,"version":"3.24.1","resolution":"/Users/puneet/workspace/vault-app/functions/node_modules/firebase-functions/lib/index.js"}} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"[runtime-status] [63401] firebase-functions has been stubbed. {\"functionsResolution\":{\"declared\":true,\"installed\":true,\"version\":\"3.24.1\",\"resolution\":\"/Users/puneet/workspace/vault-app/functions/node_modules/firebase-functions/lib/index.js\"}}"}}
+[debug] [2025-11-14T03:07:04.167Z] [runtime-status] [63401] Resolved module firebase-functions {"declared":true,"installed":true,"version":"3.24.1","resolution":"/Users/puneet/workspace/vault-app/functions/node_modules/firebase-functions/lib/index.js"} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"[runtime-status] [63401] Resolved module firebase-functions {\"declared\":true,\"installed\":true,\"version\":\"3.24.1\",\"resolution\":\"/Users/puneet/workspace/vault-app/functions/node_modules/firebase-functions/lib/index.js\"}"}}
+[debug] [2025-11-14T03:07:04.168Z] [runtime-status] [63401] Resolved module firebase-admin {"declared":true,"installed":true,"version":"9.12.0","resolution":"/Users/puneet/workspace/vault-app/functions/node_modules/firebase-admin/lib/index.js"} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"[runtime-status] [63401] Resolved module firebase-admin {\"declared\":true,\"installed\":true,\"version\":\"9.12.0\",\"resolution\":\"/Users/puneet/workspace/vault-app/functions/node_modules/firebase-admin/lib/index.js\"}"}}
+[debug] [2025-11-14T03:07:04.168Z] [runtime-status] [63401] Resolved module firebase-functions {"declared":true,"installed":true,"version":"3.24.1","resolution":"/Users/puneet/workspace/vault-app/functions/node_modules/firebase-functions/lib/index.js"} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"[runtime-status] [63401] Resolved module firebase-functions {\"declared\":true,\"installed\":true,\"version\":\"3.24.1\",\"resolution\":\"/Users/puneet/workspace/vault-app/functions/node_modules/firebase-functions/lib/index.js\"}"}}
+[debug] [2025-11-14T03:07:04.168Z] [runtime-status] [63401] firebase-admin has been stubbed. {"adminResolution":{"declared":true,"installed":true,"version":"9.12.0","resolution":"/Users/puneet/workspace/vault-app/functions/node_modules/firebase-admin/lib/index.js"}} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"[runtime-status] [63401] firebase-admin has been stubbed. {\"adminResolution\":{\"declared\":true,\"installed\":true,\"version\":\"9.12.0\",\"resolution\":\"/Users/puneet/workspace/vault-app/functions/node_modules/firebase-admin/lib/index.js\"}}"}}
+[debug] [2025-11-14T03:07:04.434Z] [runtime-status] [63401] initializeApp(DEFAULT) {"storageBucket":"dev-vaultapp.firebasestorage.app","databaseURL":"https://dev-vaultapp-default-rtdb.firebaseio.com","projectId":"dev-vaultapp"} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"[runtime-status] [63401] initializeApp(DEFAULT) {\"storageBucket\":\"dev-vaultapp.firebasestorage.app\",\"databaseURL\":\"https://dev-vaultapp-default-rtdb.firebaseio.com\",\"projectId\":\"dev-vaultapp\"}"}}
+[debug] [2025-11-14T03:07:04.452Z] [runtime-status] [63401] Functions runtime initialized. {"cwd":"/Users/puneet/workspace/vault-app/functions","node_version":"24.11.0"} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"[runtime-status] [63401] Functions runtime initialized. {\"cwd\":\"/Users/puneet/workspace/vault-app/functions\",\"node_version\":\"24.11.0\"}"}}
+[debug] [2025-11-14T03:07:04.452Z] [runtime-status] [63401] Listening to port: /var/folders/vr/q2wscbn14310myb7dqcsssqm0000gn/T/fire_emu_4dee6f029b3859e4.sock {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"[runtime-status] [63401] Listening to port: /var/folders/vr/q2wscbn14310myb7dqcsssqm0000gn/T/fire_emu_4dee6f029b3859e4.sock"}}
+[debug] [2025-11-14T03:07:04.559Z] [worker-us-central1-exportInventoryToExcel-f614b5a3-39c2-4fb5-b248-4a1297fe98c3]: IDLE {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"[worker-us-central1-exportInventoryToExcel-f614b5a3-39c2-4fb5-b248-4a1297fe98c3]: IDLE"}}
+[debug] [2025-11-14T03:07:04.559Z] [worker-pool] submitRequest(triggerId=us-central1-exportInventoryToExcel) {"metadata":{"emulator":{"name":"functions"},"message":"[worker-pool] submitRequest(triggerId=us-central1-exportInventoryToExcel)"}}
+[info] i  functions: Beginning execution of "us-central1-exportInventoryToExcel" {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"Beginning execution of \"us-central1-exportInventoryToExcel\""}}
+[debug] [2025-11-14T03:07:04.559Z] [worker-us-central1-exportInventoryToExcel-f614b5a3-39c2-4fb5-b248-4a1297fe98c3]: BUSY {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"[worker-us-central1-exportInventoryToExcel-f614b5a3-39c2-4fb5-b248-4a1297fe98c3]: BUSY"}}
+[info] >  {"verifications":{"app":"MISSING","auth":"MISSING"},"logging.googleapis.com/labels":{"firebase-log-type":"callable-request-verification"},"severity":"INFO","message":"Callable request verification passed"} {"user":{"verifications":{"app":"MISSING","auth":"MISSING"},"logging.googleapis.com/labels":{"firebase-log-type":"callable-request-verification"},"severity":"INFO","message":"Callable request verification passed"},"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"\u001b[90m> \u001b[39m {\"verifications\":{\"app\":\"MISSING\",\"auth\":\"MISSING\"},\"logging.googleapis.com/labels\":{\"firebase-log-type\":\"callable-request-verification\"},\"severity\":\"INFO\",\"message\":\"Callable request verification passed\"}"}}
+[debug] [2025-11-14T03:07:04.573Z] [runtime-status] [63401] Callable functions auth override {"key":"x-callable-context-auth","value":"%7B%22uid%22%3A%22QNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%22%2C%22token%22%3A%7B%22name%22%3A%22Puneet%20Sharma%22%2C%22picture%22%3A%22https%3A%2F%2Flh3.googleusercontent.com%2Fa%2FACg8ocIsawujdvNjn3ajEZ2UdYgRKpcaTqlVUJyiGbfOaN5OaLLWzA%3Ds96-c%22%2C%22iss%22%3A%22https%3A%2F%2Fsecuretoken.google.com%2Fdev-vaultapp%22%2C%22aud%22%3A%22dev-vaultapp%22%2C%22auth_time%22%3A1762890414%2C%22user_id%22%3A%22QNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%22%2C%22sub%22%3A%22QNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%22%2C%22iat%22%3A1763087421%2C%22exp%22%3A1763091021%2C%22email%22%3A%22puneetratan83%40gmail.com%22%2C%22email_verified%22%3Atrue%2C%22firebase%22%3A%7B%22identities%22%3A%7B%22google.com%22%3A%5B%22114617523148736053751%22%5D%2C%22email%22%3A%5B%22puneetratan83%40gmail.com%22%5D%7D%2C%22sign_in_provider%22%3A%22google.com%22%7D%2C%22uid%22%3A%22QNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%22%7D%7D"} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"[runtime-status] [63401] Callable functions auth override {\"key\":\"x-callable-context-auth\",\"value\":\"%7B%22uid%22%3A%22QNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%22%2C%22token%22%3A%7B%22name%22%3A%22Puneet%20Sharma%22%2C%22picture%22%3A%22https%3A%2F%2Flh3.googleusercontent.com%2Fa%2FACg8ocIsawujdvNjn3ajEZ2UdYgRKpcaTqlVUJyiGbfOaN5OaLLWzA%3Ds96-c%22%2C%22iss%22%3A%22https%3A%2F%2Fsecuretoken.google.com%2Fdev-vaultapp%22%2C%22aud%22%3A%22dev-vaultapp%22%2C%22auth_time%22%3A1762890414%2C%22user_id%22%3A%22QNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%22%2C%22sub%22%3A%22QNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%22%2C%22iat%22%3A1763087421%2C%22exp%22%3A1763091021%2C%22email%22%3A%22puneetratan83%40gmail.com%22%2C%22email_verified%22%3Atrue%2C%22firebase%22%3A%7B%22identities%22%3A%7B%22google.com%22%3A%5B%22114617523148736053751%22%5D%2C%22email%22%3A%5B%22puneetratan83%40gmail.com%22%5D%7D%2C%22sign_in_provider%22%3A%22google.com%22%7D%2C%22uid%22%3A%22QNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%22%7D%7D\"}"}}
+[warn] ⚠  Google API requested!
+   - URL: "https://oauth2.googleapis.com/token"
+   - Be careful, this may be a production service. {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"Google API requested!\n   - URL: \"https://oauth2.googleapis.com/token\"\n   - Be careful, this may be a production service."}}
+[info] >  Image Download URL: https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762990177149_D32F153E-F9F1-438F-959A-143854B3E65A.png?alt=media&token=722bbe3c-3d8e-4a28-810c-43a9c760de44 {"user":"Image Download URL: https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762990177149_D32F153E-F9F1-438F-959A-143854B3E65A.png?alt=media&token=722bbe3c-3d8e-4a28-810c-43a9c760de44","metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"\u001b[90m> \u001b[39m Image Download URL: https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762990177149_D32F153E-F9F1-438F-959A-143854B3E65A.png?alt=media&token=722bbe3c-3d8e-4a28-810c-43a9c760de44"}}
+[warn] ⚠  Google API requested!
+   - URL: "https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762990177149_D32F153E-F9F1-438F-959A-143854B3E65A.png?alt=media&token=722bbe3c-3d8e-4a28-810c-43a9c760de44"
+   - Be careful, this may be a production service. {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"Google API requested!\n   - URL: \"https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762990177149_D32F153E-F9F1-438F-959A-143854B3E65A.png?alt=media&token=722bbe3c-3d8e-4a28-810c-43a9c760de44\"\n   - Be careful, this may be a production service."}}
+[info] >  Fetching image-1: https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762990177149_D32F153E-F9F1-438F-959A-143854B3E65A.png?alt=media&token=722bbe3c-3d8e-4a28-810c-43a9c760de44 {"user":"Fetching image-1: https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762990177149_D32F153E-F9F1-438F-959A-143854B3E65A.png?alt=media&token=722bbe3c-3d8e-4a28-810c-43a9c760de44","metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"\u001b[90m> \u001b[39m Fetching image-1: https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762990177149_D32F153E-F9F1-438F-959A-143854B3E65A.png?alt=media&token=722bbe3c-3d8e-4a28-810c-43a9c760de44"}}
+[info] >  Response status-2: 200 {"user":"Response status-2: 200","metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"\u001b[90m> \u001b[39m Response status-2: 200"}}
+[info] >  Content-Type-3: image/png {"user":"Content-Type-3: image/png","metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"\u001b[90m> \u001b[39m Content-Type-3: image/png"}}
+[info] >  Image Download URL: https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762990365882_3B9D69A3-D96A-46CD-8E6A-0E536A848B90.png?alt=media&token=5a03f7d8-c995-446b-a0eb-d6e35ef349eb {"user":"Image Download URL: https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762990365882_3B9D69A3-D96A-46CD-8E6A-0E536A848B90.png?alt=media&token=5a03f7d8-c995-446b-a0eb-d6e35ef349eb","metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"\u001b[90m> \u001b[39m Image Download URL: https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762990365882_3B9D69A3-D96A-46CD-8E6A-0E536A848B90.png?alt=media&token=5a03f7d8-c995-446b-a0eb-d6e35ef349eb"}}
+[warn] ⚠  Google API requested!
+   - URL: "https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762990365882_3B9D69A3-D96A-46CD-8E6A-0E536A848B90.png?alt=media&token=5a03f7d8-c995-446b-a0eb-d6e35ef349eb"
+   - Be careful, this may be a production service. {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"Google API requested!\n   - URL: \"https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762990365882_3B9D69A3-D96A-46CD-8E6A-0E536A848B90.png?alt=media&token=5a03f7d8-c995-446b-a0eb-d6e35ef349eb\"\n   - Be careful, this may be a production service."}}
+[info] >  Fetching image-1: https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762990365882_3B9D69A3-D96A-46CD-8E6A-0E536A848B90.png?alt=media&token=5a03f7d8-c995-446b-a0eb-d6e35ef349eb {"user":"Fetching image-1: https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762990365882_3B9D69A3-D96A-46CD-8E6A-0E536A848B90.png?alt=media&token=5a03f7d8-c995-446b-a0eb-d6e35ef349eb","metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"\u001b[90m> \u001b[39m Fetching image-1: https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762990365882_3B9D69A3-D96A-46CD-8E6A-0E536A848B90.png?alt=media&token=5a03f7d8-c995-446b-a0eb-d6e35ef349eb"}}
+[info] >  Response status-2: 200 {"user":"Response status-2: 200","metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"\u001b[90m> \u001b[39m Response status-2: 200"}}
+[info] >  Content-Type-3: image/png {"user":"Content-Type-3: image/png","metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"\u001b[90m> \u001b[39m Content-Type-3: image/png"}}
+[info] >  Image Download URL: https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762741744369_2A54C40F-D65C-4A07-AF90-6144EC7855E2.png?alt=media&token=5d68e77c-666f-4be0-9aee-a3b6e2b03fb6 {"user":"Image Download URL: https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762741744369_2A54C40F-D65C-4A07-AF90-6144EC7855E2.png?alt=media&token=5d68e77c-666f-4be0-9aee-a3b6e2b03fb6","metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"\u001b[90m> \u001b[39m Image Download URL: https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762741744369_2A54C40F-D65C-4A07-AF90-6144EC7855E2.png?alt=media&token=5d68e77c-666f-4be0-9aee-a3b6e2b03fb6"}}
+[warn] ⚠  Google API requested!
+   - URL: "https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762741744369_2A54C40F-D65C-4A07-AF90-6144EC7855E2.png?alt=media&token=5d68e77c-666f-4be0-9aee-a3b6e2b03fb6"
+   - Be careful, this may be a production service. {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"Google API requested!\n   - URL: \"https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762741744369_2A54C40F-D65C-4A07-AF90-6144EC7855E2.png?alt=media&token=5d68e77c-666f-4be0-9aee-a3b6e2b03fb6\"\n   - Be careful, this may be a production service."}}
+[info] >  Fetching image-1: https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762741744369_2A54C40F-D65C-4A07-AF90-6144EC7855E2.png?alt=media&token=5d68e77c-666f-4be0-9aee-a3b6e2b03fb6 {"user":"Fetching image-1: https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762741744369_2A54C40F-D65C-4A07-AF90-6144EC7855E2.png?alt=media&token=5d68e77c-666f-4be0-9aee-a3b6e2b03fb6","metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"\u001b[90m> \u001b[39m Fetching image-1: https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762741744369_2A54C40F-D65C-4A07-AF90-6144EC7855E2.png?alt=media&token=5d68e77c-666f-4be0-9aee-a3b6e2b03fb6"}}
+[info] >  Response status-2: 200 {"user":"Response status-2: 200","metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"\u001b[90m> \u001b[39m Response status-2: 200"}}
+[info] >  Content-Type-3: image/png {"user":"Content-Type-3: image/png","metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"\u001b[90m> \u001b[39m Content-Type-3: image/png"}}
+[info] >  Image Download URL: https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762990267663_829119B2-6DA1-4C82-87F7-71DD3DFD893F.png?alt=media&token=7fc9f240-adbe-4321-88bf-44e06ba0a141 {"user":"Image Download URL: https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762990267663_829119B2-6DA1-4C82-87F7-71DD3DFD893F.png?alt=media&token=7fc9f240-adbe-4321-88bf-44e06ba0a141","metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"\u001b[90m> \u001b[39m Image Download URL: https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762990267663_829119B2-6DA1-4C82-87F7-71DD3DFD893F.png?alt=media&token=7fc9f240-adbe-4321-88bf-44e06ba0a141"}}
+[warn] ⚠  Google API requested!
+   - URL: "https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762990267663_829119B2-6DA1-4C82-87F7-71DD3DFD893F.png?alt=media&token=7fc9f240-adbe-4321-88bf-44e06ba0a141"
+   - Be careful, this may be a production service. {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"Google API requested!\n   - URL: \"https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762990267663_829119B2-6DA1-4C82-87F7-71DD3DFD893F.png?alt=media&token=7fc9f240-adbe-4321-88bf-44e06ba0a141\"\n   - Be careful, this may be a production service."}}
+[info] >  Fetching image-1: https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762990267663_829119B2-6DA1-4C82-87F7-71DD3DFD893F.png?alt=media&token=7fc9f240-adbe-4321-88bf-44e06ba0a141 {"user":"Fetching image-1: https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762990267663_829119B2-6DA1-4C82-87F7-71DD3DFD893F.png?alt=media&token=7fc9f240-adbe-4321-88bf-44e06ba0a141","metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"\u001b[90m> \u001b[39m Fetching image-1: https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762990267663_829119B2-6DA1-4C82-87F7-71DD3DFD893F.png?alt=media&token=7fc9f240-adbe-4321-88bf-44e06ba0a141"}}
+[info] >  Response status-2: 200 {"user":"Response status-2: 200","metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"\u001b[90m> \u001b[39m Response status-2: 200"}}
+[info] >  Content-Type-3: image/png {"user":"Content-Type-3: image/png","metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"\u001b[90m> \u001b[39m Content-Type-3: image/png"}}
+[info] >  Image Download URL: https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762979487542_6B1BEB55-D697-4662-9DFC-E6373D963301.png?alt=media&token=4926d31d-96f6-44dd-9a20-00fe28413d59 {"user":"Image Download URL: https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762979487542_6B1BEB55-D697-4662-9DFC-E6373D963301.png?alt=media&token=4926d31d-96f6-44dd-9a20-00fe28413d59","metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"\u001b[90m> \u001b[39m Image Download URL: https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762979487542_6B1BEB55-D697-4662-9DFC-E6373D963301.png?alt=media&token=4926d31d-96f6-44dd-9a20-00fe28413d59"}}
+[warn] ⚠  Google API requested!
+   - URL: "https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762979487542_6B1BEB55-D697-4662-9DFC-E6373D963301.png?alt=media&token=4926d31d-96f6-44dd-9a20-00fe28413d59"
+   - Be careful, this may be a production service. {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"Google API requested!\n   - URL: \"https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762979487542_6B1BEB55-D697-4662-9DFC-E6373D963301.png?alt=media&token=4926d31d-96f6-44dd-9a20-00fe28413d59\"\n   - Be careful, this may be a production service."}}
+[info] >  Fetching image-1: https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762979487542_6B1BEB55-D697-4662-9DFC-E6373D963301.png?alt=media&token=4926d31d-96f6-44dd-9a20-00fe28413d59 {"user":"Fetching image-1: https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762979487542_6B1BEB55-D697-4662-9DFC-E6373D963301.png?alt=media&token=4926d31d-96f6-44dd-9a20-00fe28413d59","metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"\u001b[90m> \u001b[39m Fetching image-1: https://firebasestorage.googleapis.com/v0/b/dev-vaultapp.firebasestorage.app/o/inventory%2FQNRxRS2QhaOBM5OqhiJ9Y9lLXtu2%2F1762979487542_6B1BEB55-D697-4662-9DFC-E6373D963301.png?alt=media&token=4926d31d-96f6-44dd-9a20-00fe28413d59"}}
+[info] >  Response status-2: 200 {"user":"Response status-2: 200","metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"\u001b[90m> \u001b[39m Response status-2: 200"}}
+[info] >  Content-Type-3: image/png {"user":"Content-Type-3: image/png","metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"\u001b[90m> \u001b[39m Content-Type-3: image/png"}}
+[debug] [2025-11-14T03:07:19.544Z] Finishing up request with event=pause {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"Finishing up request with event=pause"}}
+[info] i  functions: Finished "us-central1-exportInventoryToExcel" in 14985.12638ms {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"Finished \"us-central1-exportInventoryToExcel\" in 14985.12638ms"}}
+[debug] [2025-11-14T03:07:19.544Z] [worker-us-central1-exportInventoryToExcel-f614b5a3-39c2-4fb5-b248-4a1297fe98c3]: IDLE {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"[worker-us-central1-exportInventoryToExcel-f614b5a3-39c2-4fb5-b248-4a1297fe98c3]: IDLE"}}
+[debug] [2025-11-14T03:07:19.544Z] Finishing up request with event=finish {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"Finishing up request with event=finish"}}
+[debug] [2025-11-14T03:07:19.545Z] Finishing up request with event=close {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"Finishing up request with event=close"}}
+[debug] [2025-11-14T03:07:19.545Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":[],"workRunningCount":0}
+[debug] [2025-11-14T03:08:37.215Z] File /Users/puneet/workspace/vault-app/functions/index.js changed, reloading triggers {"metadata":{"emulator":{"name":"functions"},"message":"File /Users/puneet/workspace/vault-app/functions/index.js changed, reloading triggers"}}
+[debug] [2025-11-14T03:08:38.216Z] Validating nodejs source
+[warn] ⚠  functions: package.json indicates an outdated version of firebase-functions. Please upgrade using npm install --save firebase-functions@latest in your functions directory. 
+[warn] ⚠  functions: Please note that there will be breaking changes when you upgrade. 
+[debug] [2025-11-14T03:08:38.955Z] > [functions] package.json contents: {
+  "name": "functions",
+  "description": "Cloud Functions for Firebase",
+  "scripts": {
+    "serve": "firebase emulators:start --only functions",
+    "shell": "firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "16"
+  },
+  "main": "index.js",
+  "dependencies": {
+    "exceljs": "^4.4.0",
+    "firebase-admin": "^9.8.0",
+    "firebase-functions": "^3.14.1",
+    "nodemailer": "^7.0.10"
+  },
+  "devDependencies": {
+    "firebase-functions-test": "^0.2.0"
+  },
+  "private": true
+}
+[debug] [2025-11-14T03:08:38.955Z] Building nodejs source
+[debug] [2025-11-14T03:08:38.955Z] Failed to find version of module node: reached end of search path /Users/puneet/workspace/vault-app/functions/node_modules
+[warn] ⚠  functions: Your requested "node" version "16" doesn't match your global version "24". Using node@24 from host. 
+[info] i  functions: You are using a version of firebase-functions SDK (3.24.1) that does not have support for the newest Firebase Extensions features. Please update firebase-functions SDK to >=5.1.0 to use them correctly 
+[debug] [2025-11-14T03:08:38.956Z] Could not find functions.yaml. Must use http discovery
+[debug] [2025-11-14T03:08:38.957Z] Found firebase-functions binary at '/Users/puneet/workspace/vault-app/functions/node_modules/.bin/firebase-functions'
+[info] Serving at port 8028
+
+[debug] [2025-11-14T03:08:39.341Z] Got response from /__/functions.yaml {"endpoints":{"exportInventoryToExcel":{"platform":"gcfv1","labels":{},"callableTrigger":{},"entryPoint":"exportInventoryToExcel"}},"specVersion":"v1alpha1","requiredAPIs":[]}
+[info] shutdown requested via /__/quitquitquit
+
+[info] ✔  functions: Loaded functions definitions from source: exportInventoryToExcel. {"metadata":{"emulator":{"name":"functions"},"message":"Loaded functions definitions from source: exportInventoryToExcel."}}
+[debug] [2025-11-14T03:08:43.355Z] [worker-pool] Shutting down IDLE worker (us-central1-exportInventoryToExcel) {"metadata":{"emulator":{"name":"functions"},"message":"[worker-pool] Shutting down IDLE worker (us-central1-exportInventoryToExcel)"}}
+[debug] [2025-11-14T03:08:43.355Z] [worker-us-central1-exportInventoryToExcel-f614b5a3-39c2-4fb5-b248-4a1297fe98c3]: FINISHING {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"[worker-us-central1-exportInventoryToExcel-f614b5a3-39c2-4fb5-b248-4a1297fe98c3]: FINISHING"}}
+[debug] [2025-11-14T03:08:43.376Z] [worker-us-central1-exportInventoryToExcel-f614b5a3-39c2-4fb5-b248-4a1297fe98c3]: exited {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"[worker-us-central1-exportInventoryToExcel-f614b5a3-39c2-4fb5-b248-4a1297fe98c3]: exited"}}
+[debug] [2025-11-14T03:08:43.376Z] [worker-us-central1-exportInventoryToExcel-f614b5a3-39c2-4fb5-b248-4a1297fe98c3]: FINISHED {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-exportInventoryToExcel"},"extension":{},"message":"[worker-us-central1-exportInventoryToExcel-f614b5a3-39c2-4fb5-b248-4a1297fe98c3]: FINISHED"}}
+[debug] [2025-11-14T03:08:43.979Z] File /Users/puneet/workspace/vault-app/functions/index.js changed, reloading triggers {"metadata":{"emulator":{"name":"functions"},"message":"File /Users/puneet/workspace/vault-app/functions/index.js changed, reloading triggers"}}
+[debug] [2025-11-14T03:08:44.979Z] Validating nodejs source
+[warn] ⚠  functions: package.json indicates an outdated version of firebase-functions. Please upgrade using npm install --save firebase-functions@latest in your functions directory. 
+[warn] ⚠  functions: Please note that there will be breaking changes when you upgrade. 
+[debug] [2025-11-14T03:08:45.716Z] > [functions] package.json contents: {
+  "name": "functions",
+  "description": "Cloud Functions for Firebase",
+  "scripts": {
+    "serve": "firebase emulators:start --only functions",
+    "shell": "firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "16"
+  },
+  "main": "index.js",
+  "dependencies": {
+    "exceljs": "^4.4.0",
+    "firebase-admin": "^9.8.0",
+    "firebase-functions": "^3.14.1",
+    "nodemailer": "^7.0.10"
+  },
+  "devDependencies": {
+    "firebase-functions-test": "^0.2.0"
+  },
+  "private": true
+}
+[debug] [2025-11-14T03:08:45.716Z] Building nodejs source
+[debug] [2025-11-14T03:08:45.716Z] Failed to find version of module node: reached end of search path /Users/puneet/workspace/vault-app/functions/node_modules
+[warn] ⚠  functions: Your requested "node" version "16" doesn't match your global version "24". Using node@24 from host. 
+[info] i  functions: You are using a version of firebase-functions SDK (3.24.1) that does not have support for the newest Firebase Extensions features. Please update firebase-functions SDK to >=5.1.0 to use them correctly 
+[debug] [2025-11-14T03:08:45.717Z] Could not find functions.yaml. Must use http discovery
+[debug] [2025-11-14T03:08:45.718Z] Found firebase-functions binary at '/Users/puneet/workspace/vault-app/functions/node_modules/.bin/firebase-functions'
+[info] Serving at port 8192
+
+[debug] [2025-11-14T03:08:46.084Z] Got response from /__/functions.yaml {"endpoints":{"exportInventoryToExcel":{"platform":"gcfv1","labels":{},"callableTrigger":{},"entryPoint":"exportInventoryToExcel"}},"specVersion":"v1alpha1","requiredAPIs":[]}
+[info] shutdown requested via /__/quitquitquit
+
+[info] ✔  functions: Loaded functions definitions from source: exportInventoryToExcel. {"metadata":{"emulator":{"name":"functions"},"message":"Loaded functions definitions from source: exportInventoryToExcel."}}

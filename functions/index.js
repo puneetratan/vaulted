@@ -33,20 +33,44 @@ exports.exportInventoryToExcel = functions.https.onCall(async (data, context) =>
       { header: "Name", key: "name", width: 35 },
       { header: "Size", key: "size", width: 5 },
       { header: "Color", key: "color", width: 20 },
-      { header: "Quantity", key: "quantity", width: 5 },
+      { header: "Quantity", key: "quantity", width: 10 },
       { header: "Release Date", key: "releaseDate", width: 15 },
       { header: "Brand", key: "brand", width: 15 },
       { header: "Retail Value", key: "retailValue", width: 10 },
       { header: "Image", key: "imageUrl", width: 30 },
     ];
-    let rowIndex = 2;
-    sheet.getRow(rowIndex).height = 120;
-
     for (const doc of snapshot.docs) {
       const item = doc.data();
-      const { name, size, color, quantity, releaseDate, brand, retailValue, imageUrl} = item;
+      const {
+        name,
+        size,
+        color,
+        quantity,
+        releaseDate,
+        brand,
+        retailValue,
+        imageUrl,
+      } = item;
 
-      sheet.addRow({ name, size, color, quantity, releaseDate, brand, retailValue, imageUrl });
+      const retailValueDisplay =
+        retailValue === undefined || retailValue === null || retailValue === ""
+          ? ""
+          : typeof retailValue === "number"
+            ? `$${retailValue.toFixed(2)}`
+            : `$${retailValue}`;
+
+      const row = sheet.addRow({
+        name,
+        size,
+        color,
+        quantity,
+        releaseDate,
+        brand,
+        retailValue: retailValueDisplay,
+        imageUrl: "",
+      });
+
+      const rowIndex = row.number;
 
       // ✅ fixed variable name
       if (imageUrl && imageUrl.startsWith("https")) {
@@ -82,8 +106,6 @@ exports.exportInventoryToExcel = functions.https.onCall(async (data, context) =>
           console.warn(`Image fetch failed for ${name}:`, err.message);
         }
       }
-
-      rowIndex++;
     }
 
     // ✅ Write to buffer (works in Node 20+)
