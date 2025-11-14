@@ -1,5 +1,5 @@
 import React, {useState, useMemo, useCallback} from 'react';
-import {View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, ActivityIndicator, Alert} from 'react-native';
+import {View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, ActivityIndicator, Alert, FlatList} from 'react-native';
 import {useNavigation, useFocusEffect} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -39,6 +39,7 @@ const DashboardTabs = ({searchQuery = ''}: DashboardTabsProps) => {
   const [lastDoc, setLastDoc] = useState<any | null>(null);
   const [hasMore, setHasMore] = useState<boolean>(false);
   const [loadingMore, setLoadingMore] = useState<boolean>(false);
+  const [refreshing, setRefreshing] = useState<boolean>(false);
 
   const tabs: TabType[] = ['Total Pairs', 'Brands', 'Total Value'];
 const PAGE_SIZE = 20;
@@ -95,6 +96,15 @@ const PAGE_SIZE = 20;
       fetchInventory();
     }, [fetchInventory]),
   );
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await fetchInventory();
+    } finally {
+      setRefreshing(false);
+    }
+  }, [fetchInventory]);
 
   const loadMore = async () => {
     if (!hasMore || loadingMore || !lastDoc) {
@@ -198,92 +208,107 @@ const PAGE_SIZE = 20;
       );
     };
 
+    const renderShoeItem = ({item: shoe}: {item: ShoeItem}) => (
+      <TouchableOpacity 
+        style={styles.shoeCard}
+        onPress={() => navigation.navigate('EditItem', {item: shoe})}>
+        {shoe.imageUrl ? (
+          <Image
+            source={{uri: shoe.imageUrl}}
+            style={styles.shoeThumbnail}
+          />
+        ) : (
+          <View style={[styles.shoeThumbnail, styles.shoeThumbnailPlaceholder]}>
+            <Icon name="image" size={32} color="#CCCCCC" />
+          </View>
+        )}
+        <View style={styles.shoeInfo}>
+          <Text style={styles.shoeName}>{shoe.name}</Text>
+          <Text style={styles.shoeBrand}>{shoe.brand}</Text>
+          <View style={styles.shoeMetaRow}>
+            <View style={styles.shoeDetails}>
+              <Text style={styles.shoeDetailText}>Silhouette: {shoe.silhouette}</Text>
+              <Text style={styles.shoeDetailText}>Style ID: {shoe.styleId}</Text>
+              <Text style={styles.shoeDetailText}>Size: {shoe.size}</Text>
+              <Text style={styles.shoeDetailText}>Color: {shoe.color}</Text>
+              {shoe.releaseDate ? (
+                <Text style={styles.shoeDetailText}>Release: {shoe.releaseDate}</Text>
+              ) : null}
+            </View>
+            <View style={styles.quantityBadge}>
+              <Text style={styles.quantityBadgeText}>Qty: {shoe.quantity}</Text>
+            </View>
+          </View>
+          <Text style={styles.shoeCost}>
+            Retail: $
+            {typeof shoe.retailValue === 'number'
+              ? shoe.retailValue.toFixed(2)
+              : '--'}
+          </Text>
+        </View>
+        <View style={styles.arrowContainer}>
+          {deletingId === shoe.id ? (
+            <ActivityIndicator size="small" color="#FF3B30" />
+          ) : (
+            <View style={styles.actionButtons}>
+              <TouchableOpacity
+                style={styles.deleteButton}
+                onPress={() => confirmDelete(shoe)}
+                accessibilityLabel={`Delete ${shoe.name}`}>
+                <Icon name="delete" size={24} color="#FF3B30" />
+              </TouchableOpacity>
+              <Icon name="arrow-forward" size={24} color="#666666" />
+            </View>
+          )}
+        </View>
+      </TouchableOpacity>
+    );
+
+    const renderEmptyComponent = () => (
+      <View style={styles.emptyState}>
+        <Text style={styles.tabContentValue}>0</Text>
+        <Text style={styles.tabContentSubtitle}>
+          No items added yet
+        </Text>
+      </View>
+    );
+
+    const renderListFooter = () => {
+      if (!hasMore || searchQuery.trim()) {
+        return null;
+      }
+      return (
+        <View style={styles.listFooter}>
+          {loadingMore && <ActivityIndicator color="#007AFF" />}
+        </View>
+      );
+    };
+
+    const handleEndReached = () => {
+      if (hasMore && !loadingMore && !searchQuery.trim()) {
+        loadMore();
+      }
+    };
+
     switch (activeTab) {
       case 'Total Pairs':
         return (
-          <ScrollView 
-            style={styles.scrollContainer}
-            contentContainerStyle={styles.scrollContent}>
-            <Text style={styles.tabContentTitle}>Total Pairs: {filteredShoes.length}</Text>
-            {filteredShoes.length > 0 ? (
-              filteredShoes.map((shoe) => (
-                <TouchableOpacity 
-                  key={shoe.id} 
-                  style={styles.shoeCard}
-                  onPress={() => navigation.navigate('EditItem', {item: shoe})}>
-                  {shoe.imageUrl ? (
-                    <Image
-                      source={{uri: shoe.imageUrl}}
-                      style={styles.shoeThumbnail}
-                    />
-                  ) : (
-                    <View style={[styles.shoeThumbnail, styles.shoeThumbnailPlaceholder]}>
-                      <Icon name="image" size={32} color="#CCCCCC" />
-                    </View>
-                  )}
-                  <View style={styles.shoeInfo}>
-                    <Text style={styles.shoeName}>{shoe.name}</Text>
-                    <Text style={styles.shoeBrand}>{shoe.brand}</Text>
-                    <View style={styles.shoeMetaRow}>
-                      <View style={styles.shoeDetails}>
-                        <Text style={styles.shoeDetailText}>Silhouette: {shoe.silhouette}</Text>
-                        <Text style={styles.shoeDetailText}>Style ID: {shoe.styleId}</Text>
-                        <Text style={styles.shoeDetailText}>Size: {shoe.size}</Text>
-                        <Text style={styles.shoeDetailText}>Color: {shoe.color}</Text>
-                        {shoe.releaseDate ? (
-                          <Text style={styles.shoeDetailText}>Release: {shoe.releaseDate}</Text>
-                        ) : null}
-                      </View>
-                      <View style={styles.quantityBadge}>
-                        <Text style={styles.quantityBadgeText}>Qty: {shoe.quantity}</Text>
-                      </View>
-                    </View>
-                    <Text style={styles.shoeCost}>
-                      Retail: $
-                      {typeof shoe.retailValue === 'number'
-                        ? shoe.retailValue.toFixed(2)
-                        : '--'}
-                    </Text>
-                  </View>
-                  <View style={styles.arrowContainer}>
-                    {deletingId === shoe.id ? (
-                      <ActivityIndicator size="small" color="#FF3B30" />
-                    ) : (
-                      <View style={styles.actionButtons}>
-                        <TouchableOpacity
-                          style={styles.deleteButton}
-                          onPress={() => confirmDelete(shoe)}
-                          accessibilityLabel={`Delete ${shoe.name}`}>
-                          <Icon name="delete" size={24} color="#FF3B30" />
-                        </TouchableOpacity>
-                        <Icon name="arrow-forward" size={24} color="#666666" />
-                      </View>
-                    )}
-                  </View>
-                </TouchableOpacity>
-              ))
-            ) : (
-              <View style={styles.emptyState}>
-                <Text style={styles.tabContentValue}>0</Text>
-                <Text style={styles.tabContentSubtitle}>
-                  No items added yet
-                </Text>
-              </View>
-            )}
-            {hasMore && filteredShoes.length > 0 && !searchQuery.trim() && (
-              <TouchableOpacity
-                style={styles.loadMoreButton}
-                onPress={loadMore}
-                disabled={loadingMore}
-                accessibilityLabel="Load more items">
-                {loadingMore ? (
-                  <ActivityIndicator color="#FFFFFF" />
-                ) : (
-                  <Text style={styles.loadMoreButtonText}>Load More</Text>
-                )}
-              </TouchableOpacity>
-            )}
-          </ScrollView>
+          <FlatList
+            data={filteredShoes}
+            keyExtractor={(shoe) => shoe.id?.toString() ?? `${shoe.name}-${shoe.size}`}
+            ListHeaderComponent={
+              <Text style={styles.tabContentTitle}>Total Pairs: {filteredShoes.length}</Text>
+            }
+            renderItem={renderShoeItem}
+            ListEmptyComponent={renderEmptyComponent}
+            contentContainerStyle={styles.scrollContent}
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            onEndReached={handleEndReached}
+            onEndReachedThreshold={0.4}
+            ListFooterComponent={renderListFooter}
+            showsVerticalScrollIndicator={false}
+          />
         );
       case 'Brands':
         const brandCounts = uniqueBrands.map(brand => ({
@@ -511,6 +536,11 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+  },
+  listFooter: {
+    paddingVertical: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   shoeName: {
     fontSize: 16,

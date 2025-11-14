@@ -1,4 +1,4 @@
-import React, {useEffect, useMemo, useState} from 'react';
+import React, {useEffect, useMemo, useState, useCallback} from 'react';
 import {
   View,
   Text,
@@ -24,6 +24,8 @@ import {
   ImageLibraryOptions,
 } from 'react-native-image-picker';
 import {updateInventoryItem} from '../services/inventoryService';
+import {getStorage} from '../services/firebase';
+import {useAuth} from '../contexts/AuthContext';
 import {Picker} from '@react-native-picker/picker';
 import DateTimePicker, {DateTimePickerEvent} from '@react-native-community/datetimepicker';
 
@@ -46,9 +48,19 @@ type RouteParams = {
   item: ShoeItem;
 };
 
+const MAX_IMAGE_BYTES = 8 * 1024 * 1024; // 8MB
+
+interface ImageAsset {
+  uri: string;
+  name?: string;
+  type?: string;
+  fileSize?: number;
+}
+
 const EditItemScreen = () => {
   const navigation = useNavigation();
   const route = useRoute<RouteProp<{params: RouteParams}, 'params'>>();
+  const {user} = useAuth();
   
   const item = route.params?.item;
   
@@ -58,6 +70,7 @@ const EditItemScreen = () => {
   const [color, setColor] = useState(item?.color || '');
   const [cost, setCost] = useState(item?.cost.toString() || '');
   const [imageUrl, setImageUrl] = useState(item?.imageUrl || '');
+  const [imageAsset, setImageAsset] = useState<ImageAsset | null>(null);
   const [quantity, setQuantity] = useState(item?.quantity?.toString() || '1');
   const [silhouette, setSilhouette] = useState(item?.silhouette || '');
   const [styleId, setStyleId] = useState(item?.styleId || '');
@@ -82,6 +95,7 @@ const EditItemScreen = () => {
       setColor(item.color);
       setCost(item.cost.toString());
       setImageUrl(item.imageUrl || '');
+      setImageAsset(null);
       setQuantity(item.quantity?.toString() || '1');
       setSilhouette(item.silhouette || '');
       setStyleId(item.styleId || '');
@@ -109,7 +123,7 @@ const EditItemScreen = () => {
     return 'Select date';
   }, [releaseDate]);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!item?.id) {
       Alert.alert('Error', 'Unable to determine which item to update.');
       return;
@@ -157,33 +171,90 @@ const EditItemScreen = () => {
       return;
     }
 
-    const payload = {
-      name: name.trim(),
-      brand: brand.trim(),
-      silhouette: silhouette.trim(),
-      styleId: styleId.trim(),
-      size: size.trim(),
-      color: color.trim(),
-      value: costNum,
-      retailValue: retailValueNum,
-      releaseDate: releaseDateTrimmed,
-      quantity: quantityNum,
-      imageUrl: imageUrl?.trim() || undefined,
-    };
+    if (imageAsset && !user?.uid) {
+      Alert.alert('Error', 'You must be logged in to update item images.');
+      return;
+    }
 
     setSubmitting(true);
 
-    updateInventoryItem(item.id, payload)
-      .then(() => {
-        Alert.alert('Success', 'Item updated successfully', [
-          {text: 'OK', onPress: () => navigation.goBack()},
-        ]);
-      })
-      .catch((error: any) => {
-        const message = error?.message || 'Failed to update item. Please try again.';
-        Alert.alert('Error', message);
-      })
-      .finally(() => setSubmitting(false));
+    try {
+      let finalImageUrl = item?.imageUrl ?? undefined;
+
+      if (imageAsset && user?.uid) {
+        const storageInstance = getStorage();
+        if (!storageInstance) {
+          throw new Error('Storage not initialized');
+        }
+
+        const timestamp = Date.now();
+        const fileName = imageAsset.name ?? `image_${timestamp}.jpg`;
+        const storagePath = `inventory/${user.uid}/${item.id}_${timestamp}_${fileName}`;
+
+        if (Platform.OS === 'web') {
+          const {ref, uploadBytes, getDownloadURL} = await import('firebase/storage');
+          const response = await fetch(imageAsset.uri);
+          const blob = await response.blob();
+          const storageRef = ref(storageInstance, storagePath);
+          await uploadBytes(storageRef, blob, {
+            contentType: imageAsset.type ?? 'image/jpeg',
+          });
+          finalImageUrl = await getDownloadURL(storageRef);
+        } else {
+          if (storageInstance.ref) {
+            const storageRef = storageInstance.ref(storagePath);
+            let fileUri = imageAsset.uri;
+            if (Platform.OS === 'ios' && fileUri.startsWith('file://')) {
+              fileUri = fileUri.replace('file://', '');
+            }
+            await storageRef.putFile(fileUri, {
+              contentType: imageAsset.type ?? 'image/jpeg',
+            });
+            finalImageUrl = await storageRef.getDownloadURL();
+          } else {
+            const {ref, uploadBytes, getDownloadURL} = await import('firebase/storage');
+            const response = await fetch(imageAsset.uri);
+            const blob = await response.blob();
+            const storageRef = ref(storageInstance, storagePath);
+            await uploadBytes(storageRef, blob, {
+              contentType: imageAsset.type ?? 'image/jpeg',
+            });
+            finalImageUrl = await getDownloadURL(storageRef);
+          }
+        }
+      } else if (!imageAsset) {
+        finalImageUrl = imageUrl?.trim() ? imageUrl.trim() : undefined;
+      }
+
+      const payload = {
+        name: name.trim(),
+        brand: brand.trim(),
+        silhouette: silhouette.trim(),
+        styleId: styleId.trim(),
+        size: size.trim(),
+        color: color.trim(),
+        value: costNum,
+        retailValue: retailValueNum,
+        releaseDate: releaseDateTrimmed,
+        quantity: quantityNum,
+        imageUrl: finalImageUrl,
+      };
+
+      await updateInventoryItem(item.id, payload);
+      setImageAsset(null);
+      if (finalImageUrl) {
+        setImageUrl(finalImageUrl);
+      }
+      Alert.alert('Success', 'Item updated successfully', [
+        {text: 'OK', onPress: () => navigation.goBack()},
+      ]);
+    } catch (error: any) {
+      console.error('Error updating item:', error);
+      const message = error?.message || 'Failed to update item. Please try again.';
+      Alert.alert('Error', message);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleDelete = () => {
@@ -213,6 +284,37 @@ const EditItemScreen = () => {
     navigation.goBack();
   };
 
+  const handleImageSelection = useCallback((response: ImagePickerResponse) => {
+    if (response.didCancel) {
+      return;
+    }
+    if (response.errorMessage) {
+      Alert.alert('Error', response.errorMessage);
+      return;
+    }
+    const asset = response?.assets?.[0];
+    if (!asset?.uri) {
+      Alert.alert('Error', 'Unable to process image. Please try again.');
+      return;
+    }
+    const fileSize = asset.fileSize ?? 0;
+    if (fileSize > MAX_IMAGE_BYTES) {
+      Alert.alert('Image Too Large', 'Please select a smaller image (less than 8MB).');
+      return;
+    }
+
+    const fileName = asset.fileName ?? `image_${Date.now()}.jpg`;
+    const type = asset.type ?? 'image/jpeg';
+
+    setImageAsset({
+      uri: asset.uri,
+      name: fileName,
+      type,
+      fileSize,
+    });
+    setImageUrl(asset.uri);
+  }, []);
+
   const handleEditImage = () => {
     Alert.alert(
       'Change Image',
@@ -226,10 +328,7 @@ const EditItemScreen = () => {
               quality: 0.8,
             };
             launchCamera(options, (response: ImagePickerResponse) => {
-              const asset = response?.assets?.[0];
-              if (asset?.uri) {
-                setImageUrl(asset.uri);
-              }
+              handleImageSelection(response);
             });
           },
         },
@@ -241,10 +340,7 @@ const EditItemScreen = () => {
               quality: 0.8,
             };
             launchImageLibrary(options, (response: ImagePickerResponse) => {
-              const asset = response?.assets?.[0];
-              if (asset?.uri) {
-                setImageUrl(asset.uri);
-              }
+              handleImageSelection(response);
             });
           },
         },

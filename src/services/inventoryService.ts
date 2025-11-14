@@ -116,7 +116,7 @@ export const saveInventoryItem = async (item: Omit<InventoryItem, 'id' | 'create
 export const getInventoryItemsPage = async (
   options: InventoryQueryOptions = {},
 ): Promise<InventoryQueryResult> => {
-  const {limit = 20, startAfter: startAfterDoc} = options;
+  const {limit = 10, startAfter: startAfterDoc} = options;
 
   try {
     const user = getAuth().currentUser;

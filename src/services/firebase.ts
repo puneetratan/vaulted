@@ -4,8 +4,9 @@ import { getAuth as rnGetAuth } from '@react-native-firebase/auth';
 import { getFirestore as rnGetFirestore } from '@react-native-firebase/firestore';
 import { getStorage as rnGetStorage } from '@react-native-firebase/storage';
 import { getFunctions as rnGetFunctions, connectFunctionsEmulator } from '@react-native-firebase/functions';
+import { Platform } from "react-native";
 
-
+console.log('=========Platform=========', Platform.OS);
 const firebaseConfig = {
   apiKey: "AIzaSyBZuRY5RIdwCG7TmI81u8tOmX5-dG8h1IM",
   authDomain: "dev-vaultapp.firebaseapp.com",
