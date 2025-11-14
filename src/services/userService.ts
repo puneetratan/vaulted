@@ -1,6 +1,5 @@
 import {Platform} from 'react-native';
-import {db, initializeFirestore} from './firebase';
-import {auth} from './firebase';
+import {getFirestore} from './firebase';
 
 export interface UserData {
   uid: string;
@@ -21,7 +20,7 @@ const USERS_COLLECTION = 'user_profile';
 export const getOrCreateUser = async (firebaseUser: any): Promise<UserData> => {
   try {
     // Try to initialize Firestore if it's not already initialized
-    const firestoreDb = db || initializeFirestore();
+    const firestoreDb = getFirestore();
     if (!firestoreDb) {
       throw new Error('Firestore database is not initialized. Please check your Firebase configuration.');
     }
@@ -98,7 +97,7 @@ export const getOrCreateUser = async (firebaseUser: any): Promise<UserData> => {
 export const getUserData = async (uid: string): Promise<UserData | null> => {
   try {
     // Try to initialize Firestore if it's not already initialized
-    const firestoreDb = db || initializeFirestore();
+    const firestoreDb = getFirestore();
     if (!firestoreDb) {
       throw new Error('Firestore database is not initialized. Please check your Firebase configuration.');
     }
@@ -159,7 +158,7 @@ export const getUserData = async (uid: string): Promise<UserData | null> => {
 export const updateUserData = async (uid: string, updates: Partial<UserData>): Promise<void> => {
   try {
     // Try to initialize Firestore if it's not already initialized
-    const firestoreDb = db || initializeFirestore();
+    const firestoreDb = getFirestore();
     if (!firestoreDb) {
       throw new Error('Firestore database is not initialized. Please check your Firebase configuration.');
     }

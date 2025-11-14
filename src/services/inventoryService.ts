@@ -1,6 +1,5 @@
 import { Platform } from "react-native";
-import { db, initializeFirestore, initializeStorage } from "./firebase";
-import { auth } from "./firebase";
+import { getFirestore, getStorage, getAuth } from "./firebase";
 
 export interface InventoryItem {
   id?: string;
@@ -34,13 +33,13 @@ interface InventoryQueryResult {
 // Save inventory item to Firestore
 export const saveInventoryItem = async (item: Omit<InventoryItem, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> => {
   try {
-    const user = auth.currentUser;
+    const user = getAuth().currentUser;
     if (!user) {
       throw new Error('User must be authenticated to save inventory items');
     }
 
     // Try to initialize Firestore if it's not already initialized
-    const firestoreDb = db || initializeFirestore();
+    const firestoreDb = getFirestore();
     if (!firestoreDb) {
       throw new Error('Firestore database is not initialized. Please check your Firebase configuration.');
     }
@@ -120,13 +119,13 @@ export const getInventoryItemsPage = async (
   const {limit = 20, startAfter: startAfterDoc} = options;
 
   try {
-    const user = auth.currentUser;
+    const user = getAuth().currentUser;
     if (!user) {
       throw new Error('User must be authenticated to get inventory items');
     }
 
     // Try to initialize Firestore if it's not already initialized
-    const firestoreDb = db || initializeFirestore();
+    const firestoreDb = getFirestore();
     if (!firestoreDb) {
       throw new Error('Firestore database is not initialized. Please check your Firebase configuration.');
     }
@@ -209,7 +208,7 @@ export const updateInventoryItem = async (
   updates: Partial<Omit<InventoryItem, 'id' | 'userId' | 'createdAt' | 'updatedAt'>>,
 ): Promise<void> => {
   try {
-    const user = auth.currentUser;
+    const user = getAuth().currentUser;
     if (!user) {
       throw new Error('User must be authenticated to update inventory items');
     }
@@ -218,7 +217,7 @@ export const updateInventoryItem = async (
       throw new Error('A valid item identifier is required to update inventory items');
     }
 
-    const firestoreDb = db || initializeFirestore();
+    const firestoreDb = getFirestore();
     if (!firestoreDb) {
       throw new Error('Firestore database is not initialized. Please check your Firebase configuration.');
     }
@@ -295,12 +294,12 @@ export const updateInventoryItem = async (
 // Delete inventory item and optional image from Firebase
 export const deleteInventoryItem = async (itemId: string, imageUrl?: string): Promise<void> => {
   try {
-    const user = auth.currentUser;
+    const user = getAuth().currentUser;
     if (!user) {
       throw new Error('User must be authenticated to delete inventory items');
     }
 
-    const firestoreDb = db || initializeFirestore();
+    const firestoreDb = getFirestore();
     if (!firestoreDb) {
       throw new Error('Firestore database is not initialized. Please check your Firebase configuration.');
     }
@@ -319,7 +318,7 @@ export const deleteInventoryItem = async (itemId: string, imageUrl?: string): Pr
     // Delete image from Storage if URL is provided
     if (imageUrl) {
       try {
-        const storageInstance = initializeStorage();
+        const storageInstance = getStorage();
         if (!storageInstance) {
           console.warn('Storage instance not initialized, skipping image deletion');
           return;

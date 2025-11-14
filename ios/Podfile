@@ -5,8 +5,12 @@ require Pod::Executable.execute_command('node', ['-p',
     {paths: [process.argv[1]]},
   )', __dir__]).strip
 
+source 'https://github.com/CocoaPods/Specs.git'
 platform :ios, '17.0'
 prepare_react_native_project!
+
+# pod 'boost_custom', :podspec => './custom_podspecs/boost.podspec'
+
 
 # If you are using a `react-native-flipper` your iOS build will fail when `NO_FLIPPER=1` is set.
 # because `react-native-flipper` depends on (FlipperKit,...) that will be excluded
@@ -34,15 +38,9 @@ target 'VaultTemp' do
 
   use_react_native!(
     :path => config[:reactNativePath],
-    # Hermes is now enabled by default. Disable by setting this flag to false.
     :hermes_enabled => flags[:hermes_enabled],
     :fabric_enabled => flags[:fabric_enabled],
-    # Enables Flipper.
-    #
-    # Note that if you have use_frameworks! enabled, Flipper will not work and
-    # you should disable the next line.
     :flipper_configuration => flipper_config,
-    # An absolute path to your application root.
     :app_path => "#{Pod::Config.instance.installation_root}/.."
   )
 
@@ -50,6 +48,15 @@ target 'VaultTemp' do
     inherit! :complete
     # Pods for testing
   end
+
+
+  # pre_install do |installer|
+  #   installer.pod_targets.each do |pod|
+  #     if pod.name == 'boost'
+  #       pod.instance_variable_set(:@spec, nil)
+  #     end
+  #   end
+  # end
 
   post_install do |installer|
     # Fix for gRPC module map issue

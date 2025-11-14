@@ -1,4 +1,3 @@
-// src/contexts/AuthContext.tsx
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { User, onAuthStateChanged, signOut, signInWithCredential, GoogleAuthProvider } from "firebase/auth";
 import { Platform } from "react-native";

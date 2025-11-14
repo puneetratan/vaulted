@@ -7,22 +7,22 @@ import {
   Modal,
   TextInput,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import {Platform} from 'react-native';
+import {Platform, PermissionsAndroid} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useAuth} from '../contexts/AuthContext';
 import {getUserData, updateUserData} from '../services/userService';
 import ShoeSizeModal from '../components/ShoeSizeModal';
 import DashboardTabs from '../components/DashboardTabs';
+import {getFunctions} from '../services/firebase';
+import RNFS from 'react-native-fs';
+
 // Use web-compatible versions on web
-const AddItemOptions = Platform.OS === 'web'
-  ? require('../components/AddItemOptions.web').default
-  : require('../components/AddItemOptions').default;
-const HamburgerMenu = Platform.OS === 'web'
-  ? require('../components/HamburgerMenu.web').default
-  : require('../components/HamburgerMenu').default;
+const AddItemOptions = require('../components/AddItemOptions').default;
+const HamburgerMenu = require('../components/HamburgerMenu').default;
 
 const DashboardScreen = () => {
   const navigation = useNavigation();
@@ -35,6 +35,7 @@ const DashboardScreen = () => {
   const [showExportModal, setShowExportModal] = useState(false);
   const [showSearchBar, setShowSearchBar] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [exporting, setExporting] = useState(false);
 
   // Check if user has shoe size saved when component loads
   useEffect(() => {
@@ -75,33 +76,82 @@ const DashboardScreen = () => {
     }
   };
 
-  const handleExport = () => {
-    setShowExportModal(true);
-    Alert.alert(
-      'Export Options',
-      'Choose export format:',
-      [
+  async function requestAndroidPermissions() {
+    if (Platform.OS === 'android') {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
         {
-          text: 'CSV',
-          onPress: () => {
-            Alert.alert('Success', 'Data exported to CSV');
-            setShowExportModal(false);
-          },
-        },
-        {
-          text: 'PDF',
-          onPress: () => {
-            Alert.alert('Success', 'Data exported to PDF');
-            setShowExportModal(false);
-          },
-        },
-        {
-          text: 'Cancel',
-          style: 'cancel',
-          onPress: () => setShowExportModal(false),
-        },
-      ],
-    );
+          title: 'Storage Permission Required',
+          message: 'App needs access to your storage to save Excel files',
+          buttonNeutral: 'Ask Me Later',
+          buttonNegative: 'Cancel',
+          buttonPositive: 'OK',
+        }
+      );
+      return granted === PermissionsAndroid.RESULTS.GRANTED;
+    }
+    return true;
+  }
+
+  const handleExport = async () => {
+    if (exporting) {
+      return;
+    }
+
+    setExporting(true);
+    try {
+      const hasPermission = await requestAndroidPermissions();
+      if (!hasPermission) {
+        Alert.alert('Permission Denied', 'Storage permission denied');
+        setExporting(false);
+        return;
+      }
+
+      if (!user?.uid) {
+        Alert.alert('Error', 'User not authenticated');
+        setExporting(false);
+        return;
+      }
+
+      console.log('Exporting for user:', user.uid);
+
+      const exportInventoryToExcel = getFunctions().httpsCallable('exportInventoryToExcel');
+      const response = await exportInventoryToExcel({
+        uid: user.uid,
+      });
+
+      const payload = response.data as {
+        fileName?: string;
+        fileData?: string;
+        success?: boolean;
+        message?: string;
+      };
+
+      if (payload?.fileName && payload?.fileData) {
+        const path =
+          Platform.OS === 'ios'
+            ? `${RNFS.DocumentDirectoryPath}/${payload.fileName}`
+            : `${RNFS.DownloadDirectoryPath}/${payload.fileName}`;
+
+        await RNFS.writeFile(path, payload.fileData, 'base64');
+
+        console.log('Excel saved at:', path);
+        Alert.alert('Export Complete', `Exported to:\n${path}`);
+      } else if (payload?.success) {
+        Alert.alert(
+          'Export Complete',
+          payload.message ?? 'Your export has been sent to your email.'
+        );
+      } else {
+        console.warn('Unexpected export payload:', payload);
+        throw new Error('Unexpected export response. Please try again later.');
+      }
+    } catch (err: any) {
+      console.error('Export failed:', err);
+      Alert.alert('Export Failed', err?.message ?? 'Unknown error');
+    } finally {
+      setExporting(false);
+    }
   };
 
   const handleFilter = () => {
@@ -252,10 +302,26 @@ const DashboardScreen = () => {
       <View style={styles.bottomActionsContainer}>
         <View style={styles.bottomActions}>
           <TouchableOpacity
-            style={[styles.bottomButton, styles.exportButton]}
-            onPress={handleExport}>
-            <Icon name="file-download" size={24} color="#007AFF" />
-            <Text style={styles.bottomButtonText}>Export</Text>
+            style={[
+              styles.bottomButton,
+              styles.exportButton,
+              exporting && styles.disabledButton,
+            ]}
+            onPress={handleExport}
+            disabled={exporting}>
+            {exporting ? (
+              <>
+                <ActivityIndicator size="small" color="#007AFF" />
+                <Text style={[styles.bottomButtonText, styles.exportingText]}>
+                  Exporting...
+                </Text>
+              </>
+            ) : (
+              <>
+                <Icon name="file-download" size={24} color="#007AFF" />
+                <Text style={styles.bottomButtonText}>Export</Text>
+              </>
+            )}
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.bottomButton, styles.filterButton]}
@@ -364,6 +430,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginLeft: 8,
   },
+  exportingText: {
+    marginLeft: 8,
+  },
   addButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -403,7 +472,9 @@ const styles = StyleSheet.create({
   clearSearchButton: {
     padding: 8,
   },
+  disabledButton: {
+    opacity: 0.6,
+  },
 });
 
 export default DashboardScreen;
-

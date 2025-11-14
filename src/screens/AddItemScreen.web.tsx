@@ -14,7 +14,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import {useNavigation} from '@react-navigation/native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {saveInventoryItem} from '../services/inventoryService';
-import {initializeStorage} from '../services/firebase';
+import {getStorage} from '../services/firebase';
 import {ref, uploadBytes, getDownloadURL} from 'firebase/storage';
 import {useAuth} from '../contexts/AuthContext';
 import {getUserData} from '../services/userService';
@@ -201,7 +201,7 @@ const AddItemScreen = () => {
 
       if (imageFile) {
         try {
-          const storageInstance = initializeStorage();
+          const storageInstance = getStorage();
           if (!storageInstance) {
             throw new Error('Storage not initialized');
           }

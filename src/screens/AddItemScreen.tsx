@@ -18,7 +18,7 @@ import {useNavigation} from '@react-navigation/native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {launchImageLibrary, ImagePickerResponse} from 'react-native-image-picker';
 import {saveInventoryItem} from '../services/inventoryService';
-import {initializeStorage} from '../services/firebase';
+import {getStorage} from '../services/firebase';
 import {useAuth} from '../contexts/AuthContext';
 import {getUserData} from '../services/userService';
 import {Picker} from '@react-native-picker/picker';
@@ -188,7 +188,7 @@ const AddItemScreen = () => {
 
       if (imageAsset) {
         try {
-          const storageInstance = initializeStorage();
+          const storageInstance = getStorage();
           if (!storageInstance) {
             throw new Error('Storage not initialized');
           }

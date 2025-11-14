@@ -6,6 +6,8 @@
 	<string>872715867979-r9b7b05lutnkblrstufbrh00aaqehgb8.apps.googleusercontent.com</string>
 	<key>REVERSED_CLIENT_ID</key>
 	<string>com.googleusercontent.apps.872715867979-r9b7b05lutnkblrstufbrh00aaqehgb8</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>872715867979-5i6op4dhpp1eo24lniiooms21b57c4su.apps.googleusercontent.com</string>
 	<key>API_KEY</key>
 	<string>AIzaSyBLGJ_j7nHtgen_hAz0SQxX0NSriLwUoA8</string>
 	<key>GCM_SENDER_ID</key>
@@ -19,16 +21,18 @@
 	<key>STORAGE_BUCKET</key>
 	<string>dev-vaultapp.firebasestorage.app</string>
 	<key>IS_ADS_ENABLED</key>
-	<false></false>
+	<false/>
 	<key>IS_ANALYTICS_ENABLED</key>
-	<false></false>
+	<false/>
 	<key>IS_APPINVITE_ENABLED</key>
-	<true></true>
+	<true/>
 	<key>IS_GCM_ENABLED</key>
-	<true></true>
+	<true/>
 	<key>IS_SIGNIN_ENABLED</key>
-	<true></true>
+	<true/>
 	<key>GOOGLE_APP_ID</key>
 	<string>1:872715867979:ios:5a876d48f392bdf0db7ace</string>
+	<key>DATABASE_URL</key>
+	<string>https://dev-vaultapp-default-rtdb.firebaseio.com</string>
 </dict>
 </plist>
