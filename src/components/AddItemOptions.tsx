@@ -11,6 +11,8 @@ import {
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {launchImageLibrary, ImagePickerResponse} from 'react-native-image-picker';
 import DocumentPicker from 'react-native-document-picker';
+import {getStorage, getFunctions} from '../services/firebase';
+import {useAuth} from '../contexts/AuthContext';
 
 interface AddItemOptionsProps {
   visible: boolean;
@@ -19,6 +21,8 @@ interface AddItemOptionsProps {
 }
 
 const AddItemOptions = ({visible, onClose, onAddManually}: AddItemOptionsProps) => {
+  const {user} = useAuth();
+
   const handleBarcodeReader = () => {
     onClose();
     Alert.alert(
@@ -55,14 +59,87 @@ const AddItemOptions = ({visible, onClose, onAddManually}: AddItemOptionsProps) 
     }
   };
 
+  const uploadImagesAndAnalyze = async (assets: Exclude<ImagePickerResponse['assets'], undefined>) => {
+    if (!user?.uid) {
+      Alert.alert('Error', 'You must be logged in to upload images.');
+      return;
+    }
+
+    const storageInstance = getStorage();
+    if (!storageInstance) {
+      Alert.alert('Error', 'Storage not initialized.');
+      return;
+    }
+
+    const functions = getFunctions();
+    const analyzeShoeMetadata = functions.httpsCallable('analyzeShoeMetadata');
+
+    const selectedAssets = assets.slice(0, 10);
+    const uploadedUris: string[] = [];
+
+    for (const asset of selectedAssets) {
+      if (!asset.uri) {
+        continue;
+      }
+
+      const fileName = asset.fileName ?? `image_${Date.now()}.jpg`;
+      const timestamp = Date.now();
+      const storagePath = `openai/${user.uid}/${timestamp}_${fileName}`;
+
+      try {
+        if (!storageInstance.ref) {
+          throw new Error('Storage instance missing ref API.');
+        }
+
+        const storageRef = storageInstance.ref(storagePath);
+        let fileUri = asset.uri;
+        if (Platform.OS === 'ios' && fileUri.startsWith('file://')) {
+          fileUri = fileUri.replace('file://', '');
+        }
+
+        await storageRef.putFile(fileUri, {
+          contentType: asset.type ?? 'image/jpeg',
+        });
+
+        const downloadUrl = await storageRef.getDownloadURL();
+        uploadedUris.push(downloadUrl);
+      } catch (uploadErr: any) {
+        console.error('Image upload failed:', uploadErr);
+        Alert.alert('Upload Error', uploadErr?.message || 'Failed to upload one of the images.');
+        return;
+      }
+    }
+    console.log('uploadedUris=====', uploadedUris);
+    if (uploadedUris.length > 0) {
+      try {
+        await analyzeShoeMetadata({
+          uid: user.uid,
+          imageUris: uploadedUris,
+        });
+      } catch (fnErr: any) {
+        console.warn('analyzeShoeMetadata failed for images', fnErr);
+      }
+    }
+
+    if (uploadedUris.length > 0) {
+      Alert.alert('Upload Complete', `${uploadedUris.length} image(s) uploaded and sent for analysis.`);
+    }
+  };
+
   const handleImageUpload = () => {
     onClose();
+    if (!user?.uid) {
+      Alert.alert('Error', 'You must be logged in to upload images.');
+      return;
+    }
+
     launchImageLibrary(
       {
         mediaType: 'photo',
         quality: 0.8,
+        selectionLimit: 10,
       },
-      (response: ImagePickerResponse) => {
+      async (response: ImagePickerResponse) => {
         if (response.didCancel) {
           return;
         }
@@ -70,13 +147,8 @@ const AddItemOptions = ({visible, onClose, onAddManually}: AddItemOptionsProps) 
           Alert.alert('Error', response.errorMessage);
           return;
         }
-        if (response.assets && response.assets[0]) {
-          Alert.alert(
-            'Image Selected',
-            `Image path: ${response.assets[0].uri}`,
-            [{text: 'OK'}],
-          );
-          // TODO: Upload image
+        if (response.assets && response.assets.length > 0) {
+          await uploadImagesAndAnalyze(response.assets);
         }
       },
     );
