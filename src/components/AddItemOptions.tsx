@@ -13,15 +13,66 @@ import {launchImageLibrary, ImagePickerResponse} from 'react-native-image-picker
 import DocumentPicker from 'react-native-document-picker';
 import {getStorage, getFunctions} from '../services/firebase';
 import {useAuth} from '../contexts/AuthContext';
+import {getUserData} from '../services/userService';
+
+type AnalyzedMetadata = {
+  name?: string;
+  brand?: string;
+  model?: string;
+  color?: string;
+  releaseDate?: string;
+  retailValue?: string | number;
+  styleId?: string;
+  silhouette?: string;
+  condition?: string;
+  flaws?: string;
+  size?: string;
+  quantity?: number;
+  imageUrl?: string;
+};
 
 interface AddItemOptionsProps {
   visible: boolean;
   onClose: () => void;
   onAddManually?: () => void;
+  onImageAnalysisStart?: (count: number) => void;
+  onImageAnalysisComplete?: (results: AnalyzedMetadata[]) => void;
+  onImageAnalysisError?: (message?: string) => void;
 }
 
-const AddItemOptions = ({visible, onClose, onAddManually}: AddItemOptionsProps) => {
+const AddItemOptions = ({
+  visible,
+  onClose,
+  onAddManually,
+  onImageAnalysisStart,
+  onImageAnalysisComplete,
+  onImageAnalysisError,
+}: AddItemOptionsProps) => {
   const {user} = useAuth();
+
+  const normalizeMetadata = (payload: any): AnalyzedMetadata[] => {
+    if (!payload) {
+      return [];
+    }
+    if (Array.isArray(payload)) {
+      return payload as AnalyzedMetadata[];
+    }
+    if (typeof payload === 'string') {
+      try {
+        return JSON.parse(payload) as AnalyzedMetadata[];
+      } catch (error) {
+        console.warn('Failed to parse metadata string:', error);
+        return [];
+      }
+    }
+    if (payload && typeof payload === 'object' && !Array.isArray(payload)) {
+      const metadataCandidate = (payload as {metadata?: unknown}).metadata;
+      if (Array.isArray(metadataCandidate)) {
+        return metadataCandidate as AnalyzedMetadata[];
+      }
+    }
+    return [];
+  };
 
   const handleBarcodeReader = () => {
     onClose();
@@ -75,6 +126,21 @@ const AddItemOptions = ({visible, onClose, onAddManually}: AddItemOptionsProps) 
     const analyzeShoeMetadata = functions.httpsCallable('analyzeShoeMetadata');
 
     const selectedAssets = assets.slice(0, 10);
+    if (selectedAssets.length === 0) {
+      return;
+    }
+
+    let shoeSizeFromProfile: string | undefined;
+    try {
+      const profile = await getUserData(user.uid);
+      if (profile?.shoeSize) {
+        shoeSizeFromProfile = String(profile.shoeSize);
+      }
+    } catch (profileError) {
+      console.warn('Failed to load user profile for shoe size:', profileError);
+    }
+
+    onImageAnalysisStart?.(selectedAssets.length);
     const uploadedUris: string[] = [];
 
     for (const asset of selectedAssets) {
@@ -104,24 +170,38 @@ const AddItemOptions = ({visible, onClose, onAddManually}: AddItemOptionsProps) 
         const downloadUrl = await storageRef.getDownloadURL();
         uploadedUris.push(downloadUrl);
       } catch (uploadErr: any) {
+        const message = uploadErr?.message || 'Failed to upload one of the images.';
         console.error('Image upload failed:', uploadErr);
-        Alert.alert('Upload Error', uploadErr?.message || 'Failed to upload one of the images.');
+        Alert.alert('Upload Error', message);
+        onImageAnalysisError?.(message);
         return;
-      }
-    }
-    console.log('uploadedUris=====', uploadedUris);
-    if (uploadedUris.length > 0) {
-      try {
-        await analyzeShoeMetadata({
-          uid: user.uid,
-          imageUris: uploadedUris,
-        });
-      } catch (fnErr: any) {
-        console.warn('analyzeShoeMetadata failed for images', fnErr);
       }
     }
 
     if (uploadedUris.length > 0) {
+      try {
+        const response = await analyzeShoeMetadata({
+          uid: user.uid,
+          imageUris: uploadedUris,
+          shoeSize: shoeSizeFromProfile,
+        });
+        const responseData = response?.data as {metadata?: unknown} | undefined;
+        const metadataPayload = responseData?.metadata ?? responseData;
+        const normalizedMetadata = normalizeMetadata(metadataPayload);
+
+        if (normalizedMetadata.length === 0) {
+          onImageAnalysisError?.('No metadata returned from analysis.');
+        } else {
+          onImageAnalysisComplete?.(normalizedMetadata);
+        }
+      } catch (fnErr: any) {
+        const message = fnErr?.message || 'Failed to analyze images.';
+        console.warn('analyzeShoeMetadata failed for images', fnErr);
+        Alert.alert('Analysis Error', message);
+        onImageAnalysisError?.(message);
+        return;
+      }
+
       Alert.alert('Upload Complete', `${uploadedUris.length} image(s) uploaded and sent for analysis.`);
     }
   };

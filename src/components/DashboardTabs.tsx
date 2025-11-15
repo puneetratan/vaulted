@@ -1,4 +1,4 @@
-import React, {useState, useMemo, useCallback} from 'react';
+import React, {useState, useMemo, useCallback, useEffect} from 'react';
 import {View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, ActivityIndicator, Alert, FlatList} from 'react-native';
 import {useNavigation, useFocusEffect} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
@@ -9,6 +9,7 @@ import {getInventoryItemsPage, InventoryItem, deleteInventoryItem} from '../serv
 type DashboardTabsNavigationProp = StackNavigationProp<RootStackParamList>;
 
 type TabType = 'Total Pairs' | 'Brands' | 'Total Value';
+type ShadowStatus = 'processing' | 'complete' | 'error';
 
 interface ShoeItem {
   id: string;
@@ -23,13 +24,26 @@ interface ShoeItem {
   releaseDate?: string;
   quantity: number;
   imageUrl?: string;
+  isShadow?: boolean;
+  shadowStatus?: ShadowStatus;
+  condition?: string;
+  notes?: string;
+  errorMessage?: string;
 }
 
 interface DashboardTabsProps {
   searchQuery?: string;
+  shadowItems?: ShoeItem[];
+  onShadowDelete?: (id: string) => void;
+  refreshToken?: number;
 }
 
-const DashboardTabs = ({searchQuery = ''}: DashboardTabsProps) => {
+const DashboardTabs = ({
+  searchQuery = '',
+  shadowItems = [],
+  onShadowDelete,
+  refreshToken = 0,
+}: DashboardTabsProps) => {
   const navigation = useNavigation<DashboardTabsNavigationProp>();
   const [activeTab, setActiveTab] = useState<TabType>('Total Pairs');
   const [allShoes, setAllShoes] = useState<ShoeItem[]>([]);
@@ -42,7 +56,32 @@ const DashboardTabs = ({searchQuery = ''}: DashboardTabsProps) => {
   const [refreshing, setRefreshing] = useState<boolean>(false);
 
   const tabs: TabType[] = ['Total Pairs', 'Brands', 'Total Value'];
-const PAGE_SIZE = 20;
+  const PAGE_SIZE = 20;
+
+  const normalizedShadowItems = useMemo(
+    () =>
+      (shadowItems ?? []).map((item, index) => ({
+        ...item,
+        id: item.id ?? `shadow-${index}`,
+        isShadow: true,
+        quantity: item.quantity ?? 1,
+        cost: typeof item.cost === 'number' ? item.cost : 0,
+        retailValue: typeof item.retailValue === 'number' ? item.retailValue : 0,
+        brand: item.brand ?? 'Processing...',
+        name: item.name ?? `Analyzing item ${index + 1}`,
+        silhouette: item.silhouette ?? 'Processing',
+        styleId: item.styleId ?? 'Pending',
+        size: item.size ?? 'N/A',
+        color: item.color ?? 'N/A',
+        shadowStatus: item.shadowStatus ?? 'processing',
+      })),
+    [shadowItems],
+  );
+
+  const combinedShoes = useMemo(
+    () => [...normalizedShadowItems, ...allShoes],
+    [normalizedShadowItems, allShoes],
+  );
 
   const mapInventoryToShoe = (items: InventoryItem[]): ShoeItem[] =>
     items.map((item, index) => {
@@ -97,6 +136,10 @@ const PAGE_SIZE = 20;
     }, [fetchInventory]),
   );
 
+  useEffect(() => {
+    fetchInventory();
+  }, [fetchInventory, refreshToken]);
+
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
@@ -131,7 +174,7 @@ const PAGE_SIZE = 20;
   };
 
   // Filter shoes based on search query
-  const filteredShoes = useMemo(() => {
+  const filteredInventoryShoes = useMemo(() => {
     if (!searchQuery.trim()) {
       return allShoes;
     }
@@ -144,6 +187,25 @@ const PAGE_SIZE = 20;
         shoe.size.toLowerCase().includes(query),
     );
   }, [allShoes, searchQuery]);
+
+  const filteredDisplayShoes = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return combinedShoes;
+    }
+    const query = searchQuery.toLowerCase();
+    return combinedShoes.filter((shoe) => {
+      const fields = [shoe.name, shoe.brand, shoe.color, shoe.size];
+      return fields.some(
+        (field) => typeof field === 'string' && field.toLowerCase().includes(query),
+      );
+    });
+  }, [combinedShoes, searchQuery]);
+
+  const shadowCount = normalizedShadowItems.length;
+  const shadowProcessingCount = useMemo(
+    () => normalizedShadowItems.filter((item) => item.shadowStatus === 'processing').length,
+    [normalizedShadowItems],
+  );
 
   // Calculate counts for tabs
   const uniqueBrands = useMemo(() => [...new Set(allShoes.map((shoe) => shoe.brand))], [allShoes]);
@@ -208,61 +270,133 @@ const PAGE_SIZE = 20;
       );
     };
 
-    const renderShoeItem = ({item: shoe}: {item: ShoeItem}) => (
-      <TouchableOpacity 
-        style={styles.shoeCard}
-        onPress={() => navigation.navigate('EditItem', {item: shoe})}>
-        {shoe.imageUrl ? (
-          <Image
-            source={{uri: shoe.imageUrl}}
-            style={styles.shoeThumbnail}
-          />
-        ) : (
-          <View style={[styles.shoeThumbnail, styles.shoeThumbnailPlaceholder]}>
-            <Icon name="image" size={32} color="#CCCCCC" />
-          </View>
-        )}
-        <View style={styles.shoeInfo}>
-          <Text style={styles.shoeName}>{shoe.name}</Text>
-          <Text style={styles.shoeBrand}>{shoe.brand}</Text>
-          <View style={styles.shoeMetaRow}>
-            <View style={styles.shoeDetails}>
-              <Text style={styles.shoeDetailText}>Silhouette: {shoe.silhouette}</Text>
-              <Text style={styles.shoeDetailText}>Style ID: {shoe.styleId}</Text>
-              <Text style={styles.shoeDetailText}>Size: {shoe.size}</Text>
-              <Text style={styles.shoeDetailText}>Color: {shoe.color}</Text>
-              {shoe.releaseDate ? (
-                <Text style={styles.shoeDetailText}>Release: {shoe.releaseDate}</Text>
-              ) : null}
-            </View>
-            <View style={styles.quantityBadge}>
-              <Text style={styles.quantityBadgeText}>Qty: {shoe.quantity}</Text>
-            </View>
-          </View>
-          <Text style={styles.shoeCost}>
-            Retail: $
-            {typeof shoe.retailValue === 'number'
-              ? shoe.retailValue.toFixed(2)
-              : '--'}
-          </Text>
-        </View>
-        <View style={styles.arrowContainer}>
-          {deletingId === shoe.id ? (
-            <ActivityIndicator size="small" color="#FF3B30" />
+    const renderShoeItem = ({item: shoe}: {item: ShoeItem}) => {
+      const isShadow = Boolean(shoe.isShadow);
+      const isProcessing = isShadow && shoe.shadowStatus === 'processing';
+      const hasError = isShadow && shoe.shadowStatus === 'error';
+      const displayRetail =
+        typeof shoe.retailValue === 'number' && shoe.retailValue > 0
+          ? shoe.retailValue.toFixed(2)
+          : '--';
+      const quantityLabel = isShadow
+        ? isProcessing
+          ? 'Analyzing'
+          : hasError
+            ? 'Error'
+            : `Qty: ${shoe.quantity ?? 1}`
+        : `Qty: ${shoe.quantity}`;
+
+      return (
+        <TouchableOpacity
+          style={[styles.shoeCard, isShadow && styles.shadowCard]}
+          disabled={isShadow}
+          activeOpacity={isShadow ? 1 : 0.7}
+          onPress={() => {
+            if (!isShadow) {
+              navigation.navigate('EditItem', {item: shoe});
+            }
+          }}>
+          {shoe.imageUrl && (!isShadow || (isShadow && !isProcessing)) ? (
+            <Image source={{uri: shoe.imageUrl}} style={styles.shoeThumbnail} />
           ) : (
-            <View style={styles.actionButtons}>
-              <TouchableOpacity
-                style={styles.deleteButton}
-                onPress={() => confirmDelete(shoe)}
-                accessibilityLabel={`Delete ${shoe.name}`}>
-                <Icon name="delete" size={24} color="#FF3B30" />
-              </TouchableOpacity>
-              <Icon name="arrow-forward" size={24} color="#666666" />
+            <View style={[styles.shoeThumbnail, styles.shoeThumbnailPlaceholder]}>
+              {isProcessing ? (
+                <ActivityIndicator color="#007AFF" />
+              ) : (
+                <Icon name="image" size={32} color="#CCCCCC" />
+              )}
             </View>
           )}
-        </View>
-      </TouchableOpacity>
-    );
+          <View style={styles.shoeInfo}>
+            <View style={styles.shadowHeaderRow}>
+              <Text style={styles.shoeName}>{shoe.name}</Text>
+              {isShadow && (
+                <View style={styles.shadowBadge}>
+                  <Text style={styles.shadowBadgeText}>
+                    {isProcessing ? 'Analyzing' : hasError ? 'Failed' : 'AI'}
+                  </Text>
+                </View>
+              )}
+            </View>
+            <Text style={styles.shoeBrand}>{shoe.brand}</Text>
+            <View style={styles.shoeMetaRow}>
+              <View style={styles.shoeDetails}>
+                <Text style={styles.shoeDetailText}>Silhouette: {shoe.silhouette}</Text>
+                <Text style={styles.shoeDetailText}>Style ID: {shoe.styleId}</Text>
+                <Text style={styles.shoeDetailText}>Size: {shoe.size}</Text>
+                <Text style={styles.shoeDetailText}>Color: {shoe.color}</Text>
+                {shoe.releaseDate ? (
+                  <Text style={styles.shoeDetailText}>Release: {shoe.releaseDate}</Text>
+                ) : null}
+                {shoe.condition ? (
+                  <Text style={styles.shoeDetailText}>Condition: {shoe.condition}</Text>
+                ) : null}
+                {shoe.notes ? (
+                  <Text style={styles.shoeDetailText}>Notes: {shoe.notes}</Text>
+                ) : null}
+              </View>
+              <View
+                style={[
+                  styles.quantityBadge,
+                  isShadow && styles.shadowQuantityBadge,
+                  hasError && styles.shadowQuantityBadgeError,
+                ]}>
+                <Text
+                  style={[
+                    styles.quantityBadgeText,
+                    isShadow && styles.shadowQuantityBadgeText,
+                    hasError && styles.shadowStatusError,
+                  ]}>
+                  {quantityLabel}
+                </Text>
+              </View>
+            </View>
+            <Text style={styles.shoeCost}>
+              Retail: $
+              {displayRetail}
+            </Text>
+          </View>
+          <View style={styles.arrowContainer}>
+            {isShadow ? (
+              <View style={styles.shadowStatusContainer}>
+                {isProcessing && (
+                  <ActivityIndicator size="small" color="#007AFF" style={styles.shadowStatusSpinner} />
+                )}
+                <Text
+                  style={[
+                    styles.shadowStatusText,
+                    hasError && styles.shadowStatusError,
+                  ]}>
+                  {isProcessing
+                    ? 'Analyzing...'
+                    : hasError
+                      ? shoe.errorMessage || 'Analysis failed'
+                      : 'AI result'}
+                </Text>
+                <TouchableOpacity
+                  style={styles.shadowDeleteButton}
+                  onPress={() => onShadowDelete?.(shoe.id)}
+                  accessibilityLabel={`Remove ${shoe.name}`}>
+                  <Icon name="close" size={16} color="#666666" />
+                </TouchableOpacity>
+              </View>
+            ) : deletingId === shoe.id ? (
+              <ActivityIndicator size="small" color="#FF3B30" />
+            ) : (
+              <View style={styles.actionButtons}>
+                <TouchableOpacity
+                  style={styles.deleteButton}
+                  onPress={() => confirmDelete(shoe)}
+                  accessibilityLabel={`Delete ${shoe.name}`}>
+                  <Icon name="delete" size={24} color="#FF3B30" />
+                </TouchableOpacity>
+                <Icon name="arrow-forward" size={24} color="#666666" />
+              </View>
+            )}
+          </View>
+        </TouchableOpacity>
+      );
+    };
 
     const renderEmptyComponent = () => (
       <View style={styles.emptyState}>
@@ -294,10 +428,22 @@ const PAGE_SIZE = 20;
       case 'Total Pairs':
         return (
           <FlatList
-            data={filteredShoes}
-            keyExtractor={(shoe) => shoe.id?.toString() ?? `${shoe.name}-${shoe.size}`}
+            data={filteredDisplayShoes}
+            keyExtractor={(shoe, index) => shoe.id?.toString() ?? `${shoe.name}-${shoe.size}-${index}`}
             ListHeaderComponent={
-              <Text style={styles.tabContentTitle}>Total Pairs: {filteredShoes.length}</Text>
+              <View style={styles.totalPairsHeader}>
+                <Text style={styles.tabContentTitle}>
+                  Total Pairs: {filteredInventoryShoes.length}
+                </Text>
+                {shadowCount > 0 && (
+                  <Text style={styles.shadowInfoText}>
+                    AI items: {shadowCount}
+                    {shadowProcessingCount > 0
+                      ? ` (${shadowProcessingCount} analyzing)`
+                      : ' (ready)'}
+                  </Text>
+                )}
+              </View>
             }
             renderItem={renderShoeItem}
             ListEmptyComponent={renderEmptyComponent}
@@ -362,7 +508,9 @@ const PAGE_SIZE = 20;
         {tabs.map((tab) => {
           let tabLabel: string = tab;
           if (tab === 'Total Pairs') {
-            tabLabel = `${tab} (${allShoes.length})`;
+            tabLabel = shadowCount > 0
+              ? `${tab} (${allShoes.length} +${shadowCount} AI)`
+              : `${tab} (${allShoes.length})`;
           } else if (tab === 'Brands') {
             tabLabel = `${tab} (${uniqueBrands.length})`;
           } else if (tab === 'Total Value') {
@@ -472,6 +620,11 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
+  shadowCard: {
+    borderWidth: 1,
+    borderColor: '#D0E2FF',
+    backgroundColor: '#F5F9FF',
+  },
   shoeThumbnail: {
     width: 100,
     height: 100,
@@ -487,6 +640,23 @@ const styles = StyleSheet.create({
     marginLeft: 12,
     justifyContent: 'space-between',
     paddingRight: 16,
+  },
+  shadowHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  shadowBadge: {
+    backgroundColor: '#E3F2FD',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    marginLeft: 8,
+  },
+  shadowBadgeText: {
+    fontSize: 12,
+    color: '#0A5FD9',
+    fontWeight: '600',
   },
   arrowContainer: {
     justifyContent: 'center',
@@ -584,11 +754,40 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#007AFF',
   },
+  shadowQuantityBadge: {
+    backgroundColor: '#DCEBFF',
+  },
+  shadowQuantityBadgeText: {
+    color: '#0A5FD9',
+  },
+  shadowQuantityBadgeError: {
+    backgroundColor: '#FDECEA',
+  },
   shoeCost: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#000000',
     marginTop: 8,
+  },
+  shadowStatusContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    maxWidth: 110,
+  },
+  shadowStatusSpinner: {
+    marginRight: 6,
+  },
+  shadowStatusText: {
+    fontSize: 12,
+    color: '#0A5FD9',
+    fontWeight: '600',
+  },
+  shadowStatusError: {
+    color: '#D7263D',
+  },
+  shadowDeleteButton: {
+    marginLeft: 8,
+    padding: 4,
   },
   brandCard: {
     flexDirection: 'row',
@@ -614,6 +813,14 @@ const styles = StyleSheet.create({
   brandCount: {
     fontSize: 14,
     color: '#666666',
+  },
+  totalPairsHeader: {
+    marginBottom: 12,
+  },
+  shadowInfoText: {
+    fontSize: 13,
+    color: '#007AFF',
+    marginTop: 4,
   },
 });
 

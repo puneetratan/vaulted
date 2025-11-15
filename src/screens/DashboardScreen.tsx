@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 import {
   View,
   Text,
@@ -24,6 +24,44 @@ import RNFS from 'react-native-fs';
 const AddItemOptions = require('../components/AddItemOptions').default;
 const HamburgerMenu = require('../components/HamburgerMenu').default;
 
+type ShadowStatus = 'processing' | 'complete' | 'error';
+
+type ImageAnalysisResult = {
+  name?: string;
+  brand?: string;
+  model?: string;
+  color?: string;
+  releaseDate?: string;
+  retailValue?: string | number;
+  styleId?: string;
+  silhouette?: string;
+  condition?: string;
+  flaws?: string;
+  size?: string | number;
+  quantity?: number;
+  imageUrl?: string;
+};
+
+interface ShadowListItem {
+  id: string;
+  name: string;
+  brand: string;
+  silhouette: string;
+  styleId: string;
+  size: string;
+  color: string;
+  cost: number;
+  retailValue: number;
+  releaseDate?: string;
+  quantity: number;
+  imageUrl?: string;
+  isShadow: true;
+  shadowStatus: ShadowStatus;
+  condition?: string;
+  notes?: string;
+  errorMessage?: string;
+}
+
 const DashboardScreen = () => {
   const navigation = useNavigation();
   const {logout, user} = useAuth();
@@ -36,6 +74,12 @@ const DashboardScreen = () => {
   const [showSearchBar, setShowSearchBar] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [exporting, setExporting] = useState(false);
+  const [shadowItems, setShadowItems] = useState<ShadowListItem[]>([]);
+  const [inventoryRefreshToken, setInventoryRefreshToken] = useState(0);
+  const triggerInventoryRefresh = useCallback(() => {
+    setInventoryRefreshToken(prev => prev + 1);
+  }, []);
+
 
   // Check if user has shoe size saved when component loads
   useEffect(() => {
@@ -92,6 +136,122 @@ const DashboardScreen = () => {
     }
     return true;
   }
+
+  const parseNumericValue = (value: any): number => {
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      return value;
+    }
+    if (typeof value === 'string') {
+      const cleaned = value.replace(/[^\d.-]/g, '');
+      const parsed = parseFloat(cleaned);
+      return Number.isFinite(parsed) ? parsed : 0;
+    }
+    return 0;
+  };
+
+  const mapMetadataToShadow = useCallback((
+    metadata: ImageAnalysisResult,
+    fallbackIndex: number,
+  ): Partial<ShadowListItem> => {
+    const name = metadata?.name || metadata?.model || `AI Item ${fallbackIndex + 1}`;
+    const brand = metadata?.brand || 'Unknown Brand';
+    const silhouette = metadata?.silhouette || metadata?.model || 'Unknown';
+    const styleId = metadata?.styleId || 'N/A';
+    const size = metadata?.size ? String(metadata.size) : 'N/A';
+    const color = metadata?.color || 'Unknown';
+    const releaseDate = metadata?.releaseDate;
+    const retailValue = parseNumericValue(metadata?.retailValue);
+    const quantityValue = Number(metadata?.quantity);
+    const quantity = Number.isFinite(quantityValue) && quantityValue > 0 ? Math.round(quantityValue) : 1;
+
+    return {
+      name,
+      brand,
+      silhouette,
+      styleId,
+      size,
+      color,
+      releaseDate,
+      retailValue,
+      cost: retailValue,
+      quantity,
+      imageUrl: metadata?.imageUrl,
+      condition: metadata?.condition,
+      notes: metadata?.flaws,
+    };
+  }, [parseNumericValue]);
+
+  const handleImageAnalysisStart = useCallback((count: number) => {
+    if (!count) {
+      return;
+    }
+    const timestamp = Date.now();
+    setShadowItems(prev => [
+      ...prev,
+      ...Array.from({length: count}, (_, index) => ({
+        id: `shadow-${timestamp}-${index}-${Math.random().toString(36).slice(2, 8)}`,
+        name: `Analyzing item ${prev.length + index + 1}`,
+        brand: 'Processing...',
+        silhouette: 'Processing',
+        styleId: 'Processing',
+        size: 'N/A',
+        color: 'N/A',
+        cost: 0,
+        retailValue: 0,
+        quantity: 1,
+        isShadow: true as const,
+        shadowStatus: 'processing' as ShadowStatus,
+      })),
+    ]);
+  }, []);
+
+  const handleImageAnalysisComplete = useCallback((results: ImageAnalysisResult[]) => {
+    if (!Array.isArray(results) || results.length === 0) {
+      setShadowItems(prev => prev.filter(item => item.shadowStatus !== 'processing'));
+      return;
+    }
+
+    const processedIds: string[] = [];
+    setShadowItems(prev => {
+      const updated = [...prev];
+      let resultIndex = 0;
+
+      for (let i = 0; i < updated.length && resultIndex < results.length; i += 1) {
+        if (updated[i].shadowStatus !== 'processing') {
+          continue;
+        }
+        const placeholderId = updated[i].id;
+        const mapped = mapMetadataToShadow(results[resultIndex], resultIndex);
+        updated[i] = {
+          ...updated[i],
+          ...mapped,
+          shadowStatus: 'complete',
+          isShadow: true as const,
+        };
+        resultIndex += 1;
+        processedIds.push(placeholderId);
+      }
+
+      return updated;
+    });
+    triggerInventoryRefresh();
+    if (processedIds.length > 0) {
+      setTimeout(() => {
+        setShadowItems(prev => prev.filter(item => !processedIds.includes(item.id)));
+      }, 1500);
+    }
+  }, [mapMetadataToShadow, triggerInventoryRefresh]);
+
+  const handleImageAnalysisError = useCallback((message?: string) => {
+    setShadowItems(prev => prev.filter(item => item.shadowStatus !== 'processing'));
+    if (message) {
+      Alert.alert('Analysis Error', message);
+    }
+  }, []);
+
+  const handleShadowItemDelete = useCallback((id: string) => {
+    setShadowItems(prev => prev.filter(item => item.id !== id));
+  }, []);
 
   const handleExport = async () => {
     if (exporting) {
@@ -295,7 +455,12 @@ const DashboardScreen = () => {
 
       {/* Body - Tabs */}
       <View style={styles.body}>
-        <DashboardTabs searchQuery={searchQuery} />
+        <DashboardTabs
+          searchQuery={searchQuery}
+          shadowItems={shadowItems}
+          onShadowDelete={handleShadowItemDelete}
+          refreshToken={inventoryRefreshToken}
+        />
       </View>
 
       {/* Bottom Action Buttons */}
@@ -353,6 +518,9 @@ const DashboardScreen = () => {
         visible={showAddItemOptions}
         onClose={() => setShowAddItemOptions(false)}
         onAddManually={() => navigation.navigate('AddItem')}
+        onImageAnalysisStart={handleImageAnalysisStart}
+        onImageAnalysisComplete={handleImageAnalysisComplete}
+        onImageAnalysisError={handleImageAnalysisError}
       />
 
       {/* Hamburger Menu */}
