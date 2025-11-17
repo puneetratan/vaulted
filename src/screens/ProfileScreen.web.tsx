@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import {
   View,
   Text,
@@ -7,10 +7,17 @@ import {
   ScrollView,
   Image,
   Alert,
+  ActivityIndicator,
+  Modal,
+  Dimensions,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {useAuth} from '../contexts/AuthContext';
 import {getUserData, updateUserData} from '../services/userService';
+import {getStorage} from '../services/firebase';
+import {getStorage as getWebStorage} from 'firebase/storage';
+import {initializeApp, getApps} from 'firebase/app';
+import {updateProfile, reload} from 'firebase/auth';
 import ShoeSizeModal from '../components/ShoeSizeModal';
 
 const ProfileScreen = () => {
@@ -19,11 +26,16 @@ const ProfileScreen = () => {
   const [shoeSize, setShoeSize] = useState<string | undefined>(undefined);
   const [showShoeSizeModal, setShowShoeSizeModal] = useState(false);
   const [editShoeSize, setEditShoeSize] = useState('');
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [localPhotoURL, setLocalPhotoURL] = useState<string | null>(null);
+  const [showImageViewer, setShowImageViewer] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   
   // Get user information from Firebase Auth
   const displayName = user?.displayName || 'User';
   const email = user?.email || '';
-  const photoURL = user?.photoURL || null;
+  const photoURL = localPhotoURL || user?.photoURL || null;
 
   // Fetch user profile data including shoe size
   useEffect(() => {
@@ -42,6 +54,11 @@ const ProfileScreen = () => {
 
     fetchUserData();
   }, [user]);
+
+  // Update local photo URL when user changes
+  useEffect(() => {
+    setLocalPhotoURL(user?.photoURL || null);
+  }, [user?.photoURL]);
 
   const handleEditShoeSize = () => {
     setEditShoeSize(shoeSize || '');
@@ -79,6 +96,142 @@ const ProfileScreen = () => {
     }
   };
 
+  const handleImagePicker = () => {
+    if (!user?.uid) {
+      Alert.alert('Error', 'You must be logged in to upload images.');
+      return;
+    }
+
+    Alert.alert(
+      'Select Photo',
+      'Choose an option',
+      [
+        {
+          text: 'Camera',
+          onPress: () => {
+            // Trigger camera input click
+            if (cameraInputRef.current) {
+              cameraInputRef.current.click();
+            }
+          },
+        },
+        {
+          text: 'Photo Library',
+          onPress: () => {
+            // Trigger file input click
+            if (fileInputRef.current) {
+              fileInputRef.current.click();
+            }
+          },
+        },
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+      ],
+    );
+  };
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      Alert.alert('Error', 'Please select an image file.');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      Alert.alert('Error', 'Image size must be less than 5MB.');
+      return;
+    }
+
+    // Reset input value to allow selecting the same file again
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+    if (cameraInputRef.current) {
+      cameraInputRef.current.value = '';
+    }
+
+    await uploadProfileImage(file);
+  };
+
+  const uploadProfileImage = async (file: File) => {
+    if (!user?.uid) {
+      Alert.alert('Error', 'You must be logged in to upload images.');
+      return;
+    }
+
+    setUploadingImage(true);
+
+    try {
+      // Initialize Firebase for web if not already initialized
+      const firebaseConfig = {
+        apiKey: "AIzaSyBZuRY5RIdwCG7TmI81u8tOmX5-dG8h1IM",
+        authDomain: "dev-vaultapp.firebaseapp.com",
+        projectId: "dev-vaultapp",
+        storageBucket: "dev-vaultapp.firebasestorage.app",
+        messagingSenderId: "872715867979",
+        appId: "1:872715867979:ios:5a876d48f392bdf0db7ace",
+        measurementId: "G-PNKEGHHYSF",
+        databaseURL: "https://dev-vaultapp-default-rtdb.firebaseio.com",
+      };
+
+      let app;
+      if (getApps().length === 0) {
+        app = initializeApp(firebaseConfig);
+      } else {
+        app = getApps()[0];
+      }
+
+      const timestamp = Date.now();
+      const fileName = file.name || `avatar_${timestamp}.jpg`;
+      const storagePath = `profile/${user.uid}/avatar_${timestamp}_${fileName}`;
+
+      // Use web SDK's getStorage for web platform
+      const {ref, uploadBytes, getDownloadURL} = await import('firebase/storage');
+      const storageInstance = getWebStorage(app);
+      const storageRef = ref(storageInstance, storagePath);
+      await uploadBytes(storageRef, file, {
+        contentType: file.type || 'image/jpeg',
+      });
+      const uploadedImageUrl = await getDownloadURL(storageRef);
+
+      // Update Firebase Auth profile
+      if (user) {
+        await updateProfile(user, {
+          photoURL: uploadedImageUrl,
+        });
+        // Reload user to get updated photoURL - this will trigger onAuthStateChanged
+        // which will update the user object in AuthContext
+        await reload(user);
+      }
+
+      // Update Firestore user document
+      await updateUserData(user.uid, {photoURL: uploadedImageUrl});
+
+      // Update local state immediately for better UX
+      // The useEffect will also update it when user.photoURL changes after reload
+      setLocalPhotoURL(uploadedImageUrl);
+
+      Alert.alert('Success', 'Profile image updated successfully!');
+    } catch (error: any) {
+      console.error('Image upload error:', error);
+      const errorMessage =
+        error?.code === 'storage/unauthorized'
+          ? 'You do not have permission to upload images. Please check your Storage security rules.'
+          : error?.message || 'Failed to upload image. Please try again.';
+      Alert.alert('Error', errorMessage);
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
@@ -92,20 +245,71 @@ const ProfileScreen = () => {
       </View>
 
       <View style={styles.content}>
+        {/* Hidden file inputs for web */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          style={{display: 'none'}}
+          onChange={handleFileChange}
+        />
+        <input
+          ref={cameraInputRef}
+          type="file"
+          accept="image/*"
+          capture="user"
+          style={{display: 'none'}}
+          onChange={handleFileChange}
+        />
+
         {/* Profile Avatar Section */}
         <View style={styles.avatarSection}>
-          <View style={styles.avatarContainer}>
-            {photoURL ? (
-              <Image
-                source={{uri: photoURL}}
-                style={styles.avatarImage}
-              />
-            ) : (
-              <Text style={styles.avatarEmoji}>👤</Text>
-            )}
+          <View style={styles.avatarTouchable}>
+            <View style={styles.avatarContainer}>
+              {uploadingImage ? (
+                <View style={styles.avatarLoadingContainer}>
+                  <ActivityIndicator size="large" color="#007AFF" />
+                </View>
+              ) : photoURL ? (
+                <TouchableOpacity
+                  onPress={() => setShowImageViewer(true)}
+                  activeOpacity={0.8}>
+                  <Image
+                    source={{uri: photoURL}}
+                    style={styles.avatarImage}
+                  />
+                </TouchableOpacity>
+              ) : (
+                <Text style={styles.avatarEmoji}>👤</Text>
+              )}
+              {!uploadingImage && photoURL && (
+                <TouchableOpacity
+                  onPress={handleImagePicker}
+                  style={styles.cameraIconOverlay}
+                  activeOpacity={0.8}>
+                  <Text style={styles.cameraIconText}>📷</Text>
+                </TouchableOpacity>
+              )}
+              {!uploadingImage && !photoURL && (
+                <TouchableOpacity
+                  onPress={handleImagePicker}
+                  style={styles.cameraIconOverlay}
+                  activeOpacity={0.8}>
+                  <Text style={styles.cameraIconText}>📷</Text>
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
           <Text style={styles.userName}>{displayName}</Text>
           <Text style={styles.userEmail}>{email}</Text>
+          <TouchableOpacity
+            onPress={handleImagePicker}
+            disabled={uploadingImage}
+            style={styles.changePhotoButton}>
+            <Text style={styles.changePhotoText}>
+              {uploadingImage ? 'Uploading...' : photoURL ? 'Change Photo' : 'Upload Photo'}
+            </Text>
+          </TouchableOpacity>
         </View>
 
         {/* Profile Information */}
@@ -184,6 +388,29 @@ const ProfileScreen = () => {
         onShoeSizeChange={setEditShoeSize}
         onSubmit={handleShoeSizeSubmit}
       />
+
+      {/* Image Viewer Modal */}
+      <Modal
+        visible={showImageViewer}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowImageViewer(false)}>
+        <View style={styles.imageViewerContainer}>
+          <TouchableOpacity
+            style={styles.imageViewerCloseButton}
+            onPress={() => setShowImageViewer(false)}
+            activeOpacity={0.8}>
+            <Text style={styles.imageViewerCloseText}>✕</Text>
+          </TouchableOpacity>
+          {photoURL && (
+            <Image
+              source={{uri: photoURL}}
+              style={styles.imageViewerImage}
+              resizeMode="contain"
+            />
+          )}
+        </View>
+      </Modal>
     </ScrollView>
   );
 };
@@ -228,19 +455,95 @@ const styles = StyleSheet.create({
     padding: 24,
     marginBottom: 16,
   },
-  avatarContainer: {
+  avatarTouchable: {
     marginBottom: 16,
-    overflow: 'hidden',
+    cursor: 'pointer',
+  },
+  avatarContainer: {
+    width: 100,
+    height: 100,
     borderRadius: 50,
+    overflow: 'hidden',
+    backgroundColor: '#E0E0E0',
+    position: 'relative',
+    alignSelf: 'center',
   },
   avatarEmoji: {
     fontSize: 80,
+    textAlign: 'center',
+    lineHeight: 100,
   },
   avatarImage: {
     width: 100,
     height: 100,
     borderRadius: 50,
     backgroundColor: '#E0E0E0',
+  },
+  avatarLoadingContainer: {
+    width: 100,
+    height: 100,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F0F0F0',
+  },
+  cameraIconOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: '#007AFF',
+    borderRadius: 20,
+    width: 36,
+    height: 36,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: '#FFFFFF',
+    borderStyle: 'solid',
+    zIndex: 1,
+    cursor: 'pointer',
+  },
+  cameraIconText: {
+    fontSize: 18,
+    color: '#FFFFFF',
+  },
+  imageViewerContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.95)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  imageViewerCloseButton: {
+    position: 'absolute',
+    top: 50,
+    right: 20,
+    zIndex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    borderRadius: 20,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    cursor: 'pointer',
+  },
+  imageViewerCloseText: {
+    fontSize: 24,
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+  },
+  imageViewerImage: {
+    width: Dimensions.get('window').width,
+    height: Dimensions.get('window').height,
+  },
+  changePhotoButton: {
+    marginTop: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    cursor: 'pointer',
+  },
+  changePhotoText: {
+    fontSize: 14,
+    color: '#007AFF',
+    fontWeight: '500',
   },
   userName: {
     fontSize: 24,
