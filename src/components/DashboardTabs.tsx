@@ -411,7 +411,7 @@ const DashboardTabs = ({
                   style={styles.deleteButton}
                   onPress={() => confirmDelete(shoe)}
                   accessibilityLabel={`Delete ${shoe.name}`}>
-                  <Icon name="delete" size={24} color="#FF3B30" />
+                  <Icon name="delete" size={24} color="#000000" />
                 </TouchableOpacity>
                 <Icon name="arrow-forward" size={24} color="#666666" />
               </View>

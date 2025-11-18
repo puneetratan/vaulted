@@ -261,28 +261,6 @@ const EditItemScreen = () => {
     }
   };
 
-  const handleDelete = () => {
-    Alert.alert(
-      'Delete Item',
-      'Are you sure you want to delete this item?',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => {
-            // Here you would typically delete the item from your data store
-            Alert.alert('Success', 'Item deleted successfully', [
-              {text: 'OK', onPress: () => navigation.goBack()},
-            ]);
-          },
-        },
-      ],
-    );
-  };
 
   const handleCancel = () => {
     navigation.goBack();
@@ -643,14 +621,6 @@ const EditItemScreen = () => {
 
       {/* Action Buttons */}
       <View style={styles.actions}>
-        <TouchableOpacity
-          style={[styles.button, styles.deleteButton, submitting && styles.buttonDisabled]}
-          onPress={handleDelete}
-          disabled={submitting}>
-          <Icon name="delete" size={24} color="#FFFFFF" />
-          <Text style={styles.deleteButtonText}>Delete</Text>
-        </TouchableOpacity>
-
         <TouchableOpacity
           style={[styles.button, styles.cancelButton, submitting && styles.buttonDisabled]}
           onPress={handleCancel}
