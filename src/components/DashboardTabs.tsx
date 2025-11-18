@@ -309,7 +309,11 @@ const DashboardTabs = ({
           )}
           <View style={styles.shoeInfo}>
             <View style={styles.shadowHeaderRow}>
-              <Text style={styles.shoeName}>{shoe.name}</Text>
+              <View style={styles.shoeNameContainer}>
+                <Text style={styles.shoeName}  numberOfLines={1} ellipsizeMode="tail">
+                  {shoe.name}
+                </Text>
+              </View>
               {isShadow && (
                 <View style={styles.shadowBadge}>
                   <Text style={styles.shadowBadgeText}>
@@ -320,21 +324,6 @@ const DashboardTabs = ({
             </View>
             <Text style={styles.shoeBrand}>{shoe.brand}</Text>
             <View style={styles.shoeMetaRow}>
-              <View style={styles.shoeDetails}>
-                <Text style={styles.shoeDetailText}>Silhouette: {shoe.silhouette}</Text>
-                <Text style={styles.shoeDetailText}>Style ID: {shoe.styleId}</Text>
-                <Text style={styles.shoeDetailText}>Size: {shoe.size}</Text>
-                <Text style={styles.shoeDetailText}>Color: {shoe.color}</Text>
-                {shoe.releaseDate ? (
-                  <Text style={styles.shoeDetailText}>Release: {shoe.releaseDate}</Text>
-                ) : null}
-                {shoe.condition ? (
-                  <Text style={styles.shoeDetailText}>Condition: {shoe.condition}</Text>
-                ) : null}
-                {shoe.notes ? (
-                  <Text style={styles.shoeDetailText}>Notes: {shoe.notes}</Text>
-                ) : null}
-              </View>
               <View
                 style={[
                   styles.quantityBadge,
@@ -352,8 +341,7 @@ const DashboardTabs = ({
               </View>
             </View>
             <Text style={styles.shoeCost}>
-              Retail: $
-              {displayRetail}
+              ${displayRetail}
             </Text>
           </View>
           <View style={styles.arrowContainer}>
@@ -644,7 +632,7 @@ const styles = StyleSheet.create({
   shadowHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
   },
   shadowBadge: {
     backgroundColor: '#E3F2FD',
@@ -712,11 +700,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  shoeNameContainer: {
+    flex: 1,
+    marginRight: 8,
+  },
   shoeName: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 14,
+    fontWeight: '500',
     color: '#000000',
     marginBottom: 4,
+    maxWidth: 240, // Approximately 30 characters at 14px font size
   },
   shoeBrand: {
     fontSize: 14,
