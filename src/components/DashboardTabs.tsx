@@ -110,6 +110,7 @@ const DashboardTabs = ({
         quantity,
         imageUrl: item.imageUrl,
         source: item.source,
+        notes: item.notes,
       };
     });
 

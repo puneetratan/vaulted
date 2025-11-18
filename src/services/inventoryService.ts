@@ -87,6 +87,11 @@ export const saveInventoryItem = async (item: Omit<InventoryItem, 'id' | 'create
       cleanItem.releaseDate = String(cleanItem.releaseDate).trim();
     }
 
+    if (cleanItem.notes !== undefined && cleanItem.notes !== null) {
+      const trimmed = String(cleanItem.notes).trim();
+      cleanItem.notes = trimmed.length > 0 ? trimmed : undefined;
+    }
+
     const itemData = {
       ...cleanItem,
       userId: user.uid,
@@ -269,6 +274,11 @@ export const updateInventoryItem = async (
     if (cleanUpdates.releaseDate !== undefined && cleanUpdates.releaseDate !== null) {
       const trimmed = String(cleanUpdates.releaseDate).trim();
       cleanUpdates.releaseDate = trimmed.length ? trimmed : undefined;
+    }
+
+    if (cleanUpdates.notes !== undefined && cleanUpdates.notes !== null) {
+      const trimmed = String(cleanUpdates.notes).trim();
+      cleanUpdates.notes = trimmed.length > 0 ? trimmed : undefined;
     }
 
     if (Object.keys(cleanUpdates).length === 0) {
