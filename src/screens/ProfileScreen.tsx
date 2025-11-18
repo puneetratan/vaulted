@@ -23,7 +23,7 @@ import {
   ImageLibraryOptions,
 } from 'react-native-image-picker';
 import {useAuth} from '../contexts/AuthContext';
-import {getUserData, updateUserData} from '../services/userService';
+import {getUserData, updateUserData, deleteUserAccount} from '../services/userService';
 import {getStorage, getAuth} from '../services/firebase';
 import ShoeSizeModal from '../components/ShoeSizeModal';
 
@@ -36,6 +36,7 @@ const ProfileScreen = () => {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [localPhotoURL, setLocalPhotoURL] = useState<string | null>(null);
   const [showImageViewer, setShowImageViewer] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
   
   // Get user information from Firebase Auth
   const displayName = user?.displayName || 'User';
@@ -99,6 +100,86 @@ const ProfileScreen = () => {
     } catch (error) {
       console.error('Logout error:', error);
     }
+  };
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      'Delete Account',
+      'Are you sure you want to delete your account? This action cannot be undone. All your data, including inventory items and profile information, will be permanently deleted.',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            // Second confirmation
+            Alert.alert(
+              'Final Confirmation',
+              'This will permanently delete your account and all associated data. Are you absolutely sure?',
+              [
+                {
+                  text: 'Cancel',
+                  style: 'cancel',
+                },
+                {
+                  text: 'Yes, Delete My Account',
+                  style: 'destructive',
+                  onPress: async () => {
+                    if (!user?.uid) {
+                      Alert.alert('Error', 'User not authenticated');
+                      return;
+                    }
+
+                    setDeletingAccount(true);
+                    try {
+                      // Delete all user data (inventory, profile, storage)
+                      await deleteUserAccount(user.uid, photoURL);
+
+                      // Delete Firebase Auth account
+                      const authInstance = getAuth();
+                      const currentUser = authInstance.currentUser;
+                      if (currentUser) {
+                        await currentUser.delete();
+                      }
+
+                      // Logout will happen automatically when auth state changes
+                      Alert.alert(
+                        'Account Deleted',
+                        'Your account has been successfully deleted.',
+                        [
+                          {
+                            text: 'OK',
+                            onPress: async () => {
+                              await logout();
+                            },
+                          },
+                        ],
+                      );
+                    } catch (error: any) {
+                      console.error('Error deleting account:', error);
+                      let errorMessage = 'Failed to delete account. Please try again.';
+                      
+                      if (error?.code === 'auth/requires-recent-login') {
+                        errorMessage = 'For security reasons, please sign out and sign back in before deleting your account.';
+                      } else if (error?.message) {
+                        errorMessage = error.message;
+                      }
+                      
+                      Alert.alert('Error', errorMessage);
+                    } finally {
+                      setDeletingAccount(false);
+                    }
+                  },
+                },
+              ],
+            );
+          },
+        },
+      ],
+    );
   };
 
   const handleImagePicker = () => {
@@ -352,10 +433,19 @@ const ProfileScreen = () => {
           
           
 
-          <TouchableOpacity style={styles.settingsItem}>
-            <Icon name="lock" size={24} color="#007AFF" />
-            <Text style={styles.settingsText}>Delete Account</Text>
-            <Icon name="chevron-right" size={24} color="#CCCCCC" />
+          <TouchableOpacity 
+            style={styles.settingsItem}
+            onPress={handleDeleteAccount}
+            disabled={deletingAccount}>
+            {deletingAccount ? (
+              <ActivityIndicator size="small" color="#FF3B30" style={styles.deleteAccountLoader} />
+            ) : (
+              <Icon name="delete-forever" size={24} color="#FF3B30" />
+            )}
+            <Text style={[styles.settingsText, styles.deleteAccountText]}>
+              {deletingAccount ? 'Deleting Account...' : 'Delete Account'}
+            </Text>
+            {!deletingAccount && <Icon name="chevron-right" size={24} color="#CCCCCC" />}
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.settingsItem}>
@@ -589,6 +679,13 @@ const styles = StyleSheet.create({
   editButton: {
     padding: 8,
     marginLeft: 8,
+  },
+  deleteAccountText: {
+    color: '#FF3B30',
+    fontWeight: '600',
+  },
+  deleteAccountLoader: {
+    marginRight: 16,
   },
 });
 

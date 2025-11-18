@@ -15,6 +15,7 @@ const iconMap: {[key: string]: string} = {
   delete: '🗑',
   edit: '✏️',
   photo: '📷',
+  'auto-awesome': '✨',
 };
 
 interface IconProps {

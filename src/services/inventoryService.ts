@@ -15,6 +15,8 @@ export interface InventoryItem {
   releaseDate?: string;
   imageUrl?: string;
   barcode?: string;
+  notes?: string;
+  source?: string;
   userId: string;
   createdAt?: any;
   updatedAt?: any;

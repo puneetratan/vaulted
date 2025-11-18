@@ -36,6 +36,7 @@ const AddItemScreen = () => {
   const [imagePreview, setImagePreview] = useState<string | undefined>(undefined);
   const [imageFile, setImageFile] = useState<{blob: Blob; name: string; type: string} | undefined>(undefined);
   const [barcode, setBarcode] = useState('');
+  const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -234,6 +235,7 @@ const AddItemScreen = () => {
         releaseDate: releaseDateTrimmed,
         imageUrl: uploadedImageUrl || undefined,
         barcode: barcode.trim() || undefined,
+        notes: notes.trim() || undefined,
         userId: user.uid,
       };
 
@@ -258,6 +260,7 @@ const AddItemScreen = () => {
               setImagePreview(undefined);
               setImageFile(undefined);
               setBarcode('');
+              setNotes('');
               setQuantity('1');
               setReleaseDate('');
               // Navigate back
@@ -435,6 +438,20 @@ const AddItemScreen = () => {
               placeholderTextColor="#999999"
             />
           </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Notes</Text>
+            <TextInput
+              style={[styles.input, styles.textArea]}
+              placeholder="Enter notes (optional)"
+              value={notes}
+              onChangeText={setNotes}
+              placeholderTextColor="#999999"
+              multiline
+              numberOfLines={4}
+              textAlignVertical="top"
+            />
+          </View>
         </View>
       </ScrollView>
 
@@ -548,6 +565,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#000000',
     backgroundColor: '#FFFFFF',
+  },
+  textArea: {
+    minHeight: 100,
+    paddingTop: 12,
   },
   pickerContainer: {
     borderWidth: 1,

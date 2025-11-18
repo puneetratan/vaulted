@@ -28,6 +28,7 @@ interface ShoeItem {
   shadowStatus?: ShadowStatus;
   condition?: string;
   notes?: string;
+  source?: string;
   errorMessage?: string;
 }
 
@@ -108,6 +109,7 @@ const DashboardTabs = ({
         releaseDate: item.releaseDate ?? undefined,
         quantity,
         imageUrl: item.imageUrl,
+        source: item.source,
       };
     });
 
@@ -296,17 +298,28 @@ const DashboardTabs = ({
               navigation.navigate('EditItem', {item: shoe});
             }
           }}>
-          {shoe.imageUrl && (!isShadow || (isShadow && !isProcessing)) ? (
-            <Image source={{uri: shoe.imageUrl}} style={styles.shoeThumbnail} />
-          ) : (
-            <View style={[styles.shoeThumbnail, styles.shoeThumbnailPlaceholder]}>
-              {isProcessing ? (
-                <ActivityIndicator color="#007AFF" />
-              ) : (
-                <Icon name="image" size={32} color="#CCCCCC" />
-              )}
-            </View>
-          )}
+          <View style={styles.imageContainer}>
+            {shoe.imageUrl && (!isShadow || (isShadow && !isProcessing)) ? (
+              <Image source={{uri: shoe.imageUrl}} style={styles.shoeThumbnail} />
+            ) : (
+              <View style={[styles.shoeThumbnail, styles.shoeThumbnailPlaceholder]}>
+                {isProcessing ? (
+                  <ActivityIndicator color="#007AFF" />
+                ) : (
+                  <Icon name="image" size={32} color="#CCCCCC" />
+                )}
+              </View>
+            )}
+            {!isShadow && (
+              <View style={styles.sourceIconOverlay}>
+                {shoe.source === 'ai' ? (
+                  <Icon name="auto-awesome" size={18} color="#000000" />
+                ) : (
+                  <Icon name="edit" size={18} color="#000000" />
+                )}
+              </View>
+            )}
+          </View>
           <View style={styles.shoeInfo}>
             <View style={styles.shadowHeaderRow}>
               <View style={styles.shoeNameContainer}>
@@ -613,15 +626,34 @@ const styles = StyleSheet.create({
     borderColor: '#D0E2FF',
     backgroundColor: '#F5F9FF',
   },
+  imageContainer: {
+    position: 'relative',
+  },
   shoeThumbnail: {
-    width: 100,
-    height: 100,
+    width: 80,
+    height: 80,
     borderRadius: 8,
     backgroundColor: '#F0F0F0',
   },
   shoeThumbnailPlaceholder: {
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  sourceIconOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: 12,
+    width: 28,
+    height: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
   },
   shoeInfo: {
     flex: 1,
