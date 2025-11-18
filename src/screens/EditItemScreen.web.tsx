@@ -28,6 +28,7 @@ interface ShoeItem {
   quantity?: number;
   releaseDate?: string;
   imageUrl?: string;
+  notes?: string;
 }
 
 type RouteParams = {
@@ -55,6 +56,7 @@ const EditItemScreen = () => {
   const [releaseDate, setReleaseDate] = useState(item?.releaseDate || '');
   const [imageUrl, setImageUrl] = useState(item?.imageUrl || '');
   const [quantity, setQuantity] = useState(item?.quantity?.toString() || '1');
+  const [notes, setNotes] = useState(item?.notes || '');
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -74,6 +76,7 @@ const EditItemScreen = () => {
       setReleaseDate(item.releaseDate || '');
       setImageUrl(item.imageUrl || '');
       setQuantity(item.quantity?.toString() || '1');
+      setNotes(item.notes || '');
     }
   }, [item]);
 
@@ -137,6 +140,7 @@ const EditItemScreen = () => {
       releaseDate: releaseDateTrimmed,
       quantity: quantityNum,
       imageUrl: imageUrl?.trim() || undefined,
+      notes: notes.trim() || undefined,
     };
 
     setSubmitting(true);
@@ -341,6 +345,20 @@ const EditItemScreen = () => {
             placeholder="Enter release date"
           />
         </View>
+
+        <View style={styles.field}>
+          <Text style={styles.label}>Notes</Text>
+          <TextInput
+            style={[styles.input, styles.textArea]}
+            value={notes}
+            onChangeText={setNotes}
+            placeholder="Enter notes (optional)"
+            placeholderTextColor="#999999"
+            multiline
+            numberOfLines={4}
+            textAlignVertical="top"
+          />
+        </View>
         </View>
       </ScrollView>
 
@@ -467,6 +485,10 @@ const styles = StyleSheet.create({
     color: '#000000',
     borderWidth: 1,
     borderColor: '#E0E0E0',
+  },
+  textArea: {
+    minHeight: 100,
+    paddingTop: 12,
   },
   pickerContainer: {
     borderWidth: 1,

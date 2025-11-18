@@ -336,6 +336,28 @@ const DashboardTabs = ({
               )}
             </View>
             <Text style={styles.shoeBrand}>{shoe.brand}</Text>
+            <View style={styles.shoeDetailsRow}>
+              {shoe.silhouette && 
+               typeof shoe.silhouette === 'string' &&
+               shoe.silhouette.trim() !== '' && 
+               shoe.silhouette.trim().toLowerCase() !== 'unknown' && 
+               shoe.silhouette.trim().toLowerCase() !== 'n/a' && (
+                <Text style={styles.shoeDetailText} numberOfLines={1}>
+                  <Text style={styles.shoeDetailLabel}>Silhouette: </Text>
+                  {shoe.silhouette}
+                </Text>
+              )}
+              {shoe.styleId && 
+               typeof shoe.styleId === 'string' &&
+               shoe.styleId.trim() !== '' && 
+               shoe.styleId.trim().toLowerCase() !== 'unknown' && 
+               shoe.styleId.trim().toLowerCase() !== 'n/a' && (
+                <Text style={styles.shoeDetailText} numberOfLines={1}>
+                  <Text style={styles.shoeDetailLabel}>Style ID: </Text>
+                  {shoe.styleId}
+                </Text>
+              )}
+            </View>
             <View style={styles.shoeMetaRow}>
               <View
                 style={[
@@ -747,7 +769,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#007AFF',
-    marginBottom: 8,
+    marginBottom: 4,
+  },
+  shoeDetailsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    marginBottom: 6,
   },
   shoeMetaRow: {
     flexDirection: 'row',
@@ -760,10 +788,15 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   shoeDetailText: {
-    fontSize: 13,
+    fontSize: 12,
     color: '#666666',
     marginRight: 12,
-    marginBottom: 4,
+    marginBottom: 0,
+  },
+  shoeDetailLabel: {
+    fontSize: 12,
+    color: '#666666',
+    fontWeight: '600',
   },
   quantityBadge: {
     backgroundColor: '#E3F2FD',
