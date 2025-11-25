@@ -17,6 +17,7 @@ import {useAuth} from '../contexts/AuthContext';
 import {getUserData, updateUserData} from '../services/userService';
 import ShoeSizeModal from '../components/ShoeSizeModal';
 import DashboardTabs from '../components/DashboardTabs';
+import FilterModal, {FilterOptions} from '../components/FilterModal';
 import {getFunctions} from '../services/firebase';
 import RNFS from 'react-native-fs';
 
@@ -76,8 +77,16 @@ const DashboardScreen = () => {
   const [exporting, setExporting] = useState(false);
   const [shadowItems, setShadowItems] = useState<ShadowListItem[]>([]);
   const [inventoryRefreshToken, setInventoryRefreshToken] = useState(0);
+  const [activeFilters, setActiveFilters] = useState<FilterOptions | null>(null);
+  const [availableBrands, setAvailableBrands] = useState<string[]>([]);
+  const [availableColors, setAvailableColors] = useState<string[]>([]);
   const triggerInventoryRefresh = useCallback(() => {
     setInventoryRefreshToken(prev => prev + 1);
+  }, []);
+
+  const handleAvailableFiltersChange = useCallback((brands: string[], colors: string[]) => {
+    setAvailableBrands(brands);
+    setAvailableColors(colors);
   }, []);
 
 
@@ -316,38 +325,15 @@ const DashboardScreen = () => {
 
   const handleFilter = () => {
     setShowFilterModal(true);
-    Alert.alert(
-      'Filter Options',
-      'Filter by:',
-      [
-        {
-          text: 'Brand',
-          onPress: () => {
-            Alert.alert('Filter', 'Filter by brand clicked');
-            setShowFilterModal(false);
-          },
-        },
-        {
-          text: 'Size',
-          onPress: () => {
-            Alert.alert('Filter', 'Filter by size clicked');
-            setShowFilterModal(false);
-          },
-        },
-        {
-          text: 'Color',
-          onPress: () => {
-            Alert.alert('Filter', 'Filter by color clicked');
-            setShowFilterModal(false);
-          },
-        },
-        {
-          text: 'Cancel',
-          style: 'cancel',
-          onPress: () => setShowFilterModal(false),
-        },
-      ],
-    );
+  };
+
+  const handleFilterApply = (filters: FilterOptions) => {
+    setActiveFilters(filters);
+    setShowFilterModal(false);
+  };
+
+  const handleFilterClear = () => {
+    setActiveFilters(null);
   };
 
   const handleSearchIconPress = () => {
@@ -460,6 +446,8 @@ const DashboardScreen = () => {
           shadowItems={shadowItems}
           onShadowDelete={handleShadowItemDelete}
           refreshToken={inventoryRefreshToken}
+          filters={activeFilters}
+          onAvailableFiltersChange={handleAvailableFiltersChange}
         />
       </View>
 
@@ -476,14 +464,14 @@ const DashboardScreen = () => {
             disabled={exporting}>
             {exporting ? (
               <>
-                <ActivityIndicator size="small" color="#007AFF" />
+                <ActivityIndicator size="small" color="#FFFFFF" />
                 <Text style={[styles.bottomButtonText, styles.exportingText]}>
                   Exporting...
                 </Text>
               </>
             ) : (
               <>
-                <Icon name="file-download" size={24} color="#007AFF" />
+                <Icon name="file-download" size={24} color="#FFFFFF" />
                 <Text style={styles.bottomButtonText}>Export</Text>
               </>
             )}
@@ -491,7 +479,17 @@ const DashboardScreen = () => {
           <TouchableOpacity
             style={[styles.bottomButton, styles.filterButton]}
             onPress={handleFilter}>
-            <Icon name="filter-list" size={24} color="#007AFF" />
+            {activeFilters && (
+              (activeFilters.brands.length > 0 ||
+               activeFilters.sources.length > 0 ||
+               activeFilters.colors.length > 0 ||
+               activeFilters.priceRange !== null) && (
+                <View style={styles.filterBadge}>
+                  <Icon name="check" size={12} color="#FFFFFF" />
+                </View>
+              )
+            )}
+            <Icon name="filter-list" size={24} color="#FFFFFF" />
             <Text style={styles.bottomButtonText}>Filter</Text>
           </TouchableOpacity>
         </View>
@@ -528,6 +526,16 @@ const DashboardScreen = () => {
         visible={showHamburgerMenu}
         onClose={() => setShowHamburgerMenu(false)}
         onMenuItemPress={handleMenuItemPress}
+      />
+
+      {/* Filter Modal */}
+      <FilterModal
+        visible={showFilterModal}
+        onClose={() => setShowFilterModal(false)}
+        onApply={handleFilterApply}
+        availableBrands={availableBrands}
+        availableColors={availableColors}
+        currentFilters={activeFilters || undefined}
       />
     </SafeAreaView>
   );
@@ -587,13 +595,28 @@ const styles = StyleSheet.create({
     minWidth: 100,
   },
   exportButton: {
-    backgroundColor: '#E3F2FD',
+    backgroundColor: '#474747',
   },
   filterButton: {
-    backgroundColor: '#E3F2FD',
+    backgroundColor: '#474747',
+    position: 'relative',
+  },
+  filterBadge: {
+    position: 'absolute',
+    top: -6,
+    right: -6,
+    backgroundColor: '#FF3B30',
+    borderRadius: 10,
+    width: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#474747',
+    zIndex: 10,
   },
   bottomButtonText: {
-    color: '#007AFF',
+    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
     marginLeft: 8,
@@ -605,7 +628,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#007AFF',
+    backgroundColor: '#474747',
     paddingVertical: 16,
     paddingHorizontal: 24,
     margin: 16,

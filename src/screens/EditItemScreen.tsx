@@ -840,7 +840,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   submitButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#474747',
   },
   submitButtonText: {
     color: '#FFFFFF',

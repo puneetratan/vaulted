@@ -5,6 +5,7 @@ import {StackNavigationProp} from '@react-navigation/stack';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {RootStackParamList} from '../navigation/AppNavigator';
 import {getInventoryItemsPage, InventoryItem, deleteInventoryItem} from '../services/inventoryService';
+import {FilterOptions} from './FilterModal';
 
 type DashboardTabsNavigationProp = StackNavigationProp<RootStackParamList>;
 
@@ -37,6 +38,8 @@ interface DashboardTabsProps {
   shadowItems?: ShoeItem[];
   onShadowDelete?: (id: string) => void;
   refreshToken?: number;
+  filters?: FilterOptions | null;
+  onAvailableFiltersChange?: (brands: string[], colors: string[]) => void;
 }
 
 const DashboardTabs = ({
@@ -44,6 +47,8 @@ const DashboardTabs = ({
   shadowItems = [],
   onShadowDelete,
   refreshToken = 0,
+  filters = null,
+  onAvailableFiltersChange,
 }: DashboardTabsProps) => {
   const navigation = useNavigation<DashboardTabsNavigationProp>();
   const [activeTab, setActiveTab] = useState<TabType>('Total Pairs');
@@ -176,33 +181,121 @@ const DashboardTabs = ({
     }
   };
 
+  // Extract available brands and colors for filter options
+  const availableBrands = useMemo(() => {
+    const brands = new Set<string>();
+    allShoes.forEach(shoe => {
+      if (shoe.brand && shoe.brand.trim() !== '' && shoe.brand.toLowerCase() !== 'unknown brand') {
+        brands.add(shoe.brand);
+      }
+    });
+    return Array.from(brands).sort();
+  }, [allShoes]);
+
+  const availableColors = useMemo(() => {
+    const colors = new Set<string>();
+    allShoes.forEach(shoe => {
+      if (shoe.color && shoe.color.trim() !== '' && shoe.color.toLowerCase() !== 'unknown') {
+        colors.add(shoe.color);
+      }
+    });
+    return Array.from(colors).sort();
+  }, [allShoes]);
+
+  // Notify parent of available filter options
+  useEffect(() => {
+    if (onAvailableFiltersChange) {
+      onAvailableFiltersChange(availableBrands, availableColors);
+    }
+  }, [availableBrands, availableColors, onAvailableFiltersChange]);
+
+  // Apply filters to shoes
+  const applyFilters = useCallback((shoes: ShoeItem[]) => {
+    if (!filters) {
+      return shoes;
+    }
+
+    return shoes.filter((shoe) => {
+      // Brand filter
+      if (filters.brands.length > 0 && !filters.brands.includes(shoe.brand)) {
+        return false;
+      }
+
+      // Source filter
+      if (filters.sources.length > 0) {
+        const shoeSource = shoe.source || 'manual';
+        const sourceMatch = filters.sources.includes(shoeSource);
+        if (!sourceMatch) {
+          return false;
+        }
+      }
+
+      // Color filter
+      if (filters.colors.length > 0 && !filters.colors.includes(shoe.color)) {
+        return false;
+      }
+
+      // Price filter
+      if (filters.priceRange) {
+        const price = shoe.retailValue || shoe.cost || 0;
+        switch (filters.priceRange) {
+          case 'Less than $50':
+            if (price >= 50) return false;
+            break;
+          case 'Between $50-$100':
+            if (price < 50 || price > 100) return false;
+            break;
+          case 'Above $100':
+            if (price <= 100) return false;
+            break;
+        }
+      }
+
+      return true;
+    });
+  }, [filters]);
+
   // Filter shoes based on search query
   const filteredInventoryShoes = useMemo(() => {
-    if (!searchQuery.trim()) {
-      return allShoes;
+    let result = allShoes;
+    
+    // Apply search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(
+        (shoe) =>
+          shoe.name.toLowerCase().includes(query) ||
+          shoe.brand.toLowerCase().includes(query) ||
+          shoe.color.toLowerCase().includes(query) ||
+          shoe.size.toLowerCase().includes(query),
+      );
     }
-    const query = searchQuery.toLowerCase();
-    return allShoes.filter(
-      (shoe) =>
-        shoe.name.toLowerCase().includes(query) ||
-        shoe.brand.toLowerCase().includes(query) ||
-        shoe.color.toLowerCase().includes(query) ||
-        shoe.size.toLowerCase().includes(query),
-    );
-  }, [allShoes, searchQuery]);
+
+    // Apply filters
+    result = applyFilters(result);
+    
+    return result;
+  }, [allShoes, searchQuery, applyFilters]);
 
   const filteredDisplayShoes = useMemo(() => {
-    if (!searchQuery.trim()) {
-      return combinedShoes;
+    let result = combinedShoes;
+    
+    // Apply search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter((shoe) => {
+        const fields = [shoe.name, shoe.brand, shoe.color, shoe.size];
+        return fields.some(
+          (field) => typeof field === 'string' && field.toLowerCase().includes(query),
+        );
+      });
     }
-    const query = searchQuery.toLowerCase();
-    return combinedShoes.filter((shoe) => {
-      const fields = [shoe.name, shoe.brand, shoe.color, shoe.size];
-      return fields.some(
-        (field) => typeof field === 'string' && field.toLowerCase().includes(query),
-      );
-    });
-  }, [combinedShoes, searchQuery]);
+
+    // Apply filters
+    result = applyFilters(result);
+    
+    return result;
+  }, [combinedShoes, searchQuery, applyFilters]);
 
   const shadowCount = normalizedShadowItems.length;
   const shadowProcessingCount = useMemo(
@@ -299,6 +392,15 @@ const DashboardTabs = ({
               navigation.navigate('EditItem', {item: shoe});
             }
           }}>
+          {!isShadow && (
+            <View style={styles.sourceIconOverlay}>
+              {shoe.source === 'ai' ? (
+                <Icon name="auto-awesome" size={14} color="#FFFFFF" />
+              ) : (
+                <Icon name="edit" size={14} color="#FFFFFF" />
+              )}
+            </View>
+          )}
           <View style={styles.imageContainer}>
             {shoe.imageUrl && (!isShadow || (isShadow && !isProcessing)) ? (
               <Image source={{uri: shoe.imageUrl}} style={styles.shoeThumbnail} />
@@ -311,21 +413,18 @@ const DashboardTabs = ({
                 )}
               </View>
             )}
-            {!isShadow && (
-              <View style={styles.sourceIconOverlay}>
-                {shoe.source === 'ai' ? (
-                  <Icon name="auto-awesome" size={18} color="#000000" />
-                ) : (
-                  <Icon name="edit" size={18} color="#000000" />
-                )}
-              </View>
-            )}
           </View>
           <View style={styles.shoeInfo}>
             <View style={styles.shadowHeaderRow}>
               <View style={styles.shoeNameContainer}>
                 <Text style={styles.shoeName}  numberOfLines={1} ellipsizeMode="tail">
-                  {shoe.name}
+                  {shoe.silhouette && 
+                   typeof shoe.silhouette === 'string' &&
+                   shoe.silhouette.trim() !== '' && 
+                   shoe.silhouette.trim().toLowerCase() !== 'unknown' && 
+                   shoe.silhouette.trim().toLowerCase() !== 'n/a'
+                    ? shoe.silhouette
+                    : shoe.name}
                 </Text>
               </View>
               {isShadow && (
@@ -338,16 +437,6 @@ const DashboardTabs = ({
             </View>
             <Text style={styles.shoeBrand}>{shoe.brand}</Text>
             <View style={styles.shoeDetailsRow}>
-              {shoe.silhouette && 
-               typeof shoe.silhouette === 'string' &&
-               shoe.silhouette.trim() !== '' && 
-               shoe.silhouette.trim().toLowerCase() !== 'unknown' && 
-               shoe.silhouette.trim().toLowerCase() !== 'n/a' && (
-                <Text style={styles.shoeDetailText} numberOfLines={1}>
-                  <Text style={styles.shoeDetailLabel}>Silhouette: </Text>
-                  {shoe.silhouette}
-                </Text>
-              )}
               {shoe.styleId && 
                typeof shoe.styleId === 'string' &&
                shoe.styleId.trim() !== '' && 
@@ -638,6 +727,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 12,
     marginBottom: 12,
+    position: 'relative',
     shadowColor: '#000',
     shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
@@ -665,11 +755,11 @@ const styles = StyleSheet.create({
   sourceIconOverlay: {
     position: 'absolute',
     top: 0,
-    left: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    right: 8,
+    backgroundColor: '#000000',
     borderRadius: 12,
-    width: 28,
-    height: 28,
+    width: 24,
+    height: 24,
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
@@ -677,6 +767,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 2,
     elevation: 2,
+    zIndex: 10,
   },
   shoeInfo: {
     flex: 1,

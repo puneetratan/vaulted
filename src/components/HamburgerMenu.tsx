@@ -6,8 +6,8 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  Platform,
 } from 'react-native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
 interface HamburgerMenuProps {
@@ -17,6 +17,7 @@ interface HamburgerMenuProps {
 }
 
 const HamburgerMenu = ({visible, onClose, onMenuItemPress}: HamburgerMenuProps) => {
+  const insets = useSafeAreaInsets();
   const menuItems = [
     {id: 'profile', label: 'Profile', icon: 'person'},
     {id: 'privacy', label: 'Privacy Policy', icon: 'privacy-tip'},
@@ -38,7 +39,7 @@ const HamburgerMenu = ({visible, onClose, onMenuItemPress}: HamburgerMenuProps) 
       <View style={styles.overlay}>
         <View style={styles.drawerContainer}>
           {/* Drawer Header */}
-          <View style={styles.header}>
+          <View style={[styles.header, {paddingTop: insets.top + 20}]}>
             <Text style={styles.headerTitle}>Menu</Text>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
               <Icon name="close" size={24} color="#000000" />
@@ -118,7 +119,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 20,
+    paddingBottom: 20,
     borderBottomWidth: 1,
     borderBottomColor: '#E0E0E0',
     backgroundColor: '#FFFFFF',
