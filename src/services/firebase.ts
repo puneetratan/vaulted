@@ -5,17 +5,19 @@ import { getFirestore as rnGetFirestore } from '@react-native-firebase/firestore
 import { getStorage as rnGetStorage } from '@react-native-firebase/storage';
 import { getFunctions as rnGetFunctions, connectFunctionsEmulator } from '@react-native-firebase/functions';
 import { Platform } from "react-native";
+import firebaseConfigData from '../../firebaseConfig.json';
 
-console.log('=========Platform=========', Platform.OS);
+// Get platform-specific config
+const platformConfig = Platform.OS === 'ios' ? firebaseConfigData.ios : firebaseConfigData.android;
 const firebaseConfig = {
-  apiKey: "AIzaSyBZuRY5RIdwCG7TmI81u8tOmX5-dG8h1IM",
-  authDomain: "dev-vaultapp.firebaseapp.com",
-  projectId: "dev-vaultapp",
-  storageBucket: "dev-vaultapp.firebasestorage.app",
-  messagingSenderId: "872715867979",
-  appId: "1:872715867979:ios:5a876d48f392bdf0db7ace",
-  measurementId: "G-PNKEGHHYSF",
-  databaseURL: "https://dev-vaultapp-default-rtdb.firebaseio.com",
+  apiKey: platformConfig.apiKey,
+  authDomain: platformConfig.authDomain,
+  projectId: platformConfig.projectId,
+  storageBucket: platformConfig.storageBucket,
+  messagingSenderId: platformConfig.messagingSenderId,
+  appId: platformConfig.appId,
+  measurementId: platformConfig.measurementId,
+  databaseURL: platformConfig.databaseURL,
 };
 
 
