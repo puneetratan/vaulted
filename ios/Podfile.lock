@@ -1720,6 +1720,9 @@ PODS:
     - React-Core
   - react-native-safe-area-context (5.6.2):
     - React-Core
+  - react-native-worklets-core (1.6.2):
+    - RCT-Folly (= 2021.07.22.00)
+    - React-Core
   - React-NativeModulesApple (0.72.6):
     - hermes-engine
     - React-callinvoker
@@ -1908,6 +1911,7 @@ PODS:
     - React
     - React-callinvoker
     - React-Core
+    - react-native-worklets-core
   - Yoga (1.14.0)
 
 DEPENDENCIES:
@@ -1937,6 +1941,7 @@ DEPENDENCIES:
   - react-native-document-picker (from `../node_modules/react-native-document-picker`)
   - react-native-image-picker (from `../node_modules/react-native-image-picker`)
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
+  - react-native-worklets-core (from `../node_modules/react-native-worklets-core`)
   - React-NativeModulesApple (from `../node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios`)
   - React-perflogger (from `../node_modules/react-native/ReactCommon/reactperflogger`)
   - React-RCTActionSheet (from `../node_modules/react-native/Libraries/ActionSheetIOS`)
@@ -2055,6 +2060,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-image-picker"
   react-native-safe-area-context:
     :path: "../node_modules/react-native-safe-area-context"
+  react-native-worklets-core:
+    :path: "../node_modules/react-native-worklets-core"
   React-NativeModulesApple:
     :path: "../node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios"
   React-perflogger:
@@ -2179,6 +2186,7 @@ SPEC CHECKSUMS:
   react-native-document-picker: f44fee3ea76683f6e79464b39e631a15263c35db
   react-native-image-picker: b981b88b807605540b2de3245c76e9729f418b37
   react-native-safe-area-context: 6c8805194166a9d6b3e53ba69ca76756c9bfb052
+  react-native-worklets-core: 7ec3b73b402b9ae21ca2e22acb3934d94c6440fc
   React-NativeModulesApple: 381289a1869b44683e0cba9f81238c7e18da87e4
   React-perflogger: e3596db7e753f51766bceadc061936ef1472edc3
   React-RCTActionSheet: 17ab132c748b4471012abbcdcf5befe860660485
@@ -2215,9 +2223,9 @@ SPEC CHECKSUMS:
   RNSVG: ae50dd253f44447b32d0f5a3657a97859f289891
   RNVectorIcons: 5867c43e74e7405a4ec434324c9efda29e8693ec
   SocketRocket: f32cd54efbe0f095c4d7594881e52619cfe80b17
-  VisionCamera: 6a90992822a293947af96e77618933405a417871
+  VisionCamera: 3a638fdf2807366ec377f4b4c0e82794d61c4910
   Yoga: b76f1acfda8212aa16b7e26bcce3983230c82603
 
-PODFILE CHECKSUM: acc86829380db27aa5b9871c1847c969beb9852f
+PODFILE CHECKSUM: 1cc209a3c55a403308136945d1e34f7be7d07f40
 
 COCOAPODS: 1.16.2

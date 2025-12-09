@@ -74,11 +74,19 @@ target 'VaultTemp' do
       target.build_configurations.each do |config|
         config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17'
         config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
+        config.build_settings['CLANG_CXX_LIBRARY'] = 'libc++'
         
         # Fix for non-modular header errors with use_frameworks!
         # Allow non-modular includes for React Native and related pods
         if target.name.include?('React') || target.name.include?('RCT') || target.name.include?('react-native')
           config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
+          # Add ReactCommon header search paths for bridging and other headers
+          react_native_path = File.join(__dir__, '..', 'node_modules', 'react-native')
+          react_native_abs = File.expand_path(react_native_path)
+          if Dir.exist?(react_native_abs)
+            config.build_settings['HEADER_SEARCH_PATHS'] ||= ['$(inherited)']
+            config.build_settings['HEADER_SEARCH_PATHS'] << File.join(react_native_abs, 'ReactCommon')
+          end
         end
         
         # Fix for react-native-image-picker
@@ -86,10 +94,67 @@ target 'VaultTemp' do
           config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
         end
         
+        # Fix for react-native-vision-camera
+        if target.name == 'VisionCamera'
+          config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
+          config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17'
+          config.build_settings['CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER'] = 'NO'
+          # Add header search paths for React Native headers including bridging
+          react_native_path = File.join(__dir__, '..', 'node_modules', 'react-native')
+          react_native_abs = File.expand_path(react_native_path)
+          if Dir.exist?(react_native_abs)
+            config.build_settings['HEADER_SEARCH_PATHS'] ||= ['$(inherited)']
+            # Add ReactCommon root for bridging headers (react/bridging/...)
+            config.build_settings['HEADER_SEARCH_PATHS'] << File.join(react_native_abs, 'ReactCommon')
+            config.build_settings['HEADER_SEARCH_PATHS'] << File.join(react_native_abs, 'ReactCommon', 'react', 'nativemodule', 'core', 'platform', 'ios')
+            config.build_settings['HEADER_SEARCH_PATHS'] << File.join(react_native_abs, 'React')
+          end
+        end
+        
+        # Fix for abseil (Firebase/gRPC dependency)
+        if target.name == 'abseil'
+          config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17'
+          config.build_settings['CLANG_CXX_LIBRARY'] = 'libc++'
+          config.build_settings['GCC_C_LANGUAGE_STANDARD'] = 'c11'
+          config.build_settings['CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER'] = 'NO'
+        end
+        
+        # Fix for gRPC and related C++ libraries
+        if target.name.include?('gRPC') || target.name.include?('BoringSSL-GRPC') || target.name.include?('leveldb')
+          config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17'
+          config.build_settings['CLANG_CXX_LIBRARY'] = 'libc++'
+          config.build_settings['CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER'] = 'NO'
+        end
+        
         # Fix for Firebase Swift compatibility
         if target.name.include?('Firebase') || target.name.include?('RNFB')
           config.build_settings['SWIFT_VERSION'] = '5.0'
           config.build_settings['DEFINES_MODULE'] = 'YES'
+        end
+        
+        # Fix for react-native-worklets-core
+        if target.name == 'react-native-worklets-core'
+          config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17'
+          config.build_settings['CLANG_CXX_LIBRARY'] = 'libc++'
+          config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
+          config.build_settings['CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER'] = 'NO'
+          # Add header search paths for React Native headers
+          react_native_path = File.join(__dir__, '..', 'node_modules', 'react-native')
+          # Convert to absolute path and ensure it exists
+          react_native_abs = File.expand_path(react_native_path)
+          if Dir.exist?(react_native_abs)
+            config.build_settings['HEADER_SEARCH_PATHS'] ||= ['$(inherited)']
+            # The ReactCommon headers are at: ReactCommon/react/nativemodule/core/platform/ios/ReactCommon/
+            # Import is: <ReactCommon/RCTTurboModule.h>
+            # So we need the parent of the ReactCommon directory
+            common_path = File.join(react_native_abs, 'ReactCommon', 'react', 'nativemodule', 'core', 'platform', 'ios')
+            if Dir.exist?(common_path)
+              config.build_settings['HEADER_SEARCH_PATHS'] << common_path
+            end
+            # Also add React and ReactCommon root
+            config.build_settings['HEADER_SEARCH_PATHS'] << File.join(react_native_abs, 'React')
+            config.build_settings['HEADER_SEARCH_PATHS'] << File.join(react_native_abs, 'ReactCommon')
+          end
         end
       end
     end
