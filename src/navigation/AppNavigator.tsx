@@ -24,6 +24,9 @@ const EditItemScreen = Platform.OS === 'web'
 const AddItemScreen = Platform.OS === 'web'
   ? require('../screens/AddItemScreen.web').default
   : require('../screens/AddItemScreen').default;
+const BarcodeScannerScreen = Platform.OS === 'web'
+  ? require('../screens/BarcodeScannerScreen.web').default
+  : require('../screens/BarcodeScannerScreen').default;
 
 interface ShoeItem {
   id: string;
@@ -48,7 +51,8 @@ export type RootStackParamList = {
   Terms: undefined;
   PrivacyPolicy: undefined;
   EditItem: {item: ShoeItem} | undefined;
-  AddItem: undefined;
+  AddItem: {barcode?: string} | undefined;
+  BarcodeScanner: undefined;
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -127,6 +131,11 @@ const AppNavigator = () => {
         <Stack.Screen
           name="AddItem"
           component={AddItemScreen}
+          options={{headerShown: false}}
+        />
+        <Stack.Screen
+          name="BarcodeScanner"
+          component={BarcodeScannerScreen}
           options={{headerShown: false}}
         />
       </Stack.Navigator>

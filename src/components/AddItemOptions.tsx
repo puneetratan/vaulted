@@ -11,6 +11,7 @@ import {
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {launchImageLibrary, ImagePickerResponse} from 'react-native-image-picker';
 import DocumentPicker from 'react-native-document-picker';
+import {useNavigation} from '@react-navigation/native';
 import {getStorage, getFunctions} from '../services/firebase';
 import {useAuth} from '../contexts/AuthContext';
 import {getUserData} from '../services/userService';
@@ -49,6 +50,7 @@ const AddItemOptions = ({
   onImageAnalysisError,
 }: AddItemOptionsProps) => {
   const {user} = useAuth();
+  const navigation = useNavigation();
 
   const normalizeMetadata = (payload: any): AnalyzedMetadata[] => {
     if (!payload) {
@@ -76,13 +78,7 @@ const AddItemOptions = ({
 
   const handleBarcodeReader = () => {
     onClose();
-    Alert.alert(
-      'Barcode Reader',
-      'Barcode scanner functionality will be implemented here',
-      [{text: 'OK'}],
-    );
-    // TODO: Implement barcode scanning
-    // You can use react-native-vision-camera and react-native-barcode-mask
+    navigation.navigate('BarcodeScanner' as never);
   };
 
   const handleXLSImport = async () => {

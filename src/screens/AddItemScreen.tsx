@@ -14,7 +14,8 @@ import {
   Pressable,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useRoute, RouteProp} from '@react-navigation/native';
+import {RootStackParamList} from '../navigation/AppNavigator';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {launchImageLibrary, ImagePickerResponse} from 'react-native-image-picker';
 import {saveInventoryItem} from '../services/inventoryService';
@@ -24,8 +25,11 @@ import {getUserData} from '../services/userService';
 import {Picker} from '@react-native-picker/picker';
 import DateTimePicker, {DateTimePickerEvent} from '@react-native-community/datetimepicker';
 
+type AddItemScreenRouteProp = RouteProp<RootStackParamList, 'AddItem'>;
+
 const AddItemScreen = () => {
   const navigation = useNavigation();
+  const route = useRoute<AddItemScreenRouteProp>();
   const {user} = useAuth();
   
   const [name, setName] = useState('');
@@ -41,7 +45,7 @@ const AddItemScreen = () => {
   const [releaseDatePickerValue, setReleaseDatePickerValue] = useState<Date | null>(null);
   const [imagePreview, setImagePreview] = useState<string | undefined>(undefined);
   const [imageAsset, setImageAsset] = useState<{uri: string; name?: string; type?: string} | undefined>(undefined);
-  const [barcode, setBarcode] = useState('');
+  const [barcode, setBarcode] = useState(route.params?.barcode || '');
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const [quantityModalVisible, setQuantityModalVisible] = useState(false);
