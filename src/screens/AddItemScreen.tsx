@@ -32,7 +32,6 @@ const AddItemScreen = () => {
   const route = useRoute<AddItemScreenRouteProp>();
   const {user} = useAuth();
   
-  const [name, setName] = useState('');
   const [brand, setBrand] = useState('');
   const [silhouette, setSilhouette] = useState('');
   const [styleId, setStyleId] = useState('');
@@ -138,15 +137,7 @@ const AddItemScreen = () => {
   };
 
   const handleSave = async () => {
-    // Validation
-    if (!name.trim()) {
-      Alert.alert('Error', 'Please enter item name');
-      return;
-    }
-    if (!brand.trim()) {
-      Alert.alert('Error', 'Please enter brand');
-      return;
-    }
+    // Validation - only silhouette and styleId are mandatory
     if (!silhouette.trim()) {
       Alert.alert('Error', 'Please enter silhouette');
       return;
@@ -155,30 +146,32 @@ const AddItemScreen = () => {
       Alert.alert('Error', 'Please enter style ID');
       return;
     }
-    if (!size.trim()) {
-      Alert.alert('Error', 'Please enter size');
-      return;
-    }
-    if (!retailValue.trim() || isNaN(parseFloat(retailValue))) {
-      Alert.alert('Error', 'Please enter a valid retail value');
-      return;
-    }
-    if (!releaseDate.trim()) {
-      Alert.alert('Error', 'Please enter release date');
-      return;
-    }
 
-    const releaseDateTrimmed = releaseDate.trim();
-    const releaseDateRegex = /^\d{4}-\d{2}-\d{2}$/;
-    if (!releaseDateRegex.test(releaseDateTrimmed)) {
-      Alert.alert('Error', 'Release date must be in YYYY-MM-DD format');
-      return;
+    // Optional fields validation
+    let releaseDateTrimmed: string | undefined;
+    if (releaseDate.trim()) {
+      releaseDateTrimmed = releaseDate.trim();
+      const releaseDateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (!releaseDateRegex.test(releaseDateTrimmed)) {
+        Alert.alert('Error', 'Release date must be in YYYY-MM-DD format');
+        return;
+      }
     }
 
     const quantityValue = parseInt(quantity, 10);
     if (!quantity || Number.isNaN(quantityValue) || quantityValue <= 0) {
       Alert.alert('Error', 'Please select a valid quantity');
       return;
+    }
+
+    let retailValueNum: number | undefined;
+    if (retailValue.trim()) {
+      const parsed = parseFloat(retailValue);
+      if (isNaN(parsed)) {
+        Alert.alert('Error', 'Please enter a valid retail value');
+        return;
+      }
+      retailValueNum = parsed;
     }
 
     if (!user) {
@@ -246,16 +239,16 @@ const AddItemScreen = () => {
       }
 
       const itemData = {
-        name: name.trim(),
-        brand: brand.trim(),
+        name: brand.trim() || silhouette.trim() || styleId.trim() || 'Item', // Generate name from available fields
+        brand: brand.trim() || undefined,
         silhouette: silhouette.trim(),
         styleId: styleId.trim(),
-        size: size.trim(),
+        size: size.trim() || undefined,
         color: color.trim() || undefined,
         quantity: quantityValue,
-        value: parseFloat(retailValue),
-        retailValue: parseFloat(retailValue),
-        releaseDate: releaseDateTrimmed,
+        value: retailValueNum || 0,
+        retailValue: retailValueNum || undefined,
+        releaseDate: releaseDateTrimmed || undefined,
         imageUrl: uploadedImageUrl || undefined,
         barcode: barcode.trim() || undefined,
         notes: notes.trim() || undefined,
@@ -273,7 +266,6 @@ const AddItemScreen = () => {
             text: 'OK',
             onPress: () => {
               // Reset form
-              setName('');
               setBrand('');
               setSilhouette('');
               setStyleId('');
@@ -345,28 +337,6 @@ const AddItemScreen = () => {
         {/* Form Fields */}
         <View style={styles.formSection}>
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Item Name *</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter item name"
-              value={name}
-              onChangeText={setName}
-              placeholderTextColor="#999999"
-            />
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Brand *</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter brand"
-              value={brand}
-              onChangeText={setBrand}
-              placeholderTextColor="#999999"
-            />
-          </View>
-
-          <View style={styles.inputGroup}>
             <Text style={styles.label}>Silhouette *</Text>
             <TextInput
               style={styles.input}
@@ -389,10 +359,21 @@ const AddItemScreen = () => {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Size *</Text>
+            <Text style={styles.label}>Brand</Text>
             <TextInput
               style={styles.input}
-              placeholder="Enter size"
+              placeholder="Enter brand (optional)"
+              value={brand}
+              onChangeText={setBrand}
+              placeholderTextColor="#999999"
+            />
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Size</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter size (optional)"
               value={size}
               onChangeText={setSize}
               placeholderTextColor="#999999"
@@ -401,7 +382,7 @@ const AddItemScreen = () => {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Quantity *</Text>
+            <Text style={styles.label}>Quantity</Text>
             {Platform.OS === 'ios' ? (
               <>
                 <TouchableOpacity
@@ -473,10 +454,10 @@ const AddItemScreen = () => {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Retail Value *</Text>
+            <Text style={styles.label}>Retail Value</Text>
             <TextInput
               style={styles.input}
-              placeholder="Enter retail value"
+              placeholder="Enter retail value (optional)"
               value={retailValue}
               onChangeText={setRetailValue}
               placeholderTextColor="#999999"
@@ -485,7 +466,7 @@ const AddItemScreen = () => {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Release Date *</Text>
+            <Text style={styles.label}>Release Date</Text>
             {Platform.OS === 'ios' ? (
               <>
                 <TouchableOpacity

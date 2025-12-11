@@ -4,14 +4,14 @@ import { getFirestore, getStorage, getAuth } from "./firebase";
 export interface InventoryItem {
   id?: string;
   name: string;
-  brand: string;
-  size: string;
+  brand?: string;
+  size?: string;
   quantity?: number;
   color?: string;
   value: number;
   retailValue?: number;
-  silhouette?: string;
-  styleId?: string;
+  silhouette: string; // Required
+  styleId: string; // Required
   releaseDate?: string;
   imageUrl?: string;
   barcode?: string;
