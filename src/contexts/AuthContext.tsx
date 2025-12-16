@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { Platform } from "react-native";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import { getAuth } from "../services/firebase";
-import { GoogleAuthProvider } from "@react-native-firebase/auth";
+import { GoogleAuthProvider, onAuthStateChanged } from "@react-native-firebase/auth";
 
 type AuthContextType = {
   user: any | null;
@@ -70,9 +70,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Use getAuth from services/firebase.ts
       const authInstance = getAuth();
       console.log("Attempting signInWithCredential...");
-      const userCredential = await authInstance.signInWithCredential(googleCredential);
-      console.log("Sign in successful:", userCredential.user?.email);
-      // Auth state listener will automatically update the user state
+      console.log("Auth instance:", authInstance ? "exists" : "null");
+      console.log("Google credential:", googleCredential ? "exists" : "null");
+      
+      try {
+        const userCredential = await authInstance.signInWithCredential(googleCredential);
+        console.log("Sign in successful:", userCredential.user?.email);
+        // Auth state listener will automatically update the user state
+      } catch (signInError: any) {
+        console.error("signInWithCredential failed:", signInError);
+        console.error("Error code:", signInError?.code);
+        console.error("Error message:", signInError?.message);
+        console.error("Full error:", JSON.stringify(signInError, null, 2));
+        throw signInError;
+      }
     } catch (error: any) {
       console.error("Google sign-in error:", error);
       // Re-throw error so the UI can handle it (show error message, etc.)
@@ -81,9 +92,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   // ✅ Track auth state changes - this maintains session persistence
+  // Using modular API (onAuthStateChanged) instead of deprecated instance method
   useEffect(() => {
     const authInstance = getAuth();
-    const unsubscribe = authInstance.onAuthStateChanged((usr: any) => {
+    const unsubscribe = onAuthStateChanged(authInstance, (usr: any) => {
       setUser(usr);
       setLoading(false);
       // Log auth state changes for debugging

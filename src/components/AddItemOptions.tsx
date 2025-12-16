@@ -119,6 +119,10 @@ const AddItemOptions = ({
     }
 
     const functions = getFunctions();
+    if (!functions) {
+      Alert.alert('Error', 'Cloud Functions are not available. Please check your Firebase configuration.');
+      return;
+    }
     const analyzeShoeMetadata = functions.httpsCallable('analyzeShoeMetadata');
 
     const selectedAssets = assets.slice(0, 10);

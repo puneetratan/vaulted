@@ -24,6 +24,7 @@ import {useAuth} from '../contexts/AuthContext';
 import {getUserData} from '../services/userService';
 import {Picker} from '@react-native-picker/picker';
 import DateTimePicker, {DateTimePickerEvent} from '@react-native-community/datetimepicker';
+import {lookupProductByBarcode} from '../services/barcodeService';
 
 type AddItemScreenRouteProp = RouteProp<RootStackParamList, 'AddItem'>;
 
@@ -48,6 +49,75 @@ const AddItemScreen = () => {
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const [quantityModalVisible, setQuantityModalVisible] = useState(false);
+
+  // Fetch product details when barcode is received via route params
+  useEffect(() => {
+    const fetchProductDetails = async () => {
+      const barcodeValue = route.params?.barcode;
+      
+      if (!barcodeValue) {
+        return;
+      }
+
+      console.log('📦 Barcode received in AddItemScreen:', barcodeValue);
+      setBarcode(barcodeValue);
+      
+      // Fetch product details from barcode
+      setLoading(true);
+      try {
+        const productInfo = await lookupProductByBarcode(barcodeValue);
+        
+        if (productInfo) {
+          console.log('✅ Product details fetched:', productInfo);
+          
+          // Populate form fields with fetched data (only if fields are empty)
+          if (productInfo.brand) {
+            setBrand(prev => prev || productInfo.brand || '');
+          }
+          if (productInfo.styleId) {
+            setStyleId(prev => prev || productInfo.styleId || '');
+          }
+          if (productInfo.color) {
+            setColor(prev => prev || productInfo.color || '');
+          }
+          if (productInfo.imageUrl) {
+            setImagePreview(prev => prev || productInfo.imageUrl || undefined);
+          }
+          if (productInfo.retailValue) {
+            setRetailValue(prev => prev || String(productInfo.retailValue || ''));
+          }
+          
+          // Show success message
+          Alert.alert(
+            'Product Found! ✅',
+            `${productInfo.name || 'Product'}\n${productInfo.brand ? `Brand: ${productInfo.brand}` : ''}\n\nFields have been auto-filled.`,
+            [{text: 'OK'}]
+          );
+        } else {
+          console.log('⚠️ No product details found for barcode');
+          // Still show the barcode was scanned, but no auto-population
+          Alert.alert(
+            'Barcode Scanned',
+            `Barcode: ${barcodeValue}\n\nProduct details not found in database. Please enter details manually.`,
+            [{text: 'OK'}]
+          );
+        }
+      } catch (error) {
+        console.error('Error fetching product details:', error);
+        // Don't show error to user, just continue with barcode value
+        Alert.alert(
+          'Barcode Scanned',
+          `Barcode: ${barcodeValue}\n\nUnable to fetch product details. Please enter details manually.`,
+          [{text: 'OK'}]
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProductDetails();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [route.params?.barcode]);
 
   useEffect(() => {
     let isActive = true;

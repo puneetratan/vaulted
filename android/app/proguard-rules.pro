@@ -8,3 +8,8 @@
 #   http://developer.android.com/guide/developing/tools/proguard.html
 
 # Add any project specific keep options here:
+
+# Keep datastore classes for Firebase
+-keep class androidx.datastore.preferences.** { *; }
+-keep class androidx.datastore.** { *; }
+-dontwarn androidx.datastore.**

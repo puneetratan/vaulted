@@ -2,10 +2,10 @@
 
 buildscript {
     ext {
-        buildToolsVersion = "33.0.0"
-        minSdkVersion = 21
-        compileSdkVersion = 33
-        targetSdkVersion = 33
+        buildToolsVersion = "34.0.0"
+        minSdkVersion = 23
+        compileSdkVersion = 34
+        targetSdkVersion = 34
         kotlinVersion = "1.9.22"
 
         // We use NDK 23 which has both M1 support and is the side-by-side NDK version from AGP.
@@ -16,10 +16,10 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath("com.android.tools.build:gradle")
+        classpath("com.android.tools.build:gradle:8.1.2")
         classpath("com.facebook.react:react-native-gradle-plugin")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion")
-        classpath("com.google.gms:google-services:4.4.0")
+        classpath("com.google.gms:google-services:4.4.2")
     }
 }
 
@@ -30,28 +30,83 @@ allprojects {
         maven { url("https://www.jitpack.io") }
     }
     
-    // Set consistent JVM target compatibility for all projects
-    afterEvaluate { project ->
-        if (project.hasProperty('android')) {
-            project.android {
-                compileOptions {
-                    sourceCompatibility JavaVersion.VERSION_17
-                    targetCompatibility JavaVersion.VERSION_17
-                }
+    // Fix for NDK build issues with system library paths (e.g., PostgreSQL)
+    // Unset problematic environment variables that interfere with Android NDK builds
+    tasks.withType(org.gradle.api.tasks.Exec).configureEach {
+        environment.remove('LDFLAGS')
+        environment.remove('DYLD_LIBRARY_PATH')
+        environment.remove('LD_LIBRARY_PATH')
+        environment.remove('LIBRARY_PATH')
+    }
+
+    // --- START: DEFINITIVE FIX FOR JVM 11 vs 17 ERROR ---
+    // This reliably enforces Java 17 for both Java and Kotlin compilation across ALL projects/libraries.
+    afterEvaluate {
+        def target = JavaVersion.VERSION_17
+        
+        // 1. Force Java Compilation Tasks to use Java 17
+        tasks.withType(JavaCompile).configureEach {
+            sourceCompatibility = target
+            targetCompatibility = target
+        }
+        
+        // 2. Force Kotlin Compilation Tasks to use JVM 17
+        tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+            kotlinOptions {
+                jvmTarget = "17"
             }
-            
-            // Configure Kotlin compilation to match Java target
-            project.tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
-                kotlinOptions {
-                    jvmTarget = "17"
+        }
+    }
+    // --- END: DEFINITIVE FIX ---
+}
+
+subprojects { subproject ->
+    afterEvaluate {
+        // Skip iOS-only packages that don't have Android support
+        if (subproject.name.contains("invertase_react-native-apple-authentication") || 
+            subproject.name.contains("apple-authentication")) {
+            // Disable all tasks for this iOS-only package
+            subproject.tasks.configureEach { task ->
+                task.enabled = false
+            }
+            return
+        }
+
+        // Set namespace for modules that need it (AGP 8.0+ fix)
+        if (subproject.hasProperty("android")) {
+            // NOTE: We only check if it has the 'android' property to avoid crashing on non-android projects
+            // The compileOptions and kotlinOptions logic was removed here and moved to the 'allprojects' block above.
+            subproject.android {
+                buildFeatures {
+                    buildConfig = true
                 }
             }
         }
-        
+
+        if (subproject.name.contains("react-native-fs") && subproject.hasProperty("android")) {
+            subproject.android {
+                namespace "com.rnfs"
+            }
+        }
+        if (subproject.name.contains("react-native-file-viewer") && subproject.hasProperty("android")) {
+            subproject.android {
+                namespace "com.vinzscam.reactnativefileviewer"
+            }
+        }
+        if (subproject.name.contains("react-native-worklets-core") && subproject.hasProperty("android")) {
+            subproject.android {
+                namespace "com.worklets"
+            }
+        }
+        if (subproject.name.contains("react-native-async-storage") && subproject.hasProperty("android")) {
+            subproject.android {
+                namespace "com.reactnativecommunity.asyncstorage"
+            }
+        }
+
         // Fix react-native-gesture-handler dependency resolution
-        if (project.name == 'react-native-gesture-handler') {
-            // Replace react-native dependency with react-android
-            project.configurations.all {
+        if (subproject.name == 'react-native-gesture-handler') {
+            subproject.configurations.all {
                 resolutionStrategy.eachDependency { details ->
                     if (details.requested.group == 'com.facebook.react' && details.requested.name == 'react-native') {
                         details.useTarget("com.facebook.react:react-android:0.72.6")
@@ -59,17 +114,12 @@ allprojects {
                     }
                 }
             }
-            
-            // After dependencies are resolved, ensure react-android is available
-            project.afterEvaluate {
-                def reactAndroidDep = project.configurations.getByName('implementation').dependencies.find { 
-                    it.group == 'com.facebook.react' && (it.name == 'react-native' || it.name == 'react-android')
-                }
-                
-                if (reactAndroidDep == null) {
-                    project.dependencies.add('implementation', 'com.facebook.react:react-android:0.72.6')
-                }
-            }
         }
     }
 }
+
+// NOTE: The redundant blocks below have been removed to prevent configuration conflicts:
+// - Global tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile)
+// - tasks.whenTaskAdded
+// - gradle.projectsEvaluated
+// - gradle.taskGraph.whenReady

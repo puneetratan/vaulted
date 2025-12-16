@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "872715867979",
+    "firebase_url": "https://dev-vaultapp-default-rtdb.firebaseio.com",
     "project_id": "dev-vaultapp",
     "storage_bucket": "dev-vaultapp.firebasestorage.app"
   },
@@ -13,6 +14,14 @@
         }
       },
       "oauth_client": [
+        {
+          "client_id": "872715867979-5i6op4dhpp1eo24lniiooms21b57c4su.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.vault.dev",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
         {
           "client_id": "872715867979-rmth3jpbic8jorgksr6i9r6j83vjqpdo.apps.googleusercontent.com",
           "client_type": 3

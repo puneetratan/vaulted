@@ -57,10 +57,11 @@ export const getOrCreateUser = async (firebaseUser: any): Promise<UserData> => {
 
       return userData;
     } else {
-      // React Native Firebase API
-      const timestamp = require('@react-native-firebase/firestore').default.FieldValue.serverTimestamp();
-      const userRef = firestoreDb.collection(USERS_COLLECTION).doc(firebaseUser.uid);
-      const userDoc = await userRef.get();
+      // React Native Firebase API - using modular API
+      const { collection, doc: docFn, getDoc, setDoc, serverTimestamp } = require('@react-native-firebase/firestore');
+      const timestamp = serverTimestamp();
+      const userRef = docFn(collection(firestoreDb, USERS_COLLECTION), firebaseUser.uid);
+      const userDoc = await getDoc(userRef);
 
       const userData: UserData = {
         uid: firebaseUser.uid,
@@ -68,16 +69,16 @@ export const getOrCreateUser = async (firebaseUser: any): Promise<UserData> => {
         displayName: firebaseUser.displayName,
         photoURL: firebaseUser.photoURL,
         provider: firebaseUser.providerData[0]?.providerId === 'apple.com' ? 'apple' : 'google',
-        shoeSize: userDoc.exists ? userDoc.data()?.shoeSize : undefined,
-        createdAt: userDoc.exists && userDoc.data()?.createdAt 
+        shoeSize: userDoc.exists() ? userDoc.data()?.shoeSize : undefined,
+        createdAt: userDoc.exists() && userDoc.data()?.createdAt 
           ? userDoc.data()?.createdAt.toDate() 
           : new Date(),
         lastLoginAt: new Date(),
       };
 
-      await userRef.set({
+      await setDoc(userRef, {
         ...userData,
-        createdAt: userDoc.exists && userDoc.data()?.createdAt 
+        createdAt: userDoc.exists() && userDoc.data()?.createdAt 
           ? userDoc.data()?.createdAt 
           : timestamp,
         lastLoginAt: timestamp,
@@ -127,10 +128,12 @@ export const getUserData = async (uid: string): Promise<UserData | null> => {
         lastLoginAt: data?.lastLoginAt?.toDate() || new Date(),
       };
     } else {
-      // React Native Firebase API
-      const userDoc = await firestoreDb.collection(USERS_COLLECTION).doc(uid).get();
+      // React Native Firebase API - using modular API
+      const { collection, doc: docFn, getDoc } = require('@react-native-firebase/firestore');
+      const userRef = docFn(collection(firestoreDb, USERS_COLLECTION), uid);
+      const userDoc = await getDoc(userRef);
       
-      if (!userDoc.exists) {
+      if (!userDoc.exists()) {
         return null;
       }
 
@@ -185,8 +188,10 @@ export const updateUserData = async (uid: string, updates: Partial<UserData>): P
       const userRef = doc(firestoreDb, USERS_COLLECTION, uid);
       await setDoc(userRef, updateData, { merge: true });
     } else {
-      // React Native Firebase API - use set with merge to create if doesn't exist, or update if it does
-      await firestoreDb.collection(USERS_COLLECTION).doc(uid).set(updateData, { merge: true });
+      // React Native Firebase API - using modular API
+      const { collection, doc: docFn, setDoc } = require('@react-native-firebase/firestore');
+      const userRef = docFn(collection(firestoreDb, USERS_COLLECTION), uid);
+      await setDoc(userRef, updateData, { merge: true });
     }
   } catch (error: any) {
     console.error('Error updating user data:', error);
@@ -219,14 +224,14 @@ export const deleteAllUserInventory = async (uid: string): Promise<void> => {
       
       await Promise.all(deletePromises);
     } else {
-      // React Native Firebase API
-      const inventorySnapshot = await firestoreDb
-        .collection("inventory")
-        .where("userId", "==", uid)
-        .get();
+      // React Native Firebase API - using modular API
+      const { collection, query, where, getDocs, doc: docFn, deleteDoc } = require('@react-native-firebase/firestore');
+      const inventoryRef = collection(firestoreDb, "inventory");
+      const q = query(inventoryRef, where("userId", "==", uid));
+      const inventorySnapshot = await getDocs(q);
       
       const deletePromises = inventorySnapshot.docs.map((docSnapshot: any) => {
-        return docSnapshot.ref.delete();
+        return deleteDoc(docFn(inventoryRef, docSnapshot.id));
       });
       
       await Promise.all(deletePromises);
@@ -293,7 +298,10 @@ export const deleteUserAccount = async (uid: string, photoURL?: string | null): 
       const userRef = doc(firestoreDb, USERS_COLLECTION, uid);
       await deleteDoc(userRef);
     } else {
-      await firestoreDb.collection(USERS_COLLECTION).doc(uid).delete();
+      // React Native Firebase API - using modular API
+      const { collection, doc: docFn, deleteDoc } = require('@react-native-firebase/firestore');
+      const userRef = docFn(collection(firestoreDb, USERS_COLLECTION), uid);
+      await deleteDoc(userRef);
     }
 
     // 4. Delete Firebase Auth account (this should be done in the component after calling this function)

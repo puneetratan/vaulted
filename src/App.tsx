@@ -2,9 +2,9 @@ import React from 'react';
 import 'react-native-gesture-handler';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import AppNavigator from './navigation/AppNavigator';
-import app from './services/firebase';
 import {AuthProvider} from './contexts/AuthContext';
-console.log('=========App=========', app);
+import './services/firebase'; // Initialize Firebase on import
+
 const App = () => {
   return (
     <SafeAreaProvider>

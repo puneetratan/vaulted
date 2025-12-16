@@ -109,8 +109,9 @@ export const saveInventoryItem = async (item: Omit<InventoryItem, 'id' | 'create
       const docRef = await addDoc(collection(firestoreDb, "inventory"), itemData);
       return docRef.id;
     } else {
-      // React Native Firebase API
-      const docRef = await firestoreDb.collection("inventory").add(itemData);
+      // React Native Firebase API - using modular API
+      const { collection, addDoc } = require("@react-native-firebase/firestore");
+      const docRef = await addDoc(collection(firestoreDb, "inventory"), itemData);
       return docRef.id;
     }
   } catch (error: any) {
@@ -171,6 +172,9 @@ export const getInventoryItemsPage = async (
       };
     } else {
       // React Native Firebase API
+      // Note: v23+ deprecates .collection() in favor of modular API
+      // Using instance methods for now (deprecation warning expected)
+      // TODO: Migrate to modular API when fully available
       let queryRef = firestoreDb
         .collection("inventory")
         .where("userId", "==", user.uid)
@@ -183,12 +187,12 @@ export const getInventoryItemsPage = async (
 
       const querySnapshot = await queryRef.get();
 
-      const items = querySnapshot.docs.map((doc: any) => ({
-        id: doc.id,
-        ...doc.data(),
-        quantity: doc.data()?.quantity ?? 1,
-        retailValue: doc.data()?.retailValue ?? doc.data()?.value ?? 0,
-        value: doc.data()?.value ?? doc.data()?.retailValue ?? 0,
+      const items = querySnapshot.docs.map((docSnapshot: any) => ({
+        id: docSnapshot.id,
+        ...docSnapshot.data(),
+        quantity: docSnapshot.data()?.quantity ?? 1,
+        retailValue: docSnapshot.data()?.retailValue ?? docSnapshot.data()?.value ?? 0,
+        value: docSnapshot.data()?.value ?? docSnapshot.data()?.retailValue ?? 0,
       })) as InventoryItem[];
 
       const lastDocSnapshot = querySnapshot.docs.length > 0 ? querySnapshot.docs[querySnapshot.docs.length - 1] : null;
@@ -295,7 +299,10 @@ export const updateInventoryItem = async (
       const itemRef = doc(firestoreDb, 'inventory', itemId);
       await updateDoc(itemRef, cleanUpdates);
     } else {
-      await firestoreDb.collection('inventory').doc(itemId).update(cleanUpdates);
+      // React Native Firebase API - using modular API
+      const { collection, doc: docFn, updateDoc } = require('@react-native-firebase/firestore');
+      const itemRef = docFn(collection(firestoreDb, 'inventory'), itemId);
+      await updateDoc(itemRef, cleanUpdates);
     }
   } catch (error: any) {
     console.error('Error updating inventory item:', error);
@@ -324,7 +331,10 @@ export const deleteInventoryItem = async (itemId: string, imageUrl?: string): Pr
       const itemRef = doc(firestoreDb, 'inventory', itemId);
       await deleteDoc(itemRef);
     } else {
-      await firestoreDb.collection('inventory').doc(itemId).delete();
+      // React Native Firebase API - using modular API
+      const { collection, doc: docFn, deleteDoc } = require('@react-native-firebase/firestore');
+      const itemRef = docFn(collection(firestoreDb, 'inventory'), itemId);
+      await deleteDoc(itemRef);
     }
 
     // Delete image from Storage if URL is provided

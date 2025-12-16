@@ -284,7 +284,13 @@ const DashboardScreen = () => {
 
       console.log('Exporting for user:', user.uid);
 
-      const exportInventoryToExcel = getFunctions().httpsCallable('exportInventoryToExcel');
+      const functions = getFunctions();
+      if (!functions) {
+        Alert.alert('Error', 'Cloud Functions are not available. Please check your Firebase configuration.');
+        setExporting(false);
+        return;
+      }
+      const exportInventoryToExcel = functions.httpsCallable('exportInventoryToExcel');
       const response = await exportInventoryToExcel({
         uid: user.uid,
       });
