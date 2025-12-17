@@ -401,3 +401,142 @@ exports.analyzeShoeMetadata = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError("internal", error.message);
   }
 });
+
+/**
+ * Lookup product details by barcode using BarcodeSpider API
+ * @param {string} data.barcode - The barcode/UPC to lookup
+ * @returns {Object} Product information including title, brand, model, image, etc.
+ */
+exports.lookupBarcode = functions.https.onCall(async (data, context) => {
+  const uid = context.auth?.uid;
+  if (!uid) {
+    throw new functions.https.HttpsError("unauthenticated", "User must be logged in.");
+  }
+
+  const barcode = data?.barcode;
+  if (!barcode || typeof barcode !== "string" || barcode.trim().length === 0) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "Barcode is required and must be a non-empty string."
+    );
+  }
+
+  // Clean the barcode (remove spaces, dashes)
+  const cleanBarcode = barcode.replace(/[\s-]/g, "").trim();
+  
+  if (cleanBarcode.length < 8) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "Invalid barcode format. Barcode must be at least 8 characters."
+    );
+  }
+
+  // Get API token from environment variable
+  const apiToken = process.env.BARCODE_SPIDER_TOKEN;
+  if (!apiToken) {
+    console.error("BARCODE_SPIDER_TOKEN environment variable is not set");
+    throw new functions.https.HttpsError(
+      "failed-precondition",
+      "Barcode lookup service is not configured. Please contact support."
+    );
+  }
+
+  try {
+    const apiUrl = `https://api.barcodespider.com/v1/lookup?token=${apiToken}&upc=${cleanBarcode}`;
+    
+    console.log(`Looking up barcode: ${cleanBarcode}`);
+    
+    const response = await fetch(apiUrl);
+    
+    if (!response.ok) {
+      console.error(`BarcodeSpider API error: ${response.status} ${response.statusText}`);
+      throw new functions.https.HttpsError(
+        "internal",
+        `Barcode lookup service returned an error: ${response.status}`
+      );
+    }
+
+    const apiData = await response.json();
+    
+    // Check if API returned an error
+    if (apiData.item_response && apiData.item_response.code !== 200) {
+      console.log(`No product found for barcode: ${cleanBarcode}`);
+      return {
+        success: false,
+        barcode: cleanBarcode,
+        message: apiData.item_response.message || "Product not found",
+      };
+    }
+
+    // Extract product information from API response
+    const itemAttributes = apiData.item_attributes || {};
+    
+    // Map API response to our format
+    const productInfo = {
+      success: true,
+      barcode: cleanBarcode,
+      name: itemAttributes.title || itemAttributes.description || undefined,
+      brand: itemAttributes.brand || undefined,
+      model: itemAttributes.model || undefined,
+      mpn: itemAttributes.mpn || undefined,
+      manufacturer: itemAttributes.manufacturer || undefined,
+      category: itemAttributes.category || itemAttributes.parent_category || undefined,
+      imageUrl: itemAttributes.image || undefined,
+      description: itemAttributes.description || undefined,
+      color: itemAttributes.color || undefined,
+      size: itemAttributes.size || undefined,
+      weight: itemAttributes.weight || undefined,
+      // Extract style ID from model or MPN if available
+      styleId: itemAttributes.mpn || itemAttributes.model || extractStyleId(itemAttributes.title || ""),
+      // Use lowest price as retail value estimate
+      retailValue: itemAttributes.lowest_price 
+        ? parseFloat(itemAttributes.lowest_price) 
+        : undefined,
+      // Store additional info
+      stores: apiData.Stores || [],
+      lowestPrice: itemAttributes.lowest_price ? parseFloat(itemAttributes.lowest_price) : undefined,
+      highestPrice: itemAttributes.highest_price ? parseFloat(itemAttributes.highest_price) : undefined,
+      asin: itemAttributes.asin || undefined,
+      ean: itemAttributes.ean || undefined,
+    };
+
+    console.log(`Product found for barcode ${cleanBarcode}:`, productInfo.name);
+    
+    return productInfo;
+  } catch (error) {
+    console.error("Error in barcode lookup:", error);
+    
+    // If it's already an HttpsError, re-throw it
+    if (error instanceof functions.https.HttpsError) {
+      throw error;
+    }
+    
+    throw new functions.https.HttpsError(
+      "internal",
+      `Failed to lookup barcode: ${error.message}`
+    );
+  }
+});
+
+/**
+ * Helper function to extract style ID from product title
+ */
+function extractStyleId(title) {
+  if (!title) return undefined;
+  
+  // Look for patterns like: Style: XXX-XXX, SKU: XXX, Style ID: XXX
+  const stylePatterns = [
+    /style[:\s]+([A-Z0-9-]+)/i,
+    /sku[:\s]+([A-Z0-9-]+)/i,
+    /style\s*id[:\s]+([A-Z0-9-]+)/i,
+  ];
+
+  for (const pattern of stylePatterns) {
+    const match = title.match(pattern);
+    if (match && match[1]) {
+      return match[1].trim();
+    }
+  }
+
+  return undefined;
+}

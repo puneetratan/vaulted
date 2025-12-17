@@ -28,56 +28,15 @@ let dbInstance: any;
 let storageInstance: any;
 let functionsInstance: any;
 
-// Lazy initialization function
-const initializeFirebase = () => {
-  if (!app) {
-    try {
-      // ✅ Get existing app or initialize default one (no config needed for native)
-      app = getApps().length ? getApp() : initializeApp(firebaseConfig);
-      
-      // ✅ Initialize modular API instances only once
-      if (!authInstance) {
-        authInstance = rnGetAuth(app);
-      }
-      // Firestore is initialized lazily via getFirestore() to avoid DataStore issues during auth
-      // Don't initialize it here - only initialize when explicitly requested
-      if (!storageInstance) {
-        storageInstance = rnGetStorage(app);
-      }
-      if (!functionsInstance) {
-        try {
-          functionsInstance = rnGetFunctions(app);
-        } catch (functionsError) {
-          console.warn('[Firebase] Functions initialization failed (non-critical):', functionsError);
-          // Don't crash if Functions fail to initialize
-          functionsInstance = null;
-        }
-      }
-    } catch (error) {
-      console.error('Firebase initialization error:', error);
-      throw error;
-    }
-  }
-  return app;
-};
-
-// Initialize on first import, but delay Firestore operations slightly
-// to avoid race conditions with thread pool initialization
-let initializationPromise: Promise<void> | null = null;
-
-const ensureInitialized = async () => {
-  if (!initializationPromise) {
-    initializationPromise = (async () => {
-      initializeFirebase();
-      // Small delay to ensure Firestore thread pool is ready
-      await new Promise(resolve => setTimeout(resolve, 50));
-    })();
-  }
-  return initializationPromise;
-};
-
-// Initialize on first import
-initializeFirebase();
+// Initialize Firebase app
+if (!app) {
+  app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+  // Initialize services
+  authInstance = rnGetAuth(app);
+  storageInstance = rnGetStorage(app);
+  functionsInstance = rnGetFunctions(app);
+  // Firestore will be initialized lazily to avoid DataStore issues during auth
+}
 
 export const auth = authInstance;
 export const db = dbInstance;
@@ -86,95 +45,57 @@ export const functions = functionsInstance;
 
 export const getAuth = () => {
   if (!authInstance) {
-    initializeFirebase();
+    if (!app) app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+    authInstance = rnGetAuth(app);
   }
   return authInstance;
 };
 
 export const getFirestore = () => {
-  if (!app) {
-    initializeFirebase();
-  }
   if (!dbInstance) {
-    try {
-      dbInstance = rnGetFirestore(app);
-      // Enable offline persistence for better reliability
-      if (dbInstance && dbInstance.enableNetwork) {
-        dbInstance.enableNetwork().catch(() => {
-          // Ignore if already enabled or network errors
-        });
-      }
-    } catch (e) {
-      console.error('[Firebase] Firestore initialization error:', e);
-      throw e;
-    }
+    if (!app) app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+    dbInstance = rnGetFirestore(app);
   }
   return dbInstance;
 };
 
 export const getStorage = () => {
   if (!storageInstance) {
-    initializeFirebase();
+    if (!app) app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+    storageInstance = rnGetStorage(app);
   }
   return storageInstance;
 };
 
+// ✅ Firebase Functions Configuration
+// Set USE_EMULATOR to true only for local development with Firebase Emulator Suite
+// For production/cloud deployment, keep this as false
+const USE_EMULATOR = false; // Set to true to use local emulator, false to use cloud functions
+const EMULATOR_HOST = '127.0.0.1'; // Use your computer's IP (e.g., '192.168.1.100') for physical devices
+const EMULATOR_PORT = 5001;
+
 export const getFunctions = () => {
-  try {
-    if (!functionsInstance) {
-      initializeFirebase();
-    }
-    return functionsInstance;
-  } catch (error) {
-    console.warn('[Firebase] Functions not available:', error);
-    return null; // Return null instead of crashing
-  }
-};
-
-// ✅ Optional emulator setup - only if explicitly enabled
-// Commented out to avoid connection issues if emulator isn't running
-// if (__DEV__ && process.env.ENABLE_FUNCTIONS_EMULATOR === 'true') {
-//   try {
-//     if (functionsInstance) {
-//       connectFunctionsEmulator(functionsInstance, '127.0.0.1', 5001);
-//       console.log('[Firebase] Connected to Functions emulator');
-//     }
-//   } catch (err) {
-//     console.warn('[Firebase] Emulator connection failed:', err);
-//   }
-// }
-
-// Helper function to safely execute Firestore operations with error handling
-export const safeFirestoreOperation = async <T>(
-  operation: () => Promise<T>,
-  retries = 1
-): Promise<T> => {
-  try {
-    return await operation();
-  } catch (error: any) {
-    // Check if it's a RejectedExecutionException (thread pool terminated)
-    const errorMessage = error?.message || '';
-    const isRejectedExecution = 
-      errorMessage.includes('RejectedExecutionException') ||
-      errorMessage.includes('rejected from') ||
-      errorMessage.includes('Terminated');
+  if (!functionsInstance) {
+    if (!app) app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+    functionsInstance = rnGetFunctions(app);
     
-    if (isRejectedExecution && retries > 0) {
-      console.warn('[Firebase] Firestore thread pool error, re-initializing...', error);
-      // Re-initialize Firestore
+    // Connect to emulator only if explicitly enabled
+    if (USE_EMULATOR) {
       try {
-        dbInstance = null;
-        initializeFirebase();
-        // Wait a bit before retry
-        await new Promise(resolve => setTimeout(resolve, 100));
-        return await safeFirestoreOperation(operation, retries - 1);
-      } catch (retryError) {
-        console.error('[Firebase] Failed to re-initialize Firestore:', retryError);
-        throw error; // Throw original error
+        connectFunctionsEmulator(functionsInstance, EMULATOR_HOST, EMULATOR_PORT);
+        console.log(`[Firebase] ✅ Connected to Functions emulator at ${EMULATOR_HOST}:${EMULATOR_PORT}`);
+      } catch (err: any) {
+        if (err.message?.includes('already been called')) {
+          // Already connected, ignore
+        } else {
+          console.warn('[Firebase] Emulator connection failed:', err);
+        }
       }
+    } else {
+      console.log('[Firebase] ✅ Using Cloud Functions (production)');
     }
-    throw error;
   }
+  return functionsInstance;
 };
 
 export default app;

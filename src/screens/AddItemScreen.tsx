@@ -15,24 +15,26 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {useNavigation, useRoute, RouteProp} from '@react-navigation/native';
-import {RootStackParamList} from '../navigation/AppNavigator';
+import {StackNavigationProp} from '@react-navigation/stack';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {launchImageLibrary, ImagePickerResponse} from 'react-native-image-picker';
 import {saveInventoryItem} from '../services/inventoryService';
-import {getStorage} from '../services/firebase';
+import {getStorage, getFunctions} from '../services/firebase';
 import {useAuth} from '../contexts/AuthContext';
 import {getUserData} from '../services/userService';
 import {Picker} from '@react-native-picker/picker';
 import DateTimePicker, {DateTimePickerEvent} from '@react-native-community/datetimepicker';
-import {lookupProductByBarcode} from '../services/barcodeService';
+import {RootStackParamList} from '../navigation/AppNavigator';
 
 type AddItemScreenRouteProp = RouteProp<RootStackParamList, 'AddItem'>;
+type AddItemScreenNavigationProp = StackNavigationProp<RootStackParamList, 'AddItem'>;
 
 const AddItemScreen = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<AddItemScreenNavigationProp>();
   const route = useRoute<AddItemScreenRouteProp>();
   const {user} = useAuth();
   
+  const [name, setName] = useState('');
   const [brand, setBrand] = useState('');
   const [silhouette, setSilhouette] = useState('');
   const [styleId, setStyleId] = useState('');
@@ -45,7 +47,7 @@ const AddItemScreen = () => {
   const [releaseDatePickerValue, setReleaseDatePickerValue] = useState<Date | null>(null);
   const [imagePreview, setImagePreview] = useState<string | undefined>(undefined);
   const [imageAsset, setImageAsset] = useState<{uri: string; name?: string; type?: string} | undefined>(undefined);
-  const [barcode, setBarcode] = useState(route.params?.barcode || '');
+  const [barcode, setBarcode] = useState('');
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const [quantityModalVisible, setQuantityModalVisible] = useState(false);
@@ -65,26 +67,40 @@ const AddItemScreen = () => {
       // Fetch product details from barcode
       setLoading(true);
       try {
-        const productInfo = await lookupProductByBarcode(barcodeValue);
+        const functions = getFunctions();
+        if (!functions) {
+          console.warn('Firebase Functions not available');
+          setLoading(false);
+          return;
+        }
+
+        const lookupBarcode = functions.httpsCallable('lookupBarcode');
+        console.log('📞 Calling Firebase Function: lookupBarcode');
         
-        if (productInfo) {
+        const result = await lookupBarcode({barcode: barcodeValue});
+        const productInfo = result.data;
+        
+        if (productInfo && productInfo.success) {
           console.log('✅ Product details fetched:', productInfo);
           
           // Populate form fields with fetched data (only if fields are empty)
-          if (productInfo.brand) {
-            setBrand(prev => prev || productInfo.brand || '');
+          if (productInfo.brand && !brand) {
+            setBrand(productInfo.brand);
           }
-          if (productInfo.styleId) {
-            setStyleId(prev => prev || productInfo.styleId || '');
+          if (productInfo.styleId && !styleId) {
+            setStyleId(productInfo.styleId);
           }
-          if (productInfo.color) {
-            setColor(prev => prev || productInfo.color || '');
+          if (productInfo.color && !color) {
+            setColor(productInfo.color);
           }
-          if (productInfo.imageUrl) {
-            setImagePreview(prev => prev || productInfo.imageUrl || undefined);
+          if (productInfo.name && !name) {
+            setName(productInfo.name);
           }
-          if (productInfo.retailValue) {
-            setRetailValue(prev => prev || String(productInfo.retailValue || ''));
+          if (productInfo.imageUrl && !imagePreview) {
+            setImagePreview(productInfo.imageUrl);
+          }
+          if (productInfo.retailValue && !retailValue) {
+            setRetailValue(String(productInfo.retailValue));
           }
           
           // Show success message
@@ -95,16 +111,14 @@ const AddItemScreen = () => {
           );
         } else {
           console.log('⚠️ No product details found for barcode');
-          // Still show the barcode was scanned, but no auto-population
           Alert.alert(
             'Barcode Scanned',
             `Barcode: ${barcodeValue}\n\nProduct details not found in database. Please enter details manually.`,
             [{text: 'OK'}]
           );
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching product details:', error);
-        // Don't show error to user, just continue with barcode value
         Alert.alert(
           'Barcode Scanned',
           `Barcode: ${barcodeValue}\n\nUnable to fetch product details. Please enter details manually.`,
@@ -207,7 +221,15 @@ const AddItemScreen = () => {
   };
 
   const handleSave = async () => {
-    // Validation - only silhouette and styleId are mandatory
+    // Validation
+    if (!name.trim()) {
+      Alert.alert('Error', 'Please enter item name');
+      return;
+    }
+    if (!brand.trim()) {
+      Alert.alert('Error', 'Please enter brand');
+      return;
+    }
     if (!silhouette.trim()) {
       Alert.alert('Error', 'Please enter silhouette');
       return;
@@ -216,32 +238,30 @@ const AddItemScreen = () => {
       Alert.alert('Error', 'Please enter style ID');
       return;
     }
+    if (!size.trim()) {
+      Alert.alert('Error', 'Please enter size');
+      return;
+    }
+    if (!retailValue.trim() || isNaN(parseFloat(retailValue))) {
+      Alert.alert('Error', 'Please enter a valid retail value');
+      return;
+    }
+    if (!releaseDate.trim()) {
+      Alert.alert('Error', 'Please enter release date');
+      return;
+    }
 
-    // Optional fields validation
-    let releaseDateTrimmed: string | undefined;
-    if (releaseDate.trim()) {
-      releaseDateTrimmed = releaseDate.trim();
-      const releaseDateRegex = /^\d{4}-\d{2}-\d{2}$/;
-      if (!releaseDateRegex.test(releaseDateTrimmed)) {
-        Alert.alert('Error', 'Release date must be in YYYY-MM-DD format');
-        return;
-      }
+    const releaseDateTrimmed = releaseDate.trim();
+    const releaseDateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!releaseDateRegex.test(releaseDateTrimmed)) {
+      Alert.alert('Error', 'Release date must be in YYYY-MM-DD format');
+      return;
     }
 
     const quantityValue = parseInt(quantity, 10);
     if (!quantity || Number.isNaN(quantityValue) || quantityValue <= 0) {
       Alert.alert('Error', 'Please select a valid quantity');
       return;
-    }
-
-    let retailValueNum: number | undefined;
-    if (retailValue.trim()) {
-      const parsed = parseFloat(retailValue);
-      if (isNaN(parsed)) {
-        Alert.alert('Error', 'Please enter a valid retail value');
-        return;
-      }
-      retailValueNum = parsed;
     }
 
     if (!user) {
@@ -309,16 +329,16 @@ const AddItemScreen = () => {
       }
 
       const itemData = {
-        name: brand.trim() || silhouette.trim() || styleId.trim() || 'Item', // Generate name from available fields
-        brand: brand.trim() || undefined,
+        name: name.trim(),
+        brand: brand.trim(),
         silhouette: silhouette.trim(),
         styleId: styleId.trim(),
-        size: size.trim() || undefined,
+        size: size.trim(),
         color: color.trim() || undefined,
         quantity: quantityValue,
-        value: retailValueNum || 0,
-        retailValue: retailValueNum || undefined,
-        releaseDate: releaseDateTrimmed || undefined,
+        value: parseFloat(retailValue),
+        retailValue: parseFloat(retailValue),
+        releaseDate: releaseDateTrimmed,
         imageUrl: uploadedImageUrl || undefined,
         barcode: barcode.trim() || undefined,
         notes: notes.trim() || undefined,
@@ -336,6 +356,7 @@ const AddItemScreen = () => {
             text: 'OK',
             onPress: () => {
               // Reset form
+              setName('');
               setBrand('');
               setSilhouette('');
               setStyleId('');
@@ -407,6 +428,28 @@ const AddItemScreen = () => {
         {/* Form Fields */}
         <View style={styles.formSection}>
           <View style={styles.inputGroup}>
+            <Text style={styles.label}>Item Name *</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter item name"
+              value={name}
+              onChangeText={setName}
+              placeholderTextColor="#999999"
+            />
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Brand *</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter brand"
+              value={brand}
+              onChangeText={setBrand}
+              placeholderTextColor="#999999"
+            />
+          </View>
+
+          <View style={styles.inputGroup}>
             <Text style={styles.label}>Silhouette *</Text>
             <TextInput
               style={styles.input}
@@ -429,21 +472,10 @@ const AddItemScreen = () => {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Brand</Text>
+            <Text style={styles.label}>Size *</Text>
             <TextInput
               style={styles.input}
-              placeholder="Enter brand (optional)"
-              value={brand}
-              onChangeText={setBrand}
-              placeholderTextColor="#999999"
-            />
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Size</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter size (optional)"
+              placeholder="Enter size"
               value={size}
               onChangeText={setSize}
               placeholderTextColor="#999999"
@@ -452,7 +484,7 @@ const AddItemScreen = () => {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Quantity</Text>
+            <Text style={styles.label}>Quantity *</Text>
             {Platform.OS === 'ios' ? (
               <>
                 <TouchableOpacity
@@ -524,10 +556,10 @@ const AddItemScreen = () => {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Retail Value</Text>
+            <Text style={styles.label}>Retail Value *</Text>
             <TextInput
               style={styles.input}
-              placeholder="Enter retail value (optional)"
+              placeholder="Enter retail value"
               value={retailValue}
               onChangeText={setRetailValue}
               placeholderTextColor="#999999"
@@ -536,7 +568,7 @@ const AddItemScreen = () => {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Release Date</Text>
+            <Text style={styles.label}>Release Date *</Text>
             {Platform.OS === 'ios' ? (
               <>
                 <TouchableOpacity

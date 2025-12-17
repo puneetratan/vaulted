@@ -7,15 +7,18 @@ import {
   Alert,
   ActivityIndicator,
   Platform,
-  Linking,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
-import {Camera, useCameraDevice, useCodeScanner, CameraPermissionStatus} from 'react-native-vision-camera';
+import {StackNavigationProp} from '@react-navigation/stack';
+import {Camera, useCameraDevice, useCodeScanner} from 'react-native-vision-camera';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import {RootStackParamList} from '../navigation/AppNavigator';
+
+type BarcodeScannerScreenNavigationProp = StackNavigationProp<RootStackParamList, 'BarcodeScanner'>;
 
 const BarcodeScannerScreen = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<BarcodeScannerScreenNavigationProp>();
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [isScanning, setIsScanning] = useState(true);
   const device = useCameraDevice('back');
@@ -26,102 +29,42 @@ const BarcodeScannerScreen = () => {
 
   const checkCameraPermission = async () => {
     try {
-      // First check current permission status
-      const currentPermission = await Camera.getCameraPermissionStatus();
-      
-      if (currentPermission === 'granted') {
-        setHasPermission(true);
-        return;
-      }
-
-      // Request permission if not granted
-      if (Platform.OS === 'android' && currentPermission === 'denied') {
-        // On Android, request permission
-        const permission = await Camera.requestCameraPermission();
-        setHasPermission(permission === 'granted');
-      } else {
-        // For iOS or other cases
-        const permission = await Camera.requestCameraPermission();
-        setHasPermission(permission === 'granted');
-      }
+      const permission = await Camera.requestCameraPermission();
+      setHasPermission(permission === 'granted');
     } catch (error) {
       console.error('Error checking camera permission:', error);
       setHasPermission(false);
     }
   };
 
-  const requestPermissionAgain = async () => {
-    try {
-      const permission = await Camera.requestCameraPermission();
-      setHasPermission(permission === 'granted');
-      
-      if (permission === 'denied' && Platform.OS === 'android') {
-        // On Android, if denied, offer to open settings
-        Alert.alert(
-          'Camera Permission Required',
-          'Please enable camera permission in app settings to use the barcode scanner.',
-          [
-            {text: 'Cancel', style: 'cancel'},
-            {
-              text: 'Open Settings',
-              onPress: () => Linking.openSettings(),
-            },
-          ]
-        );
-      }
-    } catch (error) {
-      console.error('Error requesting camera permission:', error);
-    }
-  };
-
   const handleBarcodeScanned = (barcode: string) => {
     if (!barcode || barcode.trim() === '') {
-      console.error('❌ Invalid barcode value:', barcode);
       Alert.alert('Error', 'Invalid barcode value. Please try scanning again.');
       setIsScanning(true);
       return;
     }
     
     console.log('📦 Navigating to AddItem with barcode:', barcode);
-    // Navigate to AddItemScreen with the scanned barcode
-    navigation.navigate('AddItem' as never, {barcode: barcode.trim()} as never);
+    navigation.navigate('AddItem', {barcode: barcode.trim()});
   };
 
   const codeScanner = useCodeScanner({
-    codeTypes: ['ean-13', 'ean-8', 'upc-a', 'upc-e', 'code-128', 'qr', 'ean-13', 'code-39', 'code-93'],
+    codeTypes: ['ean-13', 'ean-8', 'upc-a', 'upc-e', 'code-128', 'qr'],
     onCodeScanned: (codes) => {
-      // Log all detected codes for debugging
-      if (codes.length > 0) {
-        console.log('🔍 Barcode scanner detected codes:', codes.length);
-        codes.forEach((code, index) => {
-          console.log(`  Code ${index + 1}:`, {
-            value: code.value,
-            type: code.type,
-            frame: code.frame,
-          });
-        });
-      }
-      
       if (!isScanning || codes.length === 0) {
         return;
       }
 
       const code = codes[0];
-      
       if (code?.value) {
-        console.log('✅ Valid barcode detected! Value:', code.value, 'Type:', code.type);
         setIsScanning(false);
-        
-        // Navigate directly to AddItemScreen - it will handle fetching product details
         handleBarcodeScanned(code.value);
-      } else {
-        console.warn('⚠️ Code detected but no value:', code);
       }
     },
   });
 
   const handleManualEntry = () => {
-    navigation.navigate('AddItem' as never, {} as never);
+    navigation.navigate('AddItem', {});
   };
 
   if (hasPermission === null) {
@@ -142,29 +85,13 @@ const BarcodeScannerScreen = () => {
           <Icon name="camera-alt" size={64} color="#999" />
           <Text style={styles.errorTitle}>Camera Permission Required</Text>
           <Text style={styles.errorText}>
-            {Platform.OS === 'android'
-              ? 'Please grant camera permission to use the barcode scanner. You can also enable it in your device settings.'
-              : 'Please enable camera access in your device settings to use the barcode scanner.'}
+            Please enable camera access in your device settings to use the barcode scanner.
           </Text>
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={[styles.button, styles.primaryButton]}
-              onPress={requestPermissionAgain}>
-              <Text style={styles.buttonText}>Grant Permission</Text>
-            </TouchableOpacity>
-            {Platform.OS === 'android' && (
-              <TouchableOpacity
-                style={[styles.button, styles.secondaryButton]}
-                onPress={() => Linking.openSettings()}>
-                <Text style={[styles.buttonText, styles.secondaryButtonText]}>Open Settings</Text>
-              </TouchableOpacity>
-            )}
-            <TouchableOpacity
-              style={[styles.button, styles.secondaryButton]}
-              onPress={() => navigation.goBack()}>
-              <Text style={[styles.buttonText, styles.secondaryButtonText]}>Go Back</Text>
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => navigation.goBack()}>
+            <Text style={styles.buttonText}>Go Back</Text>
+          </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
@@ -267,33 +194,16 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 24,
   },
-  buttonContainer: {
-    width: '100%',
-    alignItems: 'center',
-    gap: 12,
-  },
   button: {
+    backgroundColor: '#007AFF',
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
-    minWidth: 200,
-    alignItems: 'center',
-  },
-  primaryButton: {
-    backgroundColor: '#007AFF',
-  },
-  secondaryButton: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: '#007AFF',
   },
   buttonText: {
     color: '#FFF',
     fontSize: 16,
     fontWeight: '600',
-  },
-  secondaryButtonText: {
-    color: '#007AFF',
   },
   header: {
     flexDirection: 'row',
@@ -388,7 +298,3 @@ const styles = StyleSheet.create({
 });
 
 export default BarcodeScannerScreen;
-
-
-
-
