@@ -56,8 +56,20 @@ const AddItemScreen = () => {
   useEffect(() => {
     const fetchProductDetails = async () => {
       const barcodeValue = route.params?.barcode;
-      
+      console.log('barcodeValue=====', barcodeValue);
       if (!barcodeValue) {
+        return;
+      }
+
+      // Check if user is authenticated before calling the function
+      if (!user?.uid) {
+        console.warn('User not authenticated, cannot fetch product details');
+        setBarcode(barcodeValue);
+        Alert.alert(
+          'Authentication Required',
+          'Please make sure you are logged in to fetch product details.',
+          [{text: 'OK'}]
+        );
         return;
       }
 
@@ -74,10 +86,12 @@ const AddItemScreen = () => {
           return;
         }
 
-        const lookupBarcode = functions.httpsCallable('lookupBarcode');
-        console.log('📞 Calling Firebase Function: lookupBarcode');
-        
-        const result = await lookupBarcode({barcode: barcodeValue});
+        const lookupbarcode = functions.httpsCallable('lookupbarcode');
+
+        console.log('📞 Calling Firebase Function: lookupbarcode with barcode:', barcodeValue);
+        console.log(lookupbarcode);
+
+        const result = await lookupbarcode({barcode: barcodeValue});
         const productInfo = result.data;
         
         if (productInfo && productInfo.success) {
@@ -119,11 +133,21 @@ const AddItemScreen = () => {
         }
       } catch (error: any) {
         console.error('Error fetching product details:', error);
-        Alert.alert(
-          'Barcode Scanned',
-          `Barcode: ${barcodeValue}\n\nUnable to fetch product details. Please enter details manually.`,
-          [{text: 'OK'}]
-        );
+        
+        // Handle authentication errors specifically
+        if (error.code === 'unauthenticated' || error.message?.includes('Unauthenticated')) {
+          Alert.alert(
+            'Authentication Error',
+            'You need to be logged in to fetch product details. Please log in and try again.',
+            [{text: 'OK'}]
+          );
+        } else {
+          Alert.alert(
+            'Barcode Scanned',
+            `Barcode: ${barcodeValue}\n\nUnable to fetch product details. Please enter details manually.`,
+            [{text: 'OK'}]
+          );
+        }
       } finally {
         setLoading(false);
       }
@@ -131,7 +155,7 @@ const AddItemScreen = () => {
 
     fetchProductDetails();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [route.params?.barcode]);
+  }, [route.params?.barcode, user?.uid]);
 
   useEffect(() => {
     let isActive = true;

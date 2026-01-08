@@ -5,6 +5,7 @@ const admin = require("firebase-admin");
 const ExcelJS = require("exceljs");
 const nodemailer = require("nodemailer");
 const OpenAI = require("openai");
+// const { onCall } = require("firebase-functions/v2/https");
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
@@ -407,8 +408,10 @@ exports.analyzeShoeMetadata = functions.https.onCall(async (data, context) => {
  * @param {string} data.barcode - The barcode/UPC to lookup
  * @returns {Object} Product information including title, brand, model, image, etc.
  */
-exports.lookupBarcode = functions.https.onCall(async (data, context) => {
+exports.lookupbarcode = functions.https.onCall(async (data, context) => {
+  console.log("🔥 lookupbarcode HIT");
   const uid = context.auth?.uid;
+  console.log('uid =====', uid);
   if (!uid) {
     throw new functions.https.HttpsError("unauthenticated", "User must be logged in.");
   }
