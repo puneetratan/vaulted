@@ -555,19 +555,19 @@ const DashboardTabs = ({
                   <View style={styles.sourceLegend}>
                     <View style={styles.legendItem}>
                       <View style={styles.legendIconContainer}>
-                        <Icon name="qr-code-scanner" size={14} color="#FFFFFF" />
+                        <Icon name="qr-code-scanner" size={12} color="#FFFFFF" />
                       </View>
                       <Text style={styles.legendText}>Scanner</Text>
                     </View>
                     <View style={styles.legendItem}>
                       <View style={styles.legendIconContainer}>
-                        <Icon name="auto-awesome" size={14} color="#FFFFFF" />
+                        <Icon name="auto-awesome" size={12} color="#FFFFFF" />
                       </View>
                       <Text style={styles.legendText}>ChatGPT</Text>
                     </View>
                     <View style={styles.legendItem}>
                       <View style={styles.legendIconContainer}>
-                        <Icon name="edit" size={14} color="#FFFFFF" />
+                        <Icon name="edit" size={12} color="#FFFFFF" />
                       </View>
                       <Text style={styles.legendText}>Manual</Text>
                     </View>
@@ -997,29 +997,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 8,
+    flexWrap: 'wrap',
   },
   sourceLegend: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexShrink: 1,
   },
   legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginRight: 16,
+    marginRight: 12,
   },
   legendIconContainer: {
     backgroundColor: '#000000',
-    borderRadius: 12,
-    width: 24,
-    height: 24,
+    borderRadius: 10,
+    width: 20,
+    height: 20,
     justifyContent: 'center',
     alignItems: 'center',
   },
   legendText: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#666666',
     fontWeight: '500',
-    marginLeft: 6,
+    marginLeft: 4,
   },
   shadowInfoText: {
     fontSize: 13,
