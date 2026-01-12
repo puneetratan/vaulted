@@ -547,9 +547,32 @@ const DashboardTabs = ({
             keyExtractor={(shoe, index) => shoe.id?.toString() ?? `${shoe.name}-${shoe.size}-${index}`}
             ListHeaderComponent={
               <View style={styles.totalPairsHeader}>
-                <Text style={styles.tabContentTitle}>
-                  Total Pairs: {filteredInventoryShoes.length}
-                </Text>
+                <View style={styles.totalPairsTitleRow}>
+                  <Text style={styles.tabContentTitle}>
+                    Total Pairs: {filteredInventoryShoes.length}
+                  </Text>
+                  {/* Legend for source icons */}
+                  <View style={styles.sourceLegend}>
+                    <View style={styles.legendItem}>
+                      <View style={styles.legendIconContainer}>
+                        <Icon name="qr-code-scanner" size={14} color="#FFFFFF" />
+                      </View>
+                      <Text style={styles.legendText}>Scanner</Text>
+                    </View>
+                    <View style={styles.legendItem}>
+                      <View style={styles.legendIconContainer}>
+                        <Icon name="auto-awesome" size={14} color="#FFFFFF" />
+                      </View>
+                      <Text style={styles.legendText}>ChatGPT</Text>
+                    </View>
+                    <View style={styles.legendItem}>
+                      <View style={styles.legendIconContainer}>
+                        <Icon name="edit" size={14} color="#FFFFFF" />
+                      </View>
+                      <Text style={styles.legendText}>Manual</Text>
+                    </View>
+                  </View>
+                </View>
                 {shadowCount > 0 && (
                   <Text style={styles.shadowInfoText}>
                     AI items: {shadowCount}
@@ -968,6 +991,35 @@ const styles = StyleSheet.create({
   },
   totalPairsHeader: {
     marginBottom: 12,
+  },
+  totalPairsTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  sourceLegend: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  legendIconContainer: {
+    backgroundColor: '#000000',
+    borderRadius: 12,
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  legendText: {
+    fontSize: 12,
+    color: '#666666',
+    fontWeight: '500',
+    marginLeft: 6,
   },
   shadowInfoText: {
     fontSize: 13,
