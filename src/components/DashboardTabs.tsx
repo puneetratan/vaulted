@@ -396,6 +396,8 @@ const DashboardTabs = ({
             <View style={styles.sourceIconOverlay}>
               {shoe.source === 'ai' ? (
                 <Icon name="auto-awesome" size={14} color="#FFFFFF" />
+              ) : shoe.source === 'barcode' ? (
+                <Icon name="qr-code-scanner" size={14} color="#FFFFFF" />
               ) : (
                 <Icon name="edit" size={14} color="#FFFFFF" />
               )}

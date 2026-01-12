@@ -261,6 +261,21 @@ const FilterModal = ({
         </View>
         <Text style={styles.checkboxLabel}>Manual</Text>
       </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.checkboxItem}
+        onPress={() => handleSourceToggle('barcode')}>
+        <View
+          style={[
+            styles.checkbox,
+            selectedSources.includes('barcode') && styles.checkboxSelected,
+          ]}>
+          {selectedSources.includes('barcode') && (
+            <Icon name="check" size={16} color="#FFFFFF" />
+          )}
+        </View>
+        <Text style={styles.checkboxLabel}>Barcode</Text>
+      </TouchableOpacity>
     </View>
   );
 

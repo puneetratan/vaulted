@@ -361,6 +361,9 @@ const AddItemScreen = () => {
         }
       }
 
+      // Determine source: 'barcode' if added via barcode scanner, otherwise 'manual'
+      const itemSource = route.params?.barcode ? 'barcode' : 'manual';
+
       const itemData = {
         name: name.trim(),
         brand: brand.trim(),
@@ -375,6 +378,7 @@ const AddItemScreen = () => {
         imageUrl: uploadedImageUrl || undefined,
         barcode: barcode.trim() || undefined,
         notes: notes.trim() || undefined,
+        source: itemSource,
         userId: user.uid,
       };
 
