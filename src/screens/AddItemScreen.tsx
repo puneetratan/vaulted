@@ -111,6 +111,7 @@ const AddItemScreen = () => {
             setName(productInfo.name);
           }
           if (productInfo.imageUrl && !imagePreview) {
+            // Image URL is already uploaded to Firebase Storage by the cloud function
             setImagePreview(productInfo.imageUrl);
           }
           if (productInfo.retailValue && !retailValue) {
@@ -297,6 +298,14 @@ const AddItemScreen = () => {
 
     try {
       let uploadedImageUrl: string | undefined;
+
+      // If imagePreview is set but imageAsset is not, it means the image was already uploaded (e.g., from barcode)
+      // In this case, imagePreview contains the Firebase Storage URL from the cloud function
+      if (!imageAsset && imagePreview && imagePreview.startsWith('https://')) {
+        // Cloud function returns Firebase Storage URLs, so we can use it directly
+        uploadedImageUrl = imagePreview;
+        console.log('Using Firebase Storage URL from cloud function:', uploadedImageUrl);
+      }
 
       if (imageAsset) {
         try {

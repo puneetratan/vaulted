@@ -460,7 +460,8 @@ exports.lookupbarcode = functions.https.onCall(async (data, context) => {
     }
 
     const apiData = await response.json();
-    
+
+    console.log({apiData});
     // Check if API returned an error
     if (apiData.item_response && apiData.item_response.code !== 200) {
       console.log(`No product found for barcode: ${cleanBarcode}`);
@@ -474,6 +475,19 @@ exports.lookupbarcode = functions.https.onCall(async (data, context) => {
     // Extract product information from API response
     const itemAttributes = apiData.item_attributes || {};
     
+    // Download and upload image to Firebase Storage if image URL exists
+    let imageUrl = itemAttributes.image || undefined;
+    if (imageUrl) {
+      console.log(`📷 Image URL found, uploading to Firebase Storage: ${imageUrl}`);
+      const uploadedImageUrl = await downloadAndUploadImageToStorage(imageUrl, uid);
+      if (uploadedImageUrl) {
+        imageUrl = uploadedImageUrl;
+        console.log(`✅ Image uploaded to Firebase Storage: ${imageUrl}`);
+      } else {
+        console.warn(`⚠️ Failed to upload image, keeping original URL: ${imageUrl}`);
+      }
+    }
+    
     // Map API response to our format
     const productInfo = {
       success: true,
@@ -484,7 +498,7 @@ exports.lookupbarcode = functions.https.onCall(async (data, context) => {
       mpn: itemAttributes.mpn || undefined,
       manufacturer: itemAttributes.manufacturer || undefined,
       category: itemAttributes.category || itemAttributes.parent_category || undefined,
-      imageUrl: itemAttributes.image || undefined,
+      imageUrl: imageUrl,
       description: itemAttributes.description || undefined,
       color: itemAttributes.color || undefined,
       size: itemAttributes.size || undefined,
@@ -542,4 +556,73 @@ function extractStyleId(title) {
   }
 
   return undefined;
+}
+
+/**
+ * Helper function to download image from URL and upload to Firebase Storage
+ * @param {string} imageUrl - The image URL to download
+ * @param {string} userId - The user ID to organize the storage path
+ * @returns {Promise<string|undefined>} Firebase Storage URL or undefined if upload fails
+ */
+async function downloadAndUploadImageToStorage(imageUrl, userId) {
+  try {
+    if (!imageUrl || !userId) {
+      console.warn('Missing imageUrl or userId');
+      return undefined;
+    }
+
+    // Clean the image URL (remove trailing quotes if any)
+    const cleanImageUrl = imageUrl.trim().replace(/['"]+$/, '').replace(/^['"]+/, '');
+    
+    console.log(`Downloading image from URL: ${cleanImageUrl}`);
+    
+    // Download the image
+    const response = await fetch(cleanImageUrl);
+    if (!response.ok) {
+      console.error(`Failed to download image: ${response.status} ${response.statusText}`);
+      return undefined;
+    }
+
+    // Get the image as buffer (node-fetch v3 uses arrayBuffer)
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    
+    // Check file size (8MB limit)
+    const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
+    if (buffer.length > MAX_IMAGE_BYTES) {
+      console.warn(`Image too large: ${buffer.length} bytes`);
+      return undefined;
+    }
+
+    // Get content type from response or default to jpeg
+    const contentType = response.headers.get('content-type') || 'image/jpeg';
+
+    // Generate storage path
+    const timestamp = Date.now();
+    const fileName = `barcode_image_${timestamp}.jpg`;
+    const storagePath = `inventory/${userId}/${timestamp}_${fileName}`;
+
+    // Get Firebase Storage bucket
+    const bucket = admin.storage().bucket();
+    const file = bucket.file(storagePath);
+
+    // Upload the image
+    await file.save(buffer, {
+      metadata: {
+        contentType: contentType,
+      },
+    });
+
+    // Make the file publicly accessible (matches existing pattern in client code)
+    await file.makePublic();
+
+    // Get the public URL
+    const publicUrl = `https://storage.googleapis.com/${bucket.name}/${storagePath}`;
+    
+    console.log(`Image uploaded to Firebase Storage: ${publicUrl}`);
+    return publicUrl;
+  } catch (error) {
+    console.error('Error downloading and uploading image to Storage:', error);
+    return undefined;
+  }
 }
