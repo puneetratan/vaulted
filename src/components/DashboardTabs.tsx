@@ -6,6 +6,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import {RootStackParamList} from '../navigation/AppNavigator';
 import {getInventoryItemsPage, InventoryItem, deleteInventoryItem} from '../services/inventoryService';
 import {FilterOptions} from './FilterModal';
+import {useTheme} from '../contexts/ThemeContext';
 
 type DashboardTabsNavigationProp = StackNavigationProp<RootStackParamList>;
 
@@ -51,7 +52,7 @@ const DashboardTabs = ({
   onAvailableFiltersChange,
 }: DashboardTabsProps) => {
   const navigation = useNavigation<DashboardTabsNavigationProp>();
-  const [activeTab, setActiveTab] = useState<TabType>('Total Pairs');
+  const {colors} = useTheme();
   const [allShoes, setAllShoes] = useState<ShoeItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -60,8 +61,8 @@ const DashboardTabs = ({
   const [hasMore, setHasMore] = useState<boolean>(false);
   const [loadingMore, setLoadingMore] = useState<boolean>(false);
   const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [selectedBrand, setSelectedBrand] = useState<string>('All');
 
-  const tabs: TabType[] = ['Total Pairs', 'Brands', 'Total Value'];
   const PAGE_SIZE = 20;
 
   const normalizedShadowItems = useMemo(
@@ -255,9 +256,34 @@ const DashboardTabs = ({
     });
   }, [filters]);
 
-  // Filter shoes based on search query
+  // Get available brands for filter buttons
+  const availableBrandsForFilter = useMemo(() => {
+    const brands = new Set<string>();
+    allShoes.forEach(shoe => {
+      if (shoe.brand && shoe.brand.trim() !== '' && shoe.brand.toLowerCase() !== 'unknown brand') {
+        brands.add(shoe.brand);
+      }
+    });
+    // Common brands to show
+    const commonBrands = ['Nike', 'Adidas', 'Converse', 'Puma'];
+    const result = ['All', ...commonBrands.filter(b => brands.has(b))];
+    // Add other brands
+    Array.from(brands).forEach(b => {
+      if (!commonBrands.includes(b) && !result.includes(b)) {
+        result.push(b);
+      }
+    });
+    return result;
+  }, [allShoes]);
+
+  // Filter shoes based on search query and brand filter
   const filteredInventoryShoes = useMemo(() => {
     let result = allShoes;
+    
+    // Apply brand filter
+    if (selectedBrand !== 'All') {
+      result = result.filter(shoe => shoe.brand === selectedBrand);
+    }
     
     // Apply search query
     if (searchQuery.trim()) {
@@ -275,10 +301,15 @@ const DashboardTabs = ({
     result = applyFilters(result);
     
     return result;
-  }, [allShoes, searchQuery, applyFilters]);
+  }, [allShoes, searchQuery, selectedBrand, applyFilters]);
 
   const filteredDisplayShoes = useMemo(() => {
     let result = combinedShoes;
+    
+    // Apply brand filter
+    if (selectedBrand !== 'All') {
+      result = result.filter(shoe => shoe.brand === selectedBrand);
+    }
     
     // Apply search query
     if (searchQuery.trim()) {
@@ -295,7 +326,7 @@ const DashboardTabs = ({
     result = applyFilters(result);
     
     return result;
-  }, [combinedShoes, searchQuery, applyFilters]);
+  }, [combinedShoes, searchQuery, selectedBrand, applyFilters]);
 
   const shadowCount = normalizedShadowItems.length;
   const shadowProcessingCount = useMemo(
@@ -303,10 +334,11 @@ const DashboardTabs = ({
     [normalizedShadowItems],
   );
 
-  // Calculate counts for tabs
+  // Calculate counts for summary cards
   const uniqueBrands = useMemo(() => [...new Set(allShoes.map((shoe) => shoe.brand))], [allShoes]);
+  const totalPairs = useMemo(() => allShoes.reduce((sum, shoe) => sum + (shoe.quantity || 1), 0), [allShoes]);
   const totalValue = useMemo(
-    () => allShoes.reduce((sum, shoe) => sum + (Number(shoe.cost) || 0), 0),
+    () => allShoes.reduce((sum, shoe) => sum + (Number(shoe.retailValue || shoe.cost) || 0), 0),
     [allShoes],
   );
 
@@ -367,24 +399,18 @@ const DashboardTabs = ({
     };
 
     const renderShoeItem = ({item: shoe}: {item: ShoeItem}) => {
+      const componentStyles = styles(colors);
       const isShadow = Boolean(shoe.isShadow);
       const isProcessing = isShadow && shoe.shadowStatus === 'processing';
       const hasError = isShadow && shoe.shadowStatus === 'error';
       const displayRetail =
         typeof shoe.retailValue === 'number' && shoe.retailValue > 0
-          ? shoe.retailValue.toFixed(2)
+          ? Math.round(shoe.retailValue).toString()
           : '--';
-      const quantityLabel = isShadow
-        ? isProcessing
-          ? 'Analyzing'
-          : hasError
-            ? 'Error'
-            : `Qty: ${shoe.quantity ?? 1}`
-        : `Qty: ${shoe.quantity}`;
 
       return (
         <TouchableOpacity
-          style={[styles.shoeCard, isShadow && styles.shadowCard]}
+          style={[componentStyles.shoeCard, isShadow && componentStyles.shadowCard]}
           disabled={isShadow}
           activeOpacity={isShadow ? 1 : 0.7}
           onPress={() => {
@@ -393,7 +419,7 @@ const DashboardTabs = ({
             }
           }}>
           {!isShadow && (
-            <View style={styles.sourceIconOverlay}>
+            <View style={componentStyles.sourceIconOverlay}>
               {shoe.source === 'ai' ? (
                 <Icon name="auto-awesome" size={14} color="#FFFFFF" />
               ) : shoe.source === 'barcode' ? (
@@ -403,23 +429,23 @@ const DashboardTabs = ({
               )}
             </View>
           )}
-          <View style={styles.imageContainer}>
+          <View style={componentStyles.imageContainer}>
             {shoe.imageUrl && (!isShadow || (isShadow && !isProcessing)) ? (
-              <Image source={{uri: shoe.imageUrl}} style={styles.shoeThumbnail} />
+              <Image source={{uri: shoe.imageUrl}} style={componentStyles.shoeThumbnail} />
             ) : (
-              <View style={[styles.shoeThumbnail, styles.shoeThumbnailPlaceholder]}>
+              <View style={[componentStyles.shoeThumbnail, componentStyles.shoeThumbnailPlaceholder]}>
                 {isProcessing ? (
-                  <ActivityIndicator color="#007AFF" />
+                  <ActivityIndicator color={colors.primary} />
                 ) : (
-                  <Icon name="image" size={32} color="#CCCCCC" />
+                  <Icon name="image" size={32} color={colors.textSecondary} />
                 )}
               </View>
             )}
           </View>
-          <View style={styles.shoeInfo}>
-            <View style={styles.shadowHeaderRow}>
-              <View style={styles.shoeNameContainer}>
-                <Text style={styles.shoeName}  numberOfLines={1} ellipsizeMode="tail">
+          <View style={componentStyles.shoeInfo}>
+            <View style={componentStyles.shadowHeaderRow}>
+              <View style={componentStyles.shoeNameContainer}>
+                <Text style={[componentStyles.shoeName, {color: colors.text}]}  numberOfLines={1} ellipsizeMode="tail">
                   {shoe.silhouette && 
                    typeof shoe.silhouette === 'string' &&
                    shoe.silhouette.trim() !== '' && 
@@ -430,57 +456,28 @@ const DashboardTabs = ({
                 </Text>
               </View>
               {isShadow && (
-                <View style={styles.shadowBadge}>
-                  <Text style={styles.shadowBadgeText}>
+                <View style={componentStyles.shadowBadge}>
+                  <Text style={componentStyles.shadowBadgeText}>
                     {isProcessing ? 'Analyzing' : hasError ? 'Failed' : 'AI'}
                   </Text>
                 </View>
               )}
             </View>
-            <Text style={styles.shoeBrand}>{shoe.brand}</Text>
-            <View style={styles.shoeDetailsRow}>
-              {shoe.styleId && 
-               typeof shoe.styleId === 'string' &&
-               shoe.styleId.trim() !== '' && 
-               shoe.styleId.trim().toLowerCase() !== 'unknown' && 
-               shoe.styleId.trim().toLowerCase() !== 'n/a' && (
-                <Text style={styles.shoeDetailText} numberOfLines={1}>
-                  <Text style={styles.shoeDetailLabel}>Style ID: </Text>
-                  {shoe.styleId}
-                </Text>
-              )}
-            </View>
-            <View style={styles.shoeMetaRow}>
-              <View
-                style={[
-                  styles.quantityBadge,
-                  isShadow && styles.shadowQuantityBadge,
-                  hasError && styles.shadowQuantityBadgeError,
-                ]}>
-                <Text
-                  style={[
-                    styles.quantityBadgeText,
-                    isShadow && styles.shadowQuantityBadgeText,
-                    hasError && styles.shadowStatusError,
-                  ]}>
-                  {quantityLabel}
-                </Text>
-              </View>
-            </View>
-            <Text style={styles.shoeCost}>
-              ${displayRetail}
+            <Text style={[componentStyles.shoeBrand, {color: colors.primary}]}>{shoe.brand}</Text>
+            <Text style={[componentStyles.shoeDetails, {color: colors.textSecondary}]}>
+              Size {shoe.size} | {shoe.color} | ${displayRetail}
             </Text>
           </View>
-          <View style={styles.arrowContainer}>
+          <View style={componentStyles.arrowContainer}>
             {isShadow ? (
-              <View style={styles.shadowStatusContainer}>
+              <View style={componentStyles.shadowStatusContainer}>
                 {isProcessing && (
-                  <ActivityIndicator size="small" color="#007AFF" style={styles.shadowStatusSpinner} />
+                  <ActivityIndicator size="small" color={colors.primary} style={componentStyles.shadowStatusSpinner} />
                 )}
                 <Text
                   style={[
-                    styles.shadowStatusText,
-                    hasError && styles.shadowStatusError,
+                    componentStyles.shadowStatusText,
+                    {color: hasError ? colors.error : colors.primary},
                   ]}>
                   {isProcessing
                     ? 'Analyzing...'
@@ -489,24 +486,16 @@ const DashboardTabs = ({
                       : 'AI result'}
                 </Text>
                 <TouchableOpacity
-                  style={styles.shadowDeleteButton}
+                  style={componentStyles.shadowDeleteButton}
                   onPress={() => onShadowDelete?.(shoe.id)}
                   accessibilityLabel={`Remove ${shoe.name}`}>
-                  <Icon name="close" size={16} color="#666666" />
+                  <Icon name="close" size={16} color={colors.textSecondary} />
                 </TouchableOpacity>
               </View>
             ) : deletingId === shoe.id ? (
-              <ActivityIndicator size="small" color="#FF3B30" />
+              <ActivityIndicator size="small" color={colors.error} />
             ) : (
-              <View style={styles.actionButtons}>
-                <TouchableOpacity
-                  style={styles.deleteButton}
-                  onPress={() => confirmDelete(shoe)}
-                  accessibilityLabel={`Delete ${shoe.name}`}>
-                  <Icon name="delete" size={24} color="#000000" />
-                </TouchableOpacity>
-                <Icon name="arrow-forward" size={24} color="#666666" />
-              </View>
+              <Icon name="chevron-right" size={24} color={colors.textSecondary} />
             )}
           </View>
         </TouchableOpacity>
@@ -539,187 +528,153 @@ const DashboardTabs = ({
       }
     };
 
-    switch (activeTab) {
-      case 'Total Pairs':
-        return (
-          <FlatList
-            data={filteredDisplayShoes}
-            keyExtractor={(shoe, index) => shoe.id?.toString() ?? `${shoe.name}-${shoe.size}-${index}`}
-            ListHeaderComponent={
-              <View style={styles.totalPairsHeader}>
-                <View style={styles.totalPairsTitleRow}>
-                  <Text style={styles.tabContentTitle}>
-                    Total Pairs: {filteredInventoryShoes.length}
-                  </Text>
-                  {/* Legend for source icons */}
-                  <View style={styles.sourceLegend}>
-                    <View style={styles.legendItem}>
-                      <View style={styles.legendIconContainer}>
-                        <Icon name="qr-code-scanner" size={12} color="#FFFFFF" />
-                      </View>
-                      <Text style={styles.legendText}>Scanner</Text>
-                    </View>
-                    <View style={styles.legendItem}>
-                      <View style={styles.legendIconContainer}>
-                        <Icon name="auto-awesome" size={12} color="#FFFFFF" />
-                      </View>
-                      <Text style={styles.legendText}>ChatGPT</Text>
-                    </View>
-                    <View style={styles.legendItem}>
-                      <View style={styles.legendIconContainer}>
-                        <Icon name="edit" size={12} color="#FFFFFF" />
-                      </View>
-                      <Text style={styles.legendText}>Manual</Text>
-                    </View>
-                  </View>
-                </View>
-                {shadowCount > 0 && (
-                  <Text style={styles.shadowInfoText}>
-                    AI items: {shadowCount}
-                    {shadowProcessingCount > 0
-                      ? ` (${shadowProcessingCount} analyzing)`
-                      : ' (ready)'}
-                  </Text>
-                )}
+    return (
+      <FlatList
+        data={filteredDisplayShoes}
+        keyExtractor={(shoe, index) => shoe.id?.toString() ?? `${shoe.name}-${shoe.size}-${index}`}
+        ListHeaderComponent={() => {
+          const componentStyles = styles(colors);
+          return (
+          <>
+            {/* Summary Statistics Cards */}
+            <View style={componentStyles.summaryCardsContainer}>
+              <View style={componentStyles.summaryCard}>
+                <Text style={componentStyles.summaryCardValue}>{totalPairs}</Text>
+                <Text style={componentStyles.summaryCardLabel}>Total Pairs</Text>
               </View>
-            }
-            renderItem={renderShoeItem}
-            ListEmptyComponent={renderEmptyComponent}
-            contentContainerStyle={styles.scrollContent}
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
-            onEndReached={handleEndReached}
-            onEndReachedThreshold={0.4}
-            ListFooterComponent={renderListFooter}
-            showsVerticalScrollIndicator={false}
-          />
-        );
-      case 'Brands':
-        const brandCounts = uniqueBrands.map(brand => ({
-          brand,
-          count: allShoes.filter(shoe => shoe.brand === brand).length
-        }));
-        
-        return (
-          <ScrollView 
-            style={styles.scrollContainer}
-            contentContainerStyle={styles.scrollContent}>
-            <Text style={styles.tabContentTitle}>Brands: {uniqueBrands.length}</Text>
-            {brandCounts.length > 0 ? (
-              brandCounts.map((item, index) => (
-                <TouchableOpacity key={index} style={styles.brandCard}>
-                  <View style={styles.brandInfo}>
-                    <Text style={styles.brandName}>{item.brand}</Text>
-                    <Text style={styles.brandCount}>{item.count} items</Text>
-                  </View>
-                </TouchableOpacity>
-              ))
-            ) : (
-              <View style={styles.emptyState}>
-                <Text style={styles.tabContentValue}>0</Text>
-                <Text style={styles.tabContentSubtitle}>
-                  No brands added yet
+              <View style={componentStyles.summaryCard}>
+                <Text style={componentStyles.summaryCardValue}>{uniqueBrands.length}</Text>
+                <Text style={componentStyles.summaryCardLabel}>Brands</Text>
+              </View>
+              <View style={componentStyles.summaryCard}>
+                <Text style={componentStyles.summaryCardValue}>
+                  ${Math.round(totalValue).toLocaleString()}
                 </Text>
+                <Text style={componentStyles.summaryCardLabel}>Total Value</Text>
               </View>
-            )}
-          </ScrollView>
-        );
-      case 'Total Value':
-        return (
-          <View style={styles.tabContent}>
-            <Text style={styles.tabContentTitle}>Total Value</Text>
-            <Text style={styles.tabContentValue}>${totalValue}</Text>
-            <Text style={styles.tabContentSubtitle}>
-              {allShoes.length > 0 ? `${allShoes.length} items` : 'No items added yet'}
-            </Text>
-          </View>
-        );
-      default:
-        return null;
-    }
+            </View>
+
+            {/* Brand Filter Buttons */}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={componentStyles.brandFilterContainer}
+              contentContainerStyle={componentStyles.brandFilterContent}>
+              {availableBrandsForFilter.map((brand) => (
+                <TouchableOpacity
+                  key={brand}
+                  style={[
+                    componentStyles.brandFilterButton,
+                    selectedBrand === brand && componentStyles.brandFilterButtonActive,
+                  ]}
+                  onPress={() => setSelectedBrand(brand)}>
+                  <Text
+                    style={[
+                      componentStyles.brandFilterButtonText,
+                      selectedBrand === brand && componentStyles.brandFilterButtonTextActive,
+                    ]}>
+                    {brand === 'Nike' ? 'Airforce' : brand}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </>
+          );
+        }}
+        renderItem={renderShoeItem}
+        ListEmptyComponent={renderEmptyComponent}
+        contentContainerStyle={componentStyles.scrollContent}
+        refreshing={refreshing}
+        onRefresh={handleRefresh}
+        onEndReached={handleEndReached}
+        onEndReachedThreshold={0.4}
+        ListFooterComponent={renderListFooter}
+        showsVerticalScrollIndicator={false}
+      />
+    );
   };
 
-  return (
-    <View style={styles.container}>
-      {/* Tab Buttons */}
-      <View style={styles.tabContainer}>
-        {tabs.map((tab) => {
-          let tabLabel: string = tab;
-          if (tab === 'Total Pairs') {
-            tabLabel = shadowCount > 0
-              ? `${tab} (${allShoes.length} +${shadowCount} AI)`
-              : `${tab} (${allShoes.length})`;
-          } else if (tab === 'Brands') {
-            tabLabel = `${tab} (${uniqueBrands.length})`;
-          } else if (tab === 'Total Value') {
-            tabLabel = `${tab} ($${totalValue})`;
-          }
-          
-          return (
-            <TouchableOpacity
-              key={tab}
-              style={[
-                styles.tab,
-                activeTab === tab && styles.activeTab,
-              ]}
-              onPress={() => setActiveTab(tab)}>
-              <Text
-                style={[
-                  styles.tabText,
-                  activeTab === tab && styles.activeTabText,
-                ]}>
-                {tabLabel}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
+  const componentStyles = styles(colors);
 
-      {/* Tab Content */}
-      <View style={styles.contentContainer}>{renderTabContent()}</View>
+  return (
+    <View style={componentStyles.container}>
+      {/* Content */}
+      <View style={componentStyles.contentContainer}>{renderTabContent()}</View>
     </View>
   );
 };
 
-const styles = StyleSheet.create({
+const styles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
-  tabContainer: {
-    flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
-    backgroundColor: '#FFFFFF',
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: 16,
-    alignItems: 'center',
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
-  },
-  activeTab: {
-    borderBottomColor: '#007AFF',
-  },
-  tabText: {
-    fontSize: 14,
-    color: '#666666',
-    fontWeight: '500',
-  },
-  activeTabText: {
-    color: '#007AFF',
-    fontWeight: '600',
+    backgroundColor: colors.background,
   },
   contentContainer: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: colors.background,
+  },
+  summaryCardsContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 12,
+    gap: 12,
+  },
+  summaryCard: {
+    flex: 1,
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  summaryCardValue: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginBottom: 4,
+  },
+  summaryCardLabel: {
+    fontSize: 12,
+    color: colors.text,
+    fontWeight: '500',
+    opacity: 0.7,
+  },
+  brandFilterContainer: {
+    marginTop: 8,
+    marginBottom: 12,
+  },
+  brandFilterContent: {
+    paddingHorizontal: 16,
+    gap: 8,
+  },
+  brandFilterButton: {
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: colors.card,
+    marginRight: 8,
+  },
+  brandFilterButtonActive: {
+    backgroundColor: colors.surfaceSecondary,
+  },
+  brandFilterButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors.text,
+  },
+  brandFilterButtonTextActive: {
+    color: colors.background,
   },
   scrollContainer: {
     flex: 1,
   },
   scrollContent: {
-    padding: 16,
+    paddingBottom: 16,
   },
   tabContent: {
     flex: 1,
@@ -728,34 +683,37 @@ const styles = StyleSheet.create({
   tabContentTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#000000',
+    color: colors.text,
     marginBottom: 16,
   },
   tabContentValue: {
     fontSize: 48,
     fontWeight: 'bold',
-    color: '#007AFF',
+    color: colors.success,
     marginBottom: 8,
   },
   tabContentSubtitle: {
     fontSize: 16,
-    color: '#666666',
+    color: colors.text,
+    opacity: 0.7,
   },
   emptyState: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    padding: 24,
   },
   shoeCard: {
     flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.card,
     borderRadius: 12,
     padding: 12,
+    marginHorizontal: 16,
     marginBottom: 12,
     position: 'relative',
     shadowColor: '#000',
     shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 3,
   },
@@ -878,71 +836,17 @@ const styles = StyleSheet.create({
   shoeName: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#000000',
     marginBottom: 4,
     maxWidth: 240, // Approximately 30 characters at 14px font size
   },
   shoeBrand: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#007AFF',
     marginBottom: 4,
   },
-  shoeDetailsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
-  shoeMetaRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    marginTop: 4,
-  },
   shoeDetails: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  shoeDetailText: {
-    fontSize: 12,
-    color: '#666666',
-    marginRight: 12,
-    marginBottom: 0,
-  },
-  shoeDetailLabel: {
-    fontSize: 12,
-    color: '#666666',
-    fontWeight: '600',
-  },
-  quantityBadge: {
-    backgroundColor: '#E3F2FD',
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
+    fontSize: 14,
     marginTop: 4,
-    // marginLeft: 30,
-    alignSelf: 'flex-start',
-  },
-  quantityBadgeText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#007AFF',
-  },
-  shadowQuantityBadge: {
-    backgroundColor: '#DCEBFF',
-  },
-  shadowQuantityBadgeText: {
-    color: '#0A5FD9',
-  },
-  shadowQuantityBadgeError: {
-    backgroundColor: '#FDECEA',
-  },
-  shoeCost: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#000000',
-    marginTop: 8,
   },
   shadowStatusContainer: {
     flexDirection: 'row',

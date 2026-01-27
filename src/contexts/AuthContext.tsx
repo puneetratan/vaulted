@@ -33,9 +33,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         iosClientId: "872715867979-r9b7b05lutnkblrstufbrh00aaqehgb8.apps.googleusercontent.com",
         webClientId: "872715867979-rmth3jpbic8jorgksr6i9r6j83vjqpdo.apps.googleusercontent.com",
         offlineAccess: false,
+        // For Android, ensure the package name matches
+        forceCodeForRefreshToken: false,
       });
+      console.log("✅ Google Sign-In configured successfully");
     } catch (error) {
-      console.warn("Failed to configure GoogleSignin:", error);
+      console.error("❌ Failed to configure GoogleSignin:", error);
     }
   }, []);
 
@@ -86,6 +89,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     } catch (error: any) {
       console.error("Google sign-in error:", error);
+      
+      // Provide more helpful error messages
+      if (error.code === '10' || error.message?.includes('DEVELOPER_ERROR')) {
+        const errorMessage = Platform.OS === 'android' 
+          ? 'DEVELOPER_ERROR: Please ensure:\n1. SHA-1 and SHA-256 fingerprints are added to Firebase Console\n2. Package name matches (com.vault.dev)\n3. google-services.json is in android/app/\n\nGet SHA-1: cd android && ./gradlew signingReport'
+          : 'DEVELOPER_ERROR: Please check your iOS OAuth client ID in Firebase Console';
+        throw new Error(errorMessage);
+      }
+      
       // Re-throw error so the UI can handle it (show error message, etc.)
       throw error;
     }

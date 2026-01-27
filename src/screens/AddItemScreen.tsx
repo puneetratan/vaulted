@@ -21,6 +21,7 @@ import {launchImageLibrary, ImagePickerResponse} from 'react-native-image-picker
 import {saveInventoryItem} from '../services/inventoryService';
 import {getStorage, getFunctions} from '../services/firebase';
 import {useAuth} from '../contexts/AuthContext';
+import {useTheme} from '../contexts/ThemeContext';
 import {getUserData} from '../services/userService';
 import {Picker} from '@react-native-picker/picker';
 import DateTimePicker, {DateTimePickerEvent} from '@react-native-community/datetimepicker';
@@ -33,6 +34,7 @@ const AddItemScreen = () => {
   const navigation = useNavigation<AddItemScreenNavigationProp>();
   const route = useRoute<AddItemScreenRouteProp>();
   const {user} = useAuth();
+  const {colors} = useTheme();
   
   const [name, setName] = useState('');
   const [brand, setBrand] = useState('');
@@ -424,35 +426,37 @@ const AddItemScreen = () => {
     }
   };
 
+  const componentStyles = styles(colors);
+
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={componentStyles.container} edges={['top']}>
       {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Icon name="arrow-back" size={24} color="#000000" />
+      <View style={componentStyles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={componentStyles.backButton}>
+          <Icon name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Add Item Manually</Text>
-        <View style={styles.placeholder} />
+        <Text style={[componentStyles.headerTitle, {color: colors.text}]}>Add New Item</Text>
+        <View style={componentStyles.placeholder} />
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView style={componentStyles.content} showsVerticalScrollIndicator={false}>
         {/* Image Picker */}
-        <View style={styles.imageSection}>
+        <View style={componentStyles.imageSection}>
           <TouchableOpacity
-            style={styles.imagePicker}
+            style={componentStyles.imagePicker}
             onPress={handleImagePicker}>
             {imagePreview ? (
-              <Image source={{uri: imagePreview}} style={styles.imagePreview} />
+              <Image source={{uri: imagePreview}} style={componentStyles.imagePreview} />
             ) : (
-              <View style={styles.imagePlaceholder}>
-                <Icon name="add-photo-alternate" size={48} color="#CCCCCC" />
-                <Text style={styles.imagePlaceholderText}>Add Photo</Text>
+              <View style={componentStyles.imagePlaceholder}>
+                <Icon name="add-photo-alternate" size={48} color={colors.textSecondary} />
+                <Text style={[componentStyles.imagePlaceholderText, {color: colors.textSecondary}]}>Add Photo</Text>
               </View>
             )}
           </TouchableOpacity>
           {imagePreview && (
             <TouchableOpacity
-              style={styles.removeImageButton}
+              style={componentStyles.removeImageButton}
               onPress={() => {
                 setImagePreview(undefined);
                 setImageAsset(undefined);
@@ -463,94 +467,104 @@ const AddItemScreen = () => {
         </View>
 
         {/* Form Fields */}
-        <View style={styles.formSection}>
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Item Name *</Text>
+        <View style={componentStyles.formSection}>
+          <View style={componentStyles.inputGroup}>
+            <Text style={[componentStyles.label, {color: colors.text}]}>Item Name *</Text>
             <TextInput
-              style={styles.input}
+              style={[componentStyles.input, {backgroundColor: colors.input, borderColor: colors.inputBorder, color: colors.text}]}
               placeholder="Enter item name"
               value={name}
               onChangeText={setName}
-              placeholderTextColor="#999999"
+              placeholderTextColor={colors.textSecondary}
             />
           </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Brand *</Text>
+          <View style={componentStyles.inputGroup}>
+            <Text style={[componentStyles.label, {color: colors.text}]}>Brand *</Text>
             <TextInput
-              style={styles.input}
+              style={[componentStyles.input, {backgroundColor: colors.input, borderColor: colors.inputBorder, color: colors.text}]}
               placeholder="Enter brand"
               value={brand}
               onChangeText={setBrand}
-              placeholderTextColor="#999999"
+              placeholderTextColor={colors.textSecondary}
             />
           </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Silhouette *</Text>
+          <View style={componentStyles.inputGroup}>
+            <View style={componentStyles.labelRow}>
+              <Text style={[componentStyles.label, {color: colors.text}]}>Silhouette *</Text>
+              <TouchableOpacity>
+                <Icon name="info" size={18} color={colors.primary} />
+              </TouchableOpacity>
+            </View>
             <TextInput
-              style={styles.input}
+              style={[componentStyles.input, {backgroundColor: colors.input, borderColor: colors.inputBorder, color: colors.text}]}
               placeholder="Enter silhouette"
               value={silhouette}
               onChangeText={setSilhouette}
-              placeholderTextColor="#999999"
+              placeholderTextColor={colors.textSecondary}
             />
           </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Style ID *</Text>
+          <View style={componentStyles.inputGroup}>
+            <View style={componentStyles.labelRow}>
+              <Text style={[componentStyles.label, {color: colors.text}]}>Style ID *</Text>
+              <TouchableOpacity>
+                <Icon name="info" size={18} color={colors.primary} />
+              </TouchableOpacity>
+            </View>
             <TextInput
-              style={styles.input}
+              style={[componentStyles.input, {backgroundColor: colors.input, borderColor: colors.inputBorder, color: colors.text}]}
               placeholder="Enter style ID"
               value={styleId}
               onChangeText={setStyleId}
-              placeholderTextColor="#999999"
+              placeholderTextColor={colors.textSecondary}
             />
           </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Size *</Text>
+          <View style={componentStyles.inputGroup}>
+            <Text style={[componentStyles.label, {color: colors.text}]}>Size *</Text>
             <TextInput
-              style={styles.input}
+              style={[componentStyles.input, {backgroundColor: colors.input, borderColor: colors.inputBorder, color: colors.text}]}
               placeholder="Enter size"
               value={size}
               onChangeText={setSize}
-              placeholderTextColor="#999999"
+              placeholderTextColor={colors.textSecondary}
               keyboardType="numeric"
             />
           </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Quantity *</Text>
+          <View style={componentStyles.inputGroup}>
+            <Text style={[componentStyles.label, {color: colors.text}]}>Quantity *</Text>
             {Platform.OS === 'ios' ? (
               <>
                 <TouchableOpacity
-                  style={styles.selectInput}
+                  style={[componentStyles.selectInput, {backgroundColor: colors.input, borderColor: colors.inputBorder}]}
                   onPress={() => setQuantityModalVisible(true)}>
-                  <Text style={styles.selectInputText}>{quantity}</Text>
-                  <Icon name="arrow-drop-down" size={24} color="#666666" />
+                  <Text style={[componentStyles.selectInputText, {color: colors.text}]}>{quantity}</Text>
+                  <Icon name="arrow-drop-down" size={24} color={colors.textSecondary} />
                 </TouchableOpacity>
                 <Modal
                   visible={quantityModalVisible}
                   animationType="slide"
                   transparent
                   onRequestClose={() => setQuantityModalVisible(false)}>
-                  <View style={styles.modalOverlay}>
-                    <View style={styles.modalContent}>
-                      <View style={styles.modalHeader}>
+                  <View style={componentStyles.modalOverlay}>
+                    <View style={[componentStyles.modalContent, {backgroundColor: colors.surface}]}>
+                      <View style={[componentStyles.modalHeader, {borderBottomColor: colors.border}]}>
                         <TouchableOpacity onPress={() => setQuantityModalVisible(false)}>
-                          <Text style={styles.modalActionText}>Cancel</Text>
+                          <Text style={[componentStyles.modalActionText, {color: colors.success}]}>Cancel</Text>
                         </TouchableOpacity>
-                        <Text style={styles.modalTitle}>Select Quantity</Text>
+                        <Text style={[componentStyles.modalTitle, {color: colors.text}]}>Select Quantity</Text>
                         <TouchableOpacity onPress={() => setQuantityModalVisible(false)}>
-                          <Text style={styles.modalActionText}>Done</Text>
+                          <Text style={[componentStyles.modalActionText, {color: colors.success}]}>Done</Text>
                         </TouchableOpacity>
                       </View>
                       <Picker
                         selectedValue={quantity}
                         onValueChange={value => setQuantity(String(value))}
-                        style={styles.modalPicker}
-                        itemStyle={styles.pickerItem}>
+                        style={[componentStyles.modalPicker, {backgroundColor: colors.surface}]}
+                        itemStyle={componentStyles.pickerItem}>
                         {Array.from({length: 20}, (_, index) => {
                           const value = String(index + 1);
                           return (
@@ -563,12 +577,12 @@ const AddItemScreen = () => {
                 </Modal>
               </>
             ) : (
-              <View style={styles.pickerContainer}>
+              <View style={[componentStyles.pickerContainer, {backgroundColor: colors.input, borderColor: colors.inputBorder}]}>
                 <Picker
                   selectedValue={quantity}
                   onValueChange={value => setQuantity(String(value))}
-                  style={styles.picker}
-                  itemStyle={styles.pickerItem}
+                  style={[componentStyles.picker, {color: colors.text}]}
+                  itemStyle={componentStyles.pickerItem}
                   mode={Platform.OS === 'android' ? 'dropdown' : undefined}>
                   {Array.from({length: 20}, (_, index) => {
                     const value = String(index + 1);
@@ -581,35 +595,38 @@ const AddItemScreen = () => {
             )}
           </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Color</Text>
+          <View style={componentStyles.inputGroup}>
+            <Text style={[componentStyles.label, {color: colors.text}]}>Color</Text>
             <TextInput
-              style={styles.input}
+              style={[componentStyles.input, {backgroundColor: colors.input, borderColor: colors.inputBorder, color: colors.text}]}
               placeholder="Enter color"
               value={color}
               onChangeText={setColor}
-              placeholderTextColor="#999999"
+              placeholderTextColor={colors.textSecondary}
             />
           </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Retail Value *</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter retail value"
-              value={retailValue}
-              onChangeText={setRetailValue}
-              placeholderTextColor="#999999"
-              keyboardType="decimal-pad"
-            />
+          <View style={componentStyles.inputGroup}>
+            <Text style={[componentStyles.label, {color: colors.text}]}>Cost *</Text>
+            <View style={[componentStyles.costInputContainer, {backgroundColor: colors.input, borderColor: colors.inputBorder}]}>
+              <Text style={[componentStyles.currencySymbol, {color: colors.text}]}>$</Text>
+              <TextInput
+                style={[componentStyles.costInput, {color: colors.text}]}
+                placeholder="120.00"
+                value={retailValue}
+                onChangeText={setRetailValue}
+                placeholderTextColor={colors.textSecondary}
+                keyboardType="decimal-pad"
+              />
+            </View>
           </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Release Date *</Text>
+          <View style={componentStyles.inputGroup}>
+            <Text style={[componentStyles.label, {color: colors.text}]}>Release Date *</Text>
             {Platform.OS === 'ios' ? (
               <>
                 <TouchableOpacity
-                  style={styles.selectInput}
+                  style={[componentStyles.selectInput, {backgroundColor: colors.input, borderColor: colors.inputBorder}]}
                   onPress={() => {
                     const initialDate = releaseDate
                       ? new Date(releaseDate)
@@ -619,21 +636,21 @@ const AddItemScreen = () => {
                     );
                     setReleaseDatePickerVisible(true);
                   }}>
-                  <Text style={styles.selectInputText}>{formattedReleaseDate}</Text>
-                  <Icon name="event" size={22} color="#666666" />
+                  <Text style={[componentStyles.selectInputText, {color: colors.text}]}>{formattedReleaseDate}</Text>
+                  <Icon name="event" size={22} color={colors.textSecondary} />
                 </TouchableOpacity>
                 <Modal
                   visible={releaseDatePickerVisible}
                   transparent
                   animationType="slide"
                   onRequestClose={() => setReleaseDatePickerVisible(false)}>
-                  <View style={styles.modalOverlay}>
-                    <View style={styles.modalContent}>
-                      <View style={styles.modalHeader}>
+                  <View style={componentStyles.modalOverlay}>
+                    <View style={[componentStyles.modalContent, {backgroundColor: colors.surface}]}>
+                      <View style={[componentStyles.modalHeader, {borderBottomColor: colors.border}]}>
                         <TouchableOpacity onPress={() => setReleaseDatePickerVisible(false)}>
-                          <Text style={styles.modalActionText}>Cancel</Text>
+                          <Text style={[componentStyles.modalActionText, {color: colors.success}]}>Cancel</Text>
                         </TouchableOpacity>
-                        <Text style={styles.modalTitle}>Release Date</Text>
+                        <Text style={[componentStyles.modalTitle, {color: colors.text}]}>Release Date</Text>
                         <TouchableOpacity
                           onPress={() => {
                             if (releaseDatePickerValue) {
@@ -642,7 +659,7 @@ const AddItemScreen = () => {
                             }
                             setReleaseDatePickerVisible(false);
                           }}>
-                          <Text style={styles.modalActionText}>Done</Text>
+                          <Text style={[componentStyles.modalActionText, {color: colors.success}]}>Done</Text>
                         </TouchableOpacity>
                       </View>
                       <DateTimePicker
@@ -664,7 +681,7 @@ const AddItemScreen = () => {
               </>
             ) : (
               <Pressable
-                style={styles.selectInput}
+                style={[componentStyles.selectInput, {backgroundColor: colors.input, borderColor: colors.inputBorder}]}
                 onPress={() => {
                   const initialDate = releaseDate
                     ? new Date(releaseDate)
@@ -674,8 +691,8 @@ const AddItemScreen = () => {
                   );
                   setReleaseDatePickerVisible(true);
                 }}>
-                <Text style={styles.selectInputText}>{formattedReleaseDate}</Text>
-                <Icon name="event" size={22} color="#666666" />
+                <Text style={[componentStyles.selectInputText, {color: colors.text}]}>{formattedReleaseDate}</Text>
+                <Icon name="event" size={22} color={colors.textSecondary} />
                 {releaseDatePickerVisible && (
                   <DateTimePicker
                     value={
@@ -701,25 +718,25 @@ const AddItemScreen = () => {
             )}
           </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Barcode</Text>
+          <View style={componentStyles.inputGroup}>
+            <Text style={[componentStyles.label, {color: colors.text}]}>Barcode</Text>
             <TextInput
-              style={styles.input}
+              style={[componentStyles.input, {backgroundColor: colors.input, borderColor: colors.inputBorder, color: colors.text}]}
               placeholder="Enter barcode (optional)"
               value={barcode}
               onChangeText={setBarcode}
-              placeholderTextColor="#999999"
+              placeholderTextColor={colors.textSecondary}
             />
           </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Notes</Text>
+          <View style={componentStyles.inputGroup}>
+            <Text style={[componentStyles.label, {color: colors.text}]}>Notes</Text>
             <TextInput
-              style={[styles.input, styles.textArea]}
+              style={[componentStyles.input, componentStyles.textArea, {backgroundColor: colors.input, borderColor: colors.inputBorder, color: colors.text}]}
               placeholder="Enter notes (optional)"
               value={notes}
               onChangeText={setNotes}
-              placeholderTextColor="#999999"
+              placeholderTextColor={colors.textSecondary}
               multiline
               numberOfLines={4}
               textAlignVertical="top"
@@ -728,27 +745,30 @@ const AddItemScreen = () => {
         </View>
       </ScrollView>
 
-      {/* Save Button */}
-      <View style={styles.footer}>
+      {/* Save and Remove Buttons */}
+      <View style={[componentStyles.footer, {backgroundColor: colors.footer, borderTopColor: colors.border}]}>
         <TouchableOpacity
-          style={[styles.saveButton, loading && styles.saveButtonDisabled]}
+          style={[componentStyles.saveButton, {backgroundColor: colors.success}, loading && componentStyles.saveButtonDisabled]}
           onPress={handleSave}
           disabled={loading}>
           {loading ? (
             <ActivityIndicator color="#FFFFFF" />
           ) : (
-            <Text style={styles.saveButtonText}>Save Item</Text>
+            <Text style={componentStyles.saveButtonText}>Save</Text>
           )}
+        </TouchableOpacity>
+        <TouchableOpacity style={componentStyles.removeButton}>
+          <Text style={[componentStyles.removeButtonText, {color: colors.text}]}>Remove</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
 };
 
-const styles = StyleSheet.create({
+const styles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -757,8 +777,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
-    backgroundColor: '#FFFFFF',
+    borderBottomColor: colors.border,
+    backgroundColor: colors.header,
   },
   backButton: {
     padding: 8,
@@ -766,7 +786,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#000000',
   },
   placeholder: {
     width: 40,
@@ -784,7 +803,7 @@ const styles = StyleSheet.create({
     height: 200,
     borderRadius: 12,
     overflow: 'hidden',
-    backgroundColor: '#F5F5F5',
+    backgroundColor: colors.input,
   },
   imagePreview: {
     width: '100%',
@@ -796,14 +815,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#CCCCCC',
+    borderColor: colors.border,
     borderStyle: 'dashed',
     borderRadius: 12,
   },
   imagePlaceholderText: {
     marginTop: 8,
     fontSize: 14,
-    color: '#CCCCCC',
   },
   removeImageButton: {
     position: 'absolute',
@@ -823,21 +841,38 @@ const styles = StyleSheet.create({
   inputGroup: {
     marginBottom: 20,
   },
+  labelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+    gap: 8,
+  },
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#000000',
-    marginBottom: 8,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#E0E0E0',
     borderRadius: 8,
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 16,
-    color: '#000000',
-    backgroundColor: '#FFFFFF',
+  },
+  costInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 16,
+  },
+  currencySymbol: {
+    fontSize: 16,
+    marginRight: 8,
+  },
+  costInput: {
+    flex: 1,
+    paddingVertical: 12,
+    fontSize: 16,
   },
   textArea: {
     minHeight: 100,
@@ -845,29 +880,23 @@ const styles = StyleSheet.create({
   },
   selectInput: {
     borderWidth: 1,
-    borderColor: '#E0E0E0',
     borderRadius: 8,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
   selectInputText: {
     fontSize: 16,
-    color: '#000000',
   },
   pickerContainer: {
     borderWidth: 1,
-    borderColor: '#E0E0E0',
     borderRadius: 8,
     overflow: 'hidden',
-    backgroundColor: '#FFFFFF',
     height: 48,
   },
   picker: {
-    color: '#000000',
     height: 48,
   },
   pickerItem: {
@@ -879,7 +908,6 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
     paddingBottom: Platform.OS === 'ios' ? 24 : 16,
@@ -891,35 +919,29 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
   },
   modalTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#000000',
   },
   modalActionText: {
     fontSize: 16,
-    color: '#007AFF',
     fontWeight: '600',
   },
   modalPicker: {
     height: 216,
-    backgroundColor: '#FFFFFF',
   },
   footer: {
     paddingHorizontal: 16,
     paddingVertical: 16,
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
-    backgroundColor: '#FFFFFF',
   },
   saveButton: {
-    backgroundColor: '#474747',
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: 12,
   },
   saveButtonText: {
     color: '#FFFFFF',
@@ -928,6 +950,14 @@ const styles = StyleSheet.create({
   },
   saveButtonDisabled: {
     opacity: 0.6,
+  },
+  removeButton: {
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  removeButtonText: {
+    fontSize: 16,
+    textDecorationLine: 'underline',
   },
 });
 

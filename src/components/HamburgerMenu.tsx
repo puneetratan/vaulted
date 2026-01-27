@@ -6,9 +6,11 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
+  Switch,
 } from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import {useTheme} from '../contexts/ThemeContext';
 
 interface HamburgerMenuProps {
   visible: boolean;
@@ -18,11 +20,13 @@ interface HamburgerMenuProps {
 
 const HamburgerMenu = ({visible, onClose, onMenuItemPress}: HamburgerMenuProps) => {
   const insets = useSafeAreaInsets();
+  const {theme, toggleTheme, colors} = useTheme();
+  
   const menuItems = [
-    {id: 'profile', label: 'Profile', icon: 'person'},
+    {id: 'profile', label: 'My Profile', icon: 'person'},
+    {id: 'terms', label: 'Terms & Conditions', icon: 'description'},
     {id: 'privacy', label: 'Privacy Policy', icon: 'privacy-tip'},
-    {id: 'terms', label: 'Terms and Conditions', icon: 'description'},
-    {id: 'signout', label: 'Sign Out', icon: 'logout', isDanger: true},
+    {id: 'report', label: 'Report a Problem', icon: 'error-outline'},
   ];
 
   const handleMenuItemPress = (itemId: string) => {
@@ -40,9 +44,9 @@ const HamburgerMenu = ({visible, onClose, onMenuItemPress}: HamburgerMenuProps) 
         <View style={styles.drawerContainer}>
           {/* Drawer Header */}
           <View style={[styles.header, {paddingTop: insets.top + 20}]}>
-            <Text style={styles.headerTitle}>Menu</Text>
+            <View style={styles.headerSpacer} />
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <Icon name="close" size={24} color="#000000" />
+              <Icon name="close" size={24} color={colors.text} />
             </TouchableOpacity>
           </View>
 
@@ -53,30 +57,61 @@ const HamburgerMenu = ({visible, onClose, onMenuItemPress}: HamburgerMenuProps) 
                 key={item.id}
                 style={[
                   styles.menuItem,
-                  item.isDanger && styles.dangerItem,
                   index < menuItems.length - 1 && styles.menuItemBorder,
                 ]}
                 onPress={() => handleMenuItemPress(item.id)}>
                 <Icon
                   name={item.icon}
                   size={24}
-                  color={item.isDanger ? '#FF3B30' : '#000000'}
+                  color={colors.text}
                   style={styles.menuIcon}
                 />
-                <Text
-                  style={[
-                    styles.menuText,
-                    item.isDanger && styles.dangerText,
-                  ]}>
+                <Text style={[styles.menuText, {color: colors.text}]}>
                   {item.label}
                 </Text>
                 <Icon
                   name="chevron-right"
                   size={20}
-                  color={item.isDanger ? '#FF3B30' : '#999999'}
+                  color={colors.textSecondary}
                 />
               </TouchableOpacity>
             ))}
+            
+            {/* Light Mode Toggle */}
+            <View style={[styles.menuItem, styles.menuItemBorder, styles.toggleItem]}>
+              <Icon
+                name="light-mode"
+                size={24}
+                color={colors.text}
+                style={styles.menuIcon}
+              />
+              <Text style={[styles.menuText, {color: colors.text}]}>Light Mode</Text>
+              <Switch
+                value={theme === 'light'}
+                onValueChange={toggleTheme}
+                trackColor={{false: colors.surfaceSecondary, true: colors.success}}
+                thumbColor={theme === 'light' ? '#FFFFFF' : '#999999'}
+              />
+            </View>
+            
+            {/* Sign Out */}
+            <View style={styles.signOutSpacer} />
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => handleMenuItemPress('signout')}>
+              <Icon
+                name="exit-to-app"
+                size={24}
+                color={colors.text}
+                style={styles.menuIcon}
+              />
+              <Text style={[styles.menuText, {color: colors.text}]}>Sign Out</Text>
+              <Icon
+                name="chevron-right"
+                size={20}
+                color={colors.textSecondary}
+              />
+            </TouchableOpacity>
           </ScrollView>
         </View>
 
@@ -91,80 +126,74 @@ const HamburgerMenu = ({visible, onClose, onMenuItemPress}: HamburgerMenuProps) 
   );
 };
 
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    flexDirection: 'row',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  overlayTouchable: {
-    flex: 1,
-  },
-  drawerContainer: {
-    width: '80%',
-    maxWidth: 320,
-    height: '100%',
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 2,
-      height: 0,
+  const styles = StyleSheet.create({
+    overlay: {
+      flex: 1,
+      flexDirection: 'row',
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
     },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
-    backgroundColor: '#FFFFFF',
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#000000',
-  },
-  closeButton: {
-    padding: 4,
-  },
-  menuContainer: {
-    flex: 1,
-    paddingTop: 8,
-  },
-  menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: '#FFFFFF',
-  },
-  menuItemBorder: {
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-  },
-  menuIcon: {
-    marginRight: 16,
-  },
-  menuText: {
-    flex: 1,
-    fontSize: 16,
-    color: '#000000',
-  },
-  dangerItem: {
-    marginTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: '#F0F0F0',
-  },
-  dangerText: {
-    color: '#FF3B30',
-    fontWeight: '600',
-  },
-});
+    overlayTouchable: {
+      flex: 1,
+    },
+    drawerContainer: {
+      width: '80%',
+      maxWidth: 320,
+      height: '100%',
+      backgroundColor: colors.surfaceSecondary,
+      shadowColor: '#000',
+      shadowOffset: {
+        width: 2,
+        height: 0,
+      },
+      shadowOpacity: 0.5,
+      shadowRadius: 3.84,
+      elevation: 5,
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'flex-end',
+      alignItems: 'center',
+      paddingHorizontal: 20,
+      paddingBottom: 20,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+      backgroundColor: colors.surfaceSecondary,
+    },
+    headerSpacer: {
+      flex: 1,
+    },
+    closeButton: {
+      padding: 4,
+    },
+    menuContainer: {
+      flex: 1,
+      paddingTop: 8,
+    },
+    menuItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 20,
+      paddingVertical: 16,
+      backgroundColor: colors.surfaceSecondary,
+    },
+    menuItemBorder: {
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    toggleItem: {
+      justifyContent: 'space-between',
+    },
+    menuIcon: {
+      marginRight: 16,
+    },
+    menuText: {
+      flex: 1,
+      fontSize: 16,
+    },
+    signOutSpacer: {
+      height: 40,
+    },
+  });
 
 export default HamburgerMenu;
 

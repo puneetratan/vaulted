@@ -339,9 +339,9 @@ const EditItemScreen = () => {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={handleCancel}>
-          <Icon name="arrow-back" size={28} color="#000000" />
+          <Icon name="arrow-back" size={28} color="#FFFFFF" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Edit Item</Text>
+        <Text style={styles.headerTitle}>Add New Item</Text>
         <View style={styles.placeholder} />
       </View>
 
@@ -352,7 +352,7 @@ const EditItemScreen = () => {
             <Image source={{uri: imageUrl}} style={styles.image} />
           ) : (
             <View style={styles.placeholderImageContainer}>
-              <Icon name="photo" size={80} color="#CCCCCC" />
+              <Icon name="photo" size={80} color="#999999" />
               <Text style={styles.placeholderImageText}>No Image</Text>
             </View>
           )}
@@ -373,6 +373,7 @@ const EditItemScreen = () => {
               value={name}
               onChangeText={setName}
               placeholder="Enter shoe name"
+              placeholderTextColor="#999999"
             />
           </View>
 
@@ -383,26 +384,39 @@ const EditItemScreen = () => {
               value={brand}
               onChangeText={setBrand}
               placeholder="Enter brand"
+              placeholderTextColor="#999999"
             />
           </View>
 
           <View style={styles.field}>
-            <Text style={styles.label}>Silhouette</Text>
+            <View style={styles.labelRow}>
+              <Text style={styles.label}>Silhouette</Text>
+              <TouchableOpacity>
+                <Icon name="info" size={18} color="#007AFF" />
+              </TouchableOpacity>
+            </View>
             <TextInput
               style={styles.input}
               value={silhouette}
               onChangeText={setSilhouette}
               placeholder="Enter silhouette"
+              placeholderTextColor="#999999"
             />
           </View>
 
           <View style={styles.field}>
-            <Text style={styles.label}>Style ID</Text>
+            <View style={styles.labelRow}>
+              <Text style={styles.label}>Style ID</Text>
+              <TouchableOpacity>
+                <Icon name="info" size={18} color="#007AFF" />
+              </TouchableOpacity>
+            </View>
             <TextInput
               style={styles.input}
               value={styleId}
               onChangeText={setStyleId}
               placeholder="Enter style ID"
+              placeholderTextColor="#999999"
             />
           </View>
 
@@ -413,6 +427,7 @@ const EditItemScreen = () => {
               value={size}
               onChangeText={setSize}
               placeholder="Enter size"
+              placeholderTextColor="#999999"
               keyboardType="numeric"
             />
           </View>
@@ -425,7 +440,7 @@ const EditItemScreen = () => {
                   style={styles.selectInput}
                   onPress={() => setQuantityModalVisible(true)}>
                   <Text style={styles.selectInputText}>{quantity}</Text>
-                  <Icon name="arrow-drop-down" size={24} color="#666666" />
+                  <Icon name="arrow-drop-down" size={24} color="#999999" />
                 </TouchableOpacity>
                 <Modal
                   visible={quantityModalVisible}
@@ -481,29 +496,23 @@ const EditItemScreen = () => {
               value={color}
               onChangeText={setColor}
               placeholder="Enter color"
+              placeholderTextColor="#999999"
             />
           </View>
 
           <View style={styles.field}>
             <Text style={styles.label}>Cost</Text>
-            <TextInput
-              style={styles.input}
-              value={cost}
-              onChangeText={setCost}
-              placeholder="Enter cost"
-              keyboardType="numeric"
-            />
-          </View>
-
-          <View style={styles.field}>
-            <Text style={styles.label}>Retail Value</Text>
-            <TextInput
-              style={styles.input}
-              value={retailValue}
-              onChangeText={setRetailValue}
-              placeholder="Enter retail value"
-              keyboardType="numeric"
-            />
+            <View style={styles.costInputContainer}>
+              <Text style={styles.currencySymbol}>$</Text>
+              <TextInput
+                style={styles.costInput}
+                value={cost}
+                onChangeText={setCost}
+                placeholder="120.00"
+                placeholderTextColor="#999999"
+                keyboardType="decimal-pad"
+              />
+            </View>
           </View>
 
           <View style={styles.field}>
@@ -522,7 +531,7 @@ const EditItemScreen = () => {
                     setReleaseDatePickerVisible(true);
                   }}>
                   <Text style={styles.selectInputText}>{formattedReleaseDate}</Text>
-                  <Icon name="event" size={22} color="#666666" />
+                  <Icon name="event" size={22} color="#999999" />
                 </TouchableOpacity>
                 <Modal
                   visible={releaseDatePickerVisible}
@@ -577,7 +586,7 @@ const EditItemScreen = () => {
                   setReleaseDatePickerVisible(true);
                 }}>
                 <Text style={styles.selectInputText}>{formattedReleaseDate}</Text>
-                <Icon name="event" size={22} color="#666666" />
+                <Icon name="event" size={22} color="#999999" />
                 {releaseDatePickerVisible && (
                   <DateTimePicker
                     value={
@@ -622,21 +631,17 @@ const EditItemScreen = () => {
       {/* Action Buttons */}
       <View style={styles.actions}>
         <TouchableOpacity
-          style={[styles.button, styles.cancelButton, submitting && styles.buttonDisabled]}
-          onPress={handleCancel}
-          disabled={submitting}>
-          <Text style={styles.cancelButtonText}>Cancel</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
           style={[styles.button, styles.submitButton, submitting && styles.buttonDisabled]}
           onPress={handleSubmit}
           disabled={submitting}>
           {submitting ? (
             <ActivityIndicator color="#FFFFFF" />
           ) : (
-            <Text style={styles.submitButtonText}>Save Changes</Text>
+            <Text style={styles.submitButtonText}>Save</Text>
           )}
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.removeButton}>
+          <Text style={styles.removeButtonText}>Remove</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -646,7 +651,7 @@ const EditItemScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#000000',
   },
   header: {
     flexDirection: 'row',
@@ -654,9 +659,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#000000',
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: '#2C2C2E',
   },
   backButton: {
     padding: 8,
@@ -675,7 +680,7 @@ const styles = StyleSheet.create({
   imageContainer: {
     alignItems: 'center',
     paddingVertical: 20,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#000000',
     marginBottom: 20,
     position: 'relative',
   },
@@ -683,13 +688,13 @@ const styles = StyleSheet.create({
     width: 200,
     height: 200,
     borderRadius: 12,
-    backgroundColor: '#F0F0F0',
+    backgroundColor: '#2C2C2E',
   },
   placeholderImageContainer: {
     width: 200,
     height: 200,
     borderRadius: 12,
-    backgroundColor: '#F0F0F0',
+    backgroundColor: '#2C2C2E',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -701,7 +706,7 @@ const styles = StyleSheet.create({
   editImageButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#007AFF',
+    backgroundColor: '#34C759',
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
@@ -719,21 +724,46 @@ const styles = StyleSheet.create({
   field: {
     marginBottom: 20,
   },
-  label: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#000000',
+  labelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 8,
+    gap: 8,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
   input: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#2C2C2E',
     borderRadius: 8,
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 16,
-    color: '#000000',
+    color: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: '#2C2C2E',
+  },
+  costInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#2C2C2E',
+    borderRadius: 8,
+    backgroundColor: '#2C2C2E',
+    paddingHorizontal: 16,
+  },
+  currencySymbol: {
+    fontSize: 16,
+    color: '#FFFFFF',
+    marginRight: 8,
+  },
+  costInput: {
+    flex: 1,
+    paddingVertical: 12,
+    fontSize: 16,
+    color: '#FFFFFF',
   },
   textArea: {
     minHeight: 100,
@@ -741,30 +771,30 @@ const styles = StyleSheet.create({
   },
   selectInput: {
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: '#2C2C2E',
     borderRadius: 8,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#2C2C2E',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
   selectInputText: {
     fontSize: 16,
-    color: '#000000',
+    color: '#FFFFFF',
   },
   pickerContainer: {
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: '#2C2C2E',
     borderRadius: 8,
     overflow: 'hidden',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#2C2C2E',
     height: 48,
   },
   picker: {
     height: 48,
-    color: '#000000',
+    color: '#FFFFFF',
   },
   pickerItem: {
     fontSize: 16,
@@ -775,7 +805,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#1C1C1E',
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
     paddingBottom: Platform.OS === 'ios' ? 24 : 16,
@@ -787,65 +817,56 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: '#2C2C2E',
   },
   modalTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#000000',
+    color: '#FFFFFF',
   },
   modalActionText: {
     fontSize: 16,
-    color: '#007AFF',
+    color: '#34C759',
     fontWeight: '600',
   },
   modalPicker: {
     height: 216,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#1C1C1E',
   },
   actions: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     padding: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#000000',
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
+    borderTopColor: '#2C2C2E',
   },
   button: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
+    paddingVertical: 16,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    marginHorizontal: 4,
+    marginBottom: 12,
   },
   buttonDisabled: {
     opacity: 0.6,
   },
-  deleteButton: {
-    backgroundColor: '#FF3B30',
-    flexDirection: 'row',
-  },
-  deleteButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-    marginLeft: 8,
-  },
-  cancelButton: {
-    backgroundColor: '#F0F0F0',
-  },
-  cancelButtonText: {
-    color: '#000000',
-    fontSize: 16,
-    fontWeight: '600',
-  },
   submitButton: {
-    backgroundColor: '#474747',
+    backgroundColor: '#34C759',
+    width: '100%',
   },
   submitButtonText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '600',
+  },
+  removeButton: {
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  removeButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    textDecorationLine: 'underline',
   },
 });
 

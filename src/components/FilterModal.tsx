@@ -380,7 +380,7 @@ const FilterModal = ({
         <View style={[styles.header, {paddingTop: insets.top + 16}]}>
           <Text style={styles.headerTitle}>Filters</Text>
           <TouchableOpacity onPress={onClose}>
-            <Icon name="close" size={24} color="#000000" />
+            <Icon name="close" size={24} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
 
@@ -410,7 +410,7 @@ const FilterModal = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#000000',
   },
   header: {
     flexDirection: 'row',
@@ -419,12 +419,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: '#2C2C2E',
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#000000',
+    color: '#FFFFFF',
   },
   scrollView: {
     flex: 1,
@@ -435,7 +435,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#000000',
+    color: '#FFFFFF',
     marginBottom: 16,
   },
   headerRow: {
@@ -455,7 +455,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: '#2C2C2E',
   },
   filterOptionContent: {
     flexDirection: 'row',
@@ -464,10 +464,10 @@ const styles = StyleSheet.create({
   },
   filterOptionText: {
     fontSize: 16,
-    color: '#000000',
+    color: '#FFFFFF',
   },
   badge: {
-    backgroundColor: '#000000',
+    backgroundColor: '#34C759',
     borderRadius: 12,
     paddingHorizontal: 8,
     paddingVertical: 2,
@@ -480,7 +480,7 @@ const styles = StyleSheet.create({
   },
   selectedPriceText: {
     fontSize: 14,
-    color: '#007AFF',
+    color: '#34C759',
     marginLeft: 8,
   },
   checkboxItem: {
@@ -488,29 +488,29 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    borderBottomColor: '#2C2C2E',
   },
   checkbox: {
     width: 24,
     height: 24,
     borderWidth: 2,
-    borderColor: '#CCCCCC',
+    borderColor: '#666666',
     borderRadius: 4,
     marginRight: 12,
     justifyContent: 'center',
     alignItems: 'center',
   },
   checkboxSelected: {
-    backgroundColor: '#000000',
-    borderColor: '#000000',
+    backgroundColor: '#34C759',
+    borderColor: '#34C759',
   },
   checkboxLabel: {
     fontSize: 16,
-    color: '#000000',
+    color: '#FFFFFF',
   },
   emptyText: {
     fontSize: 14,
-    color: '#666666',
+    color: '#999999',
     textAlign: 'center',
     marginTop: 24,
   },
@@ -519,8 +519,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 16,
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
-    backgroundColor: '#FFFFFF',
+    borderTopColor: '#2C2C2E',
+    backgroundColor: '#000000',
   },
   footerButton: {
     flex: 1,
@@ -530,16 +530,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   clearButton: {
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#2C2C2E',
     marginRight: 12,
   },
   clearButtonText: {
-    color: '#000000',
+    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
   },
   applyButton: {
-    backgroundColor: '#474747',
+    backgroundColor: '#34C759',
   },
   applyButtonText: {
     color: '#FFFFFF',

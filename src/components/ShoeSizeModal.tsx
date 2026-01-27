@@ -37,6 +37,7 @@ const ShoeSizeModal = ({
           <TextInput
             style={styles.input}
             placeholder="e.g., 10.5"
+            placeholderTextColor="#999999"
             value={shoeSize}
             onChangeText={onShoeSizeChange}
             keyboardType="decimal-pad"
@@ -68,7 +69,7 @@ const styles = StyleSheet.create({
     zIndex: 1000,
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#1C1C1E',
     borderRadius: 16,
     padding: 24,
     width: '100%',
@@ -79,28 +80,29 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#000000',
+    color: '#FFFFFF',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 14,
-    color: '#666666',
+    color: '#999999',
     textAlign: 'center',
     marginBottom: 24,
   },
   input: {
     width: '100%',
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: '#2C2C2E',
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
     marginBottom: 20,
-    backgroundColor: '#F9F9F9',
+    backgroundColor: '#2C2C2E',
+    color: '#FFFFFF',
   },
   submitButton: {
     width: '100%',
-    backgroundColor: '#007AFF',
+    backgroundColor: '#34C759',
     paddingVertical: 14,
     borderRadius: 8,
     alignItems: 'center',

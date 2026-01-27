@@ -3,14 +3,17 @@ import 'react-native-gesture-handler';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import AppNavigator from './navigation/AppNavigator';
 import {AuthProvider} from './contexts/AuthContext';
+import {ThemeProvider} from './contexts/ThemeContext';
 import './services/firebase'; // Initialize Firebase on import
 
 const App = () => {
   return (
     <SafeAreaProvider>
-      <AuthProvider>
-        <AppNavigator />
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <AppNavigator />
+        </AuthProvider>
+      </ThemeProvider>
     </SafeAreaProvider>
   );
 };

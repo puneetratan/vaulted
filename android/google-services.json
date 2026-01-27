@@ -15,6 +15,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "872715867979-0n95d618b0gbgtmrn9eb0cnl6am8uh6o.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.vault.dev",
+            "certificate_hash": "f2d62f7afcf4fa429ace65e781158cd799e9d9ab"
+          }
+        },
+        {
           "client_id": "872715867979-5i6op4dhpp1eo24lniiooms21b57c4su.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
