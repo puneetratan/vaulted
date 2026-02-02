@@ -47,11 +47,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       // hasPlayServices is only needed on Android
       if (Platform.OS === 'android') {
-        await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+        try {
+          await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+        } catch (playServicesError: any) {
+          console.error("Play Services check failed:", playServicesError);
+          // Continue anyway - some devices might not have Play Services
+        }
       }
       
-      const signInResult = await GoogleSignin.signIn();
-      console.log("GoogleSignin result:", signInResult);
+      // Attempt Google Sign-In
+      let signInResult;
+      try {
+        signInResult = await GoogleSignin.signIn();
+        console.log("GoogleSignin result:", signInResult);
+      } catch (googleSignInError: any) {
+        console.error("GoogleSignin.signIn() failed:", googleSignInError);
+        // Check if it's a network error
+        if (googleSignInError.code === '10' || googleSignInError.message?.includes('network') || googleSignInError.message?.includes('NETWORK')) {
+          throw new Error("NETWORK_ERROR: Unable to connect to Google Sign-In services. Please check your internet connection.");
+        }
+        throw googleSignInError;
+      }
       
       // GoogleSignin.signIn() returns { data: { idToken, accessToken, ... } }
       const idToken = (signInResult as any)?.data?.idToken || (signInResult as any)?.idToken;
@@ -76,15 +92,56 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log("Auth instance:", authInstance ? "exists" : "null");
       console.log("Google credential:", googleCredential ? "exists" : "null");
       
+      // Log Firebase app configuration for debugging
       try {
-        const userCredential = await authInstance.signInWithCredential(googleCredential);
+        const app = authInstance.app;
+        console.log("Firebase App Name:", app?.name);
+        console.log("Firebase Project ID:", app?.options?.projectId);
+        console.log("Firebase Auth Domain:", app?.options?.authDomain);
+      } catch (configError) {
+        console.warn("Could not log Firebase config:", configError);
+      }
+      
+      try {
+        // Add timeout for network requests (increased to 60 seconds)
+        const signInPromise = authInstance.signInWithCredential(googleCredential);
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error("NETWORK_ERROR: Request timed out after 60 seconds. Please check your connection.")), 60000)
+        );
+        
+        console.log("Calling signInWithCredential with timeout...");
+        const userCredential = await Promise.race([signInPromise, timeoutPromise]) as any;
         console.log("Sign in successful:", userCredential.user?.email);
         // Auth state listener will automatically update the user state
       } catch (signInError: any) {
         console.error("signInWithCredential failed:", signInError);
         console.error("Error code:", signInError?.code);
         console.error("Error message:", signInError?.message);
+        console.error("Error name:", signInError?.name);
         console.error("Full error:", JSON.stringify(signInError, null, 2));
+        
+        // Log additional debugging info
+        if (signInError?.code === 'auth/network-request-failed') {
+          console.error("Network error details:");
+          console.error("- This usually means the device cannot reach Firebase Auth servers");
+          console.error("- Check: Internet connection, firewall, VPN, DNS resolution");
+          try {
+            const firebaseApp = authInstance.app;
+            console.error("- Auth Domain:", firebaseApp?.options?.authDomain || "unknown");
+            console.error("- Project ID:", firebaseApp?.options?.projectId || "unknown");
+          } catch (e) {
+            console.error("- Could not get Firebase config");
+          }
+        }
+        
+        // Check for network-related errors
+        if (signInError?.code === 'auth/network-request-failed' || 
+            signInError?.message?.includes('network') || 
+            signInError?.message?.includes('timeout') ||
+            signInError?.message?.includes('NETWORK_ERROR')) {
+          throw new Error("NETWORK_ERROR: Unable to connect to Firebase Authentication. Please check your internet connection and try again.");
+        }
+        
         throw signInError;
       }
     } catch (error: any) {
@@ -96,6 +153,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           ? 'DEVELOPER_ERROR: Please ensure:\n1. SHA-1 and SHA-256 fingerprints are added to Firebase Console\n2. Package name matches (com.vault.dev)\n3. google-services.json is in android/app/\n\nGet SHA-1: cd android && ./gradlew signingReport'
           : 'DEVELOPER_ERROR: Please check your iOS OAuth client ID in Firebase Console';
         throw new Error(errorMessage);
+      }
+      
+      // Handle network errors specifically
+      if (error.code === 'auth/network-request-failed' || error.message?.includes('network')) {
+        throw new Error('NETWORK_ERROR: Please check your internet connection and try again. If the problem persists, check if Firebase services are accessible.');
       }
       
       // Re-throw error so the UI can handle it (show error message, etc.)

@@ -745,7 +745,7 @@ const AddItemScreen = () => {
         </View>
       </ScrollView>
 
-      {/* Save and Remove Buttons */}
+      {/* Save and Cancel Buttons */}
       <View style={[componentStyles.footer, {backgroundColor: colors.footer, borderTopColor: colors.border}]}>
         <TouchableOpacity
           style={[componentStyles.saveButton, {backgroundColor: colors.success}, loading && componentStyles.saveButtonDisabled]}
@@ -757,8 +757,8 @@ const AddItemScreen = () => {
             <Text style={componentStyles.saveButtonText}>Save</Text>
           )}
         </TouchableOpacity>
-        <TouchableOpacity style={componentStyles.removeButton}>
-          <Text style={[componentStyles.removeButtonText, {color: colors.text}]}>Remove</Text>
+        <TouchableOpacity style={componentStyles.removeButton} onPress={() => navigation.goBack()}>
+          <Text style={[componentStyles.removeButtonText, {color: colors.text}]}>Cancel</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

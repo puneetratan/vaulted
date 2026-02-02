@@ -31,10 +31,19 @@ let functionsInstance: any;
 
 // Initialize Firebase app
 if (!app) {
+  console.log('[Firebase] Initializing Firebase app...');
+  console.log('[Firebase] Project ID:', firebaseConfig.projectId);
+  console.log('[Firebase] Auth Domain:', firebaseConfig.authDomain);
+  console.log('[Firebase] Platform:', Platform.OS);
+  
   app = getApps().length ? getApp() : initializeApp(firebaseConfig);
   // Initialize services
   authInstance = rnGetAuth(app);
   storageInstance = rnGetStorage(app);
+  
+  console.log('[Firebase] ✅ Firebase app initialized');
+  console.log('[Firebase] ✅ Auth instance created (using PRODUCTION, not emulator)');
+  
   // Functions will be initialized lazily in getFunctions() to allow emulator connection
   // Firestore will be initialized lazily to avoid DataStore issues during auth
 }
@@ -45,8 +54,12 @@ export const storage = storageInstance;
 
 export const getAuth = () => {
   if (!authInstance) {
-    if (!app) app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+    if (!app) {
+      console.log('[Firebase] Initializing Firebase app in getAuth()...');
+      app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+    }
     authInstance = rnGetAuth(app);
+    console.log('[Firebase] Auth instance retrieved (PRODUCTION mode)');
   }
   return authInstance;
 };

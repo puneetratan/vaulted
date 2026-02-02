@@ -46,6 +46,12 @@ const LoginScreen = () => {
             : 'DEVELOPER_ERROR: Please check your iOS OAuth client ID in Firebase Console.',
           [{text: 'OK'}]
         );
+      } else if (error.code === 'auth/network-request-failed' || error.message?.includes('NETWORK_ERROR') || error.message?.includes('network')) {
+        Alert.alert(
+          'Network Error',
+          'Unable to connect to authentication services. Please check:\n\n• Your internet connection\n• Firewall/VPN settings\n• Try again in a moment',
+          [{text: 'OK'}]
+        );
       } else {
         const errorMessage = error.message || error.toString() || 'Unknown error';
         Alert.alert('Error', `Something went wrong with Google Sign In: ${errorMessage}`);

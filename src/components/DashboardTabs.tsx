@@ -660,7 +660,7 @@ const styles = (colors: any) => StyleSheet.create({
     marginRight: 8,
   },
   brandFilterButtonActive: {
-    backgroundColor: colors.surfaceSecondary,
+    backgroundColor: colors.success,
   },
   brandFilterButtonText: {
     fontSize: 14,
@@ -668,7 +668,7 @@ const styles = (colors: any) => StyleSheet.create({
     color: colors.text,
   },
   brandFilterButtonTextActive: {
-    color: colors.background,
+    color: '#FFFFFF',
   },
   scrollContainer: {
     flex: 1,

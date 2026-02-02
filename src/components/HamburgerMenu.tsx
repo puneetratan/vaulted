@@ -6,7 +6,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  Switch,
 } from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -20,7 +19,56 @@ interface HamburgerMenuProps {
 
 const HamburgerMenu = ({visible, onClose, onMenuItemPress}: HamburgerMenuProps) => {
   const insets = useSafeAreaInsets();
-  const {theme, toggleTheme, colors} = useTheme();
+  const {colors} = useTheme();
+  
+  const styles = StyleSheet.create({
+    overlay: {
+      flex: 1,
+      flexDirection: 'row',
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    },
+    overlayTouchable: {
+      flex: 1,
+    },
+    drawerContainer: {
+      width: '80%',
+      maxWidth: 320,
+      height: '100%',
+      backgroundColor: colors.surfaceSecondary,
+      shadowColor: '#000',
+      shadowOffset: {width: 2, height: 0},
+      shadowOpacity: 0.5,
+      shadowRadius: 3.84,
+      elevation: 5,
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'flex-end',
+      alignItems: 'center',
+      paddingHorizontal: 20,
+      paddingBottom: 20,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+      backgroundColor: colors.surfaceSecondary,
+    },
+    headerSpacer: {flex: 1},
+    closeButton: {padding: 4},
+    menuContainer: {flex: 1, paddingTop: 8},
+    menuItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 20,
+      paddingVertical: 16,
+      backgroundColor: colors.surfaceSecondary,
+    },
+    menuItemBorder: {
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    menuIcon: {marginRight: 16},
+    menuText: {flex: 1, fontSize: 16},
+    signOutSpacer: {height: 40},
+  });
   
   const menuItems = [
     {id: 'profile', label: 'My Profile', icon: 'person'},
@@ -77,23 +125,6 @@ const HamburgerMenu = ({visible, onClose, onMenuItemPress}: HamburgerMenuProps) 
               </TouchableOpacity>
             ))}
             
-            {/* Light Mode Toggle */}
-            <View style={[styles.menuItem, styles.menuItemBorder, styles.toggleItem]}>
-              <Icon
-                name="light-mode"
-                size={24}
-                color={colors.text}
-                style={styles.menuIcon}
-              />
-              <Text style={[styles.menuText, {color: colors.text}]}>Light Mode</Text>
-              <Switch
-                value={theme === 'light'}
-                onValueChange={toggleTheme}
-                trackColor={{false: colors.surfaceSecondary, true: colors.success}}
-                thumbColor={theme === 'light' ? '#FFFFFF' : '#999999'}
-              />
-            </View>
-            
             {/* Sign Out */}
             <View style={styles.signOutSpacer} />
             <TouchableOpacity
@@ -125,75 +156,6 @@ const HamburgerMenu = ({visible, onClose, onMenuItemPress}: HamburgerMenuProps) 
     </Modal>
   );
 };
-
-  const styles = StyleSheet.create({
-    overlay: {
-      flex: 1,
-      flexDirection: 'row',
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    },
-    overlayTouchable: {
-      flex: 1,
-    },
-    drawerContainer: {
-      width: '80%',
-      maxWidth: 320,
-      height: '100%',
-      backgroundColor: colors.surfaceSecondary,
-      shadowColor: '#000',
-      shadowOffset: {
-        width: 2,
-        height: 0,
-      },
-      shadowOpacity: 0.5,
-      shadowRadius: 3.84,
-      elevation: 5,
-    },
-    header: {
-      flexDirection: 'row',
-      justifyContent: 'flex-end',
-      alignItems: 'center',
-      paddingHorizontal: 20,
-      paddingBottom: 20,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border,
-      backgroundColor: colors.surfaceSecondary,
-    },
-    headerSpacer: {
-      flex: 1,
-    },
-    closeButton: {
-      padding: 4,
-    },
-    menuContainer: {
-      flex: 1,
-      paddingTop: 8,
-    },
-    menuItem: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingHorizontal: 20,
-      paddingVertical: 16,
-      backgroundColor: colors.surfaceSecondary,
-    },
-    menuItemBorder: {
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border,
-    },
-    toggleItem: {
-      justifyContent: 'space-between',
-    },
-    menuIcon: {
-      marginRight: 16,
-    },
-    menuText: {
-      flex: 1,
-      fontSize: 16,
-    },
-    signOutSpacer: {
-      height: 40,
-    },
-  });
 
 export default HamburgerMenu;
 

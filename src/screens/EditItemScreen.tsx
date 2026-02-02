@@ -640,8 +640,8 @@ const EditItemScreen = () => {
             <Text style={styles.submitButtonText}>Save</Text>
           )}
         </TouchableOpacity>
-        <TouchableOpacity style={styles.removeButton}>
-          <Text style={styles.removeButtonText}>Remove</Text>
+        <TouchableOpacity style={styles.removeButton} onPress={() => navigation.goBack()}>
+          <Text style={styles.removeButtonText}>Cancel</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

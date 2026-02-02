@@ -23,6 +23,7 @@ import {
   ImageLibraryOptions,
 } from 'react-native-image-picker';
 import {useAuth} from '../contexts/AuthContext';
+import {useTheme} from '../contexts/ThemeContext';
 import {getUserData, updateUserData, deleteUserAccount} from '../services/userService';
 import {getStorage, getAuth} from '../services/firebase';
 import ShoeSizeModal from '../components/ShoeSizeModal';
@@ -30,6 +31,7 @@ import ShoeSizeModal from '../components/ShoeSizeModal';
 const ProfileScreen = () => {
   const navigation = useNavigation();
   const {user, logout} = useAuth();
+  const {colors} = useTheme();
   const [shoeSize, setShoeSize] = useState<string | undefined>(undefined);
   const [showShoeSizeModal, setShowShoeSizeModal] = useState(false);
   const [editShoeSize, setEditShoeSize] = useState('');
@@ -330,26 +332,26 @@ const ProfileScreen = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={[styles.container, {backgroundColor: colors.background}]} edges={['top']}>
       <ScrollView style={styles.scrollView}>
-        <View style={styles.header}>
+        <View style={[styles.header, {backgroundColor: colors.header, borderBottomColor: colors.border}]}>
           <TouchableOpacity
             onPress={() => navigation.goBack()}
             style={styles.backButton}>
-            <Icon name="arrow-back" size={24} color="#000000" />
+            <Icon name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Profile</Text>
+          <Text style={[styles.headerTitle, {color: colors.text}]}>Profile</Text>
           <View style={styles.placeholder} />
         </View>
 
         <View style={styles.content}>
         {/* Profile Avatar Section */}
-        <View style={styles.avatarSection}>
+        <View style={[styles.avatarSection, {backgroundColor: colors.surface}]}>
           <View style={styles.avatarTouchable}>
-            <View style={styles.avatarContainer}>
+            <View style={[styles.avatarContainer, {backgroundColor: colors.surfaceSecondary}]}>
               {uploadingImage ? (
-                <View style={styles.avatarLoadingContainer}>
-                  <ActivityIndicator size="large" color="#007AFF" />
+                <View style={[styles.avatarLoadingContainer, {backgroundColor: colors.surfaceSecondary}]}>
+                  <ActivityIndicator size="large" color={colors.primary} />
                 </View>
               ) : photoURL ? (
                 <TouchableOpacity
@@ -357,16 +359,16 @@ const ProfileScreen = () => {
                   activeOpacity={0.8}>
                   <Image
                     source={{uri: photoURL}}
-                    style={styles.avatarImage}
+                    style={[styles.avatarImage, {backgroundColor: colors.surfaceSecondary}]}
                   />
                 </TouchableOpacity>
               ) : (
-                <Icon name="account-circle" size={100} color="#007AFF" />
+                <Icon name="account-circle" size={100} color={colors.primary} />
               )}
               {!uploadingImage && photoURL && (
                 <TouchableOpacity
                   onPress={handleImagePicker}
-                  style={styles.cameraIconOverlay}
+                  style={[styles.cameraIconOverlay, {backgroundColor: colors.primary}]}
                   activeOpacity={0.8}>
                   <Icon name="camera-alt" size={24} color="#FFFFFF" />
                 </TouchableOpacity>
@@ -374,95 +376,93 @@ const ProfileScreen = () => {
               {!uploadingImage && !photoURL && (
                 <TouchableOpacity
                   onPress={handleImagePicker}
-                  style={styles.cameraIconOverlay}
+                  style={[styles.cameraIconOverlay, {backgroundColor: colors.primary}]}
                   activeOpacity={0.8}>
                   <Icon name="camera-alt" size={24} color="#FFFFFF" />
                 </TouchableOpacity>
               )}
             </View>
           </View>
-          <Text style={styles.userName}>{displayName}</Text>
-          <Text style={styles.userEmail}>{email}</Text>
+          <Text style={[styles.userName, {color: colors.text}]}>{displayName}</Text>
+          <Text style={[styles.userEmail, {color: colors.textSecondary}]}>{email}</Text>
           <TouchableOpacity
             onPress={handleImagePicker}
             disabled={uploadingImage}
             style={styles.changePhotoButton}>
-            <Text style={styles.changePhotoText}>
+            <Text style={[styles.changePhotoText, {color: colors.primary}]}>
               {uploadingImage ? 'Uploading...' : photoURL ? 'Change Photo' : 'Upload Photo'}
             </Text>
           </TouchableOpacity>
         </View>
 
         {/* Profile Information */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Personal Information</Text>
+        <View style={[styles.section, {backgroundColor: colors.surface, borderBottomColor: colors.border}]}>
+          <Text style={[styles.sectionTitle, {color: colors.text}]}>Personal Information</Text>
           
-          <View style={styles.infoRow}>
-            <Icon name="person" size={20} color="#666666" style={styles.infoIcon} />
+          <View style={[styles.infoRow, {borderBottomColor: colors.border}]}>
+            <Icon name="person" size={20} color={colors.textSecondary} style={styles.infoIcon} />
             <View style={styles.infoContent}>
-              <Text style={styles.infoLabel}>Full Name</Text>
-              <Text style={styles.infoValue}>{displayName}</Text>
+              <Text style={[styles.infoLabel, {color: colors.textSecondary}]}>Full Name</Text>
+              <Text style={[styles.infoValue, {color: colors.text}]}>{displayName}</Text>
             </View>
           </View>
 
-          <View style={styles.infoRow}>
-            <Icon name="email" size={20} color="#666666" style={styles.infoIcon} />
+          <View style={[styles.infoRow, {borderBottomColor: colors.border}]}>
+            <Icon name="email" size={20} color={colors.textSecondary} style={styles.infoIcon} />
             <View style={styles.infoContent}>
-              <Text style={styles.infoLabel}>Email</Text>
-              <Text style={styles.infoValue}>{email || 'Not provided'}</Text>
+              <Text style={[styles.infoLabel, {color: colors.textSecondary}]}>Email</Text>
+              <Text style={[styles.infoValue, {color: colors.text}]}>{email || 'Not provided'}</Text>
             </View>
           </View>
 
-          <View style={styles.infoRow}>
-            <Icon name="directions-walk" size={20} color="#666666" style={styles.infoIcon} />
+          <View style={[styles.infoRow, {borderBottomColor: colors.border}]}>
+            <Icon name="directions-walk" size={20} color={colors.textSecondary} style={styles.infoIcon} />
             <View style={styles.infoContent}>
-              <Text style={styles.infoLabel}>Shoe Size</Text>
-              <Text style={styles.infoValue}>{shoeSize || 'Not set'}</Text>
+              <Text style={[styles.infoLabel, {color: colors.textSecondary}]}>Shoe Size</Text>
+              <Text style={[styles.infoValue, {color: colors.text}]}>{shoeSize || 'Not set'}</Text>
             </View>
             <TouchableOpacity
               onPress={handleEditShoeSize}
               style={styles.editButton}>
-              <Icon name="edit" size={20} color="#007AFF" />
+              <Icon name="edit" size={20} color={colors.primary} />
             </TouchableOpacity>
           </View>
         </View>
 
         {/* Account Settings */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Account Settings</Text>
+        <View style={[styles.section, {backgroundColor: colors.surface}]}>
+          <Text style={[styles.sectionTitle, {color: colors.text}]}>Account Settings</Text>
           
-          
-
           <TouchableOpacity 
-            style={styles.settingsItem}
+            style={[styles.settingsItem, {borderBottomColor: colors.border}]}
             onPress={handleDeleteAccount}
             disabled={deletingAccount}>
             {deletingAccount ? (
-              <ActivityIndicator size="small" color="#FF3B30" style={styles.deleteAccountLoader} />
+              <ActivityIndicator size="small" color={colors.error} style={styles.deleteAccountLoader} />
             ) : (
-              <Icon name="delete-forever" size={24} color="#FF3B30" />
+              <Icon name="delete-forever" size={24} color={colors.error} />
             )}
-            <Text style={[styles.settingsText, styles.deleteAccountText]}>
+            <Text style={[styles.settingsText, styles.deleteAccountText, {color: colors.text, marginLeft: 16}]}>
               {deletingAccount ? 'Deleting Account...' : 'Delete Account'}
             </Text>
-            {!deletingAccount && <Icon name="chevron-right" size={24} color="#CCCCCC" />}
+            {!deletingAccount && <Icon name="chevron-right" size={24} color={colors.textSecondary} />}
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.settingsItem}>
-            <Icon name="notifications" size={24} color="#007AFF" />
-            <Text style={styles.settingsText}>Notification Settings</Text>
-            <Icon name="chevron-right" size={24} color="#CCCCCC" />
+          <TouchableOpacity style={[styles.settingsItem, {borderBottomColor: colors.border}]}>
+            <Icon name="notifications" size={24} color={colors.primary} />
+            <Text style={[styles.settingsText, {color: colors.text}]}>Notification Settings</Text>
+            <Icon name="chevron-right" size={24} color={colors.textSecondary} />
           </TouchableOpacity>
         </View>
 
         {/* Logout Section */}
-        <View style={styles.section}>
+        <View style={[styles.section, {backgroundColor: colors.surface}]}>
           <TouchableOpacity 
             style={[styles.settingsItem, styles.logoutItem]}
             onPress={handleLogout}>
-            <Icon name="logout" size={24} color="#FF3B30" />
-            <Text style={[styles.settingsText, styles.logoutText]}>Logout</Text>
-            <Icon name="chevron-right" size={24} color="#CCCCCC" />
+            <Icon name="logout" size={24} color={colors.error} />
+            <Text style={[styles.settingsText, styles.logoutText, {color: colors.error, marginLeft: 16}]}>Logout</Text>
+            <Icon name="chevron-right" size={24} color={colors.textSecondary} />
           </TouchableOpacity>
         </View>
       </View>
@@ -505,7 +505,6 @@ const ProfileScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
   },
   scrollView: {
     flex: 1,
@@ -516,9 +515,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
   },
   backButton: {
     padding: 8,
@@ -526,7 +523,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#000000',
   },
   placeholder: {
     width: 40,
@@ -536,7 +532,6 @@ const styles = StyleSheet.create({
   },
   avatarSection: {
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 24,
     marginBottom: 16,
@@ -549,7 +544,6 @@ const styles = StyleSheet.create({
     height: 100,
     borderRadius: 50,
     overflow: 'hidden',
-    backgroundColor: '#E0E0E0',
     position: 'relative',
     alignSelf: 'center',
   },
@@ -557,20 +551,17 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: '#E0E0E0',
   },
   avatarLoadingContainer: {
     width: 100,
     height: 100,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F0F0F0',
   },
   cameraIconOverlay: {
     position: 'absolute',
     bottom: 0,
     right: 0,
-    backgroundColor: '#007AFF',
     borderRadius: 20,
     width: 36,
     height: 36,
@@ -609,21 +600,17 @@ const styles = StyleSheet.create({
   },
   changePhotoText: {
     fontSize: 14,
-    color: '#007AFF',
     fontWeight: '500',
   },
   userName: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#000000',
     marginBottom: 4,
   },
   userEmail: {
     fontSize: 16,
-    color: '#666666',
   },
   section: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
@@ -631,7 +618,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#000000',
     marginBottom: 16,
   },
   infoRow: {
@@ -639,7 +625,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
   },
   infoIcon: {
     marginRight: 12,
@@ -649,31 +634,25 @@ const styles = StyleSheet.create({
   },
   infoLabel: {
     fontSize: 12,
-    color: '#666666',
     marginBottom: 4,
   },
   infoValue: {
     fontSize: 16,
-    color: '#000000',
   },
   settingsItem: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
   },
   settingsText: {
     flex: 1,
     fontSize: 16,
-    color: '#000000',
-    marginLeft: 16,
   },
   logoutItem: {
     borderBottomWidth: 0,
   },
   logoutText: {
-    color: '#FF3B30',
     fontWeight: '600',
   },
   editButton: {
@@ -681,7 +660,6 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   deleteAccountText: {
-    color: '#FF3B30',
     fontWeight: '600',
   },
   deleteAccountLoader: {

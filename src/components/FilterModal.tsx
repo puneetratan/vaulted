@@ -22,26 +22,22 @@ interface FilterModalProps {
   visible: boolean;
   onClose: () => void;
   onApply: (filters: FilterOptions) => void;
-  availableBrands: string[];
+  availableBrands?: string[];
   availableColors: string[];
   currentFilters?: FilterOptions;
 }
 
-type FilterSection = 'main' | 'brand' | 'source' | 'color' | 'price';
+type FilterSection = 'main' | 'source' | 'color' | 'price';
 
 const FilterModal = ({
   visible,
   onClose,
   onApply,
-  availableBrands,
   availableColors,
   currentFilters,
 }: FilterModalProps) => {
   const insets = useSafeAreaInsets();
   const [currentSection, setCurrentSection] = useState<FilterSection>('main');
-  const [selectedBrands, setSelectedBrands] = useState<string[]>(
-    currentFilters?.brands || []
-  );
   const [selectedSources, setSelectedSources] = useState<string[]>(
     currentFilters?.sources || []
   );
@@ -54,20 +50,11 @@ const FilterModal = ({
 
   useEffect(() => {
     if (currentFilters) {
-      setSelectedBrands(currentFilters.brands || []);
       setSelectedSources(currentFilters.sources || []);
       setSelectedColors(currentFilters.colors || []);
       setSelectedPriceRange(currentFilters.priceRange || null);
     }
   }, [currentFilters]);
-
-  const handleBrandToggle = (brand: string) => {
-    setSelectedBrands(prev =>
-      prev.includes(brand)
-        ? prev.filter(b => b !== brand)
-        : [...prev, brand]
-    );
-  };
 
   const handleSourceToggle = (source: string) => {
     setSelectedSources(prev =>
@@ -91,7 +78,7 @@ const FilterModal = ({
 
   const handleApply = () => {
     onApply({
-      brands: selectedBrands,
+      brands: [],
       sources: selectedSources,
       colors: selectedColors,
       priceRange: selectedPriceRange,
@@ -112,31 +99,14 @@ const FilterModal = ({
 
   const hasActiveFilters = useMemo(() => {
     return (
-      selectedBrands.length > 0 ||
       selectedSources.length > 0 ||
       selectedColors.length > 0 ||
       selectedPriceRange !== null
     );
-  }, [selectedBrands, selectedSources, selectedColors, selectedPriceRange]);
+  }, [selectedSources, selectedColors, selectedPriceRange]);
 
   const renderMainScreen = () => (
     <View style={styles.content}>
-      <Text style={styles.sectionTitle}>Filter Options</Text>
-      
-      <TouchableOpacity
-        style={styles.filterOption}
-        onPress={() => setCurrentSection('brand')}>
-        <View style={styles.filterOptionContent}>
-          <Text style={styles.filterOptionText}>Brand</Text>
-          {selectedBrands.length > 0 && (
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>{selectedBrands.length}</Text>
-            </View>
-          )}
-        </View>
-        <Icon name="chevron-right" size={24} color="#666666" />
-      </TouchableOpacity>
-
       <TouchableOpacity
         style={styles.filterOption}
         onPress={() => setCurrentSection('source')}>
@@ -179,56 +149,15 @@ const FilterModal = ({
     </View>
   );
 
-  const renderBrandScreen = () => (
-    <View style={styles.content}>
-      <View style={styles.headerRow}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => setCurrentSection('main')}>
-          <Icon name="arrow-back" size={24} color="#000000" />
-        </TouchableOpacity>
-        <Text style={styles.sectionTitle}>Select Brands</Text>
-        <View style={styles.placeholder} />
-      </View>
-
-      <FlatList
-        data={availableBrands}
-        keyExtractor={item => item}
-        renderItem={({item}) => {
-          const isSelected = selectedBrands.includes(item);
-          return (
-            <TouchableOpacity
-              style={styles.checkboxItem}
-              onPress={() => handleBrandToggle(item)}>
-              <View
-                style={[
-                  styles.checkbox,
-                  isSelected && styles.checkboxSelected,
-                ]}>
-                {isSelected && (
-                  <Icon name="check" size={16} color="#FFFFFF" />
-                )}
-              </View>
-              <Text style={styles.checkboxLabel}>{item}</Text>
-            </TouchableOpacity>
-          );
-        }}
-        ListEmptyComponent={
-          <Text style={styles.emptyText}>No brands available</Text>
-        }
-      />
-    </View>
-  );
-
   const renderSourceScreen = () => (
     <View style={styles.content}>
       <View style={styles.headerRow}>
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => setCurrentSection('main')}>
-          <Icon name="arrow-back" size={24} color="#000000" />
+          <Icon name="arrow-back" size={24} color="#FFFFFF" />
         </TouchableOpacity>
-        <Text style={styles.sectionTitle}>Select Source</Text>
+        <Text style={styles.headerRowTitle}>Select Source</Text>
         <View style={styles.placeholder} />
       </View>
 
@@ -285,9 +214,9 @@ const FilterModal = ({
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => setCurrentSection('main')}>
-          <Icon name="arrow-back" size={24} color="#000000" />
+          <Icon name="arrow-back" size={24} color="#FFFFFF" />
         </TouchableOpacity>
-        <Text style={styles.sectionTitle}>Select Colors</Text>
+        <Text style={styles.headerRowTitle}>Select Colors</Text>
         <View style={styles.placeholder} />
       </View>
 
@@ -326,9 +255,9 @@ const FilterModal = ({
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => setCurrentSection('main')}>
-          <Icon name="arrow-back" size={24} color="#000000" />
+          <Icon name="arrow-back" size={24} color="#FFFFFF" />
         </TouchableOpacity>
-        <Text style={styles.sectionTitle}>Select Price Range</Text>
+        <Text style={styles.headerRowTitle}>Select Price Range</Text>
         <View style={styles.placeholder} />
       </View>
 
@@ -357,8 +286,6 @@ const FilterModal = ({
 
   const renderContent = () => {
     switch (currentSection) {
-      case 'brand':
-        return renderBrandScreen();
       case 'source':
         return renderSourceScreen();
       case 'color':
@@ -442,9 +369,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 16,
+    paddingVertical: 4,
   },
   backButton: {
-    marginRight: 12,
+    padding: 4,
+    marginRight: 8,
+    marginLeft: -4,
+  },
+  headerRowTitle: {
+    flex: 1,
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginBottom: 0,
   },
   placeholder: {
     width: 24,

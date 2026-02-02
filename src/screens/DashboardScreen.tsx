@@ -21,10 +21,8 @@ import DashboardTabs from '../components/DashboardTabs';
 import FilterModal, {FilterOptions} from '../components/FilterModal';
 import {getFunctions} from '../services/firebase';
 import RNFS from 'react-native-fs';
-
-// Use web-compatible versions on web
-const AddItemOptions = require('../components/AddItemOptions').default;
-const HamburgerMenu = require('../components/HamburgerMenu').default;
+import AddItemOptions from '../components/AddItemOptions';
+import HamburgerMenu from '../components/HamburgerMenu';
 
 type ShadowStatus = 'processing' | 'complete' | 'error';
 
@@ -335,11 +333,6 @@ const DashboardScreen = () => {
     setShowFilterModal(true);
   };
 
-  const handleShare = () => {
-    // TODO: Implement share functionality
-    Alert.alert('Share', 'Share functionality coming soon!');
-  };
-
   const handleFilterApply = (filters: FilterOptions) => {
     setActiveFilters(filters);
     setShowFilterModal(false);
@@ -499,12 +492,6 @@ const DashboardScreen = () => {
                 <Text style={[componentStyles.footerTabText, {color: colors.text}]}>Export</Text>
               </>
             )}
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={componentStyles.footerTab}
-            onPress={handleShare}>
-            <Icon name="share" size={24} color={colors.text} />
-            <Text style={[componentStyles.footerTabText, {color: colors.text}]}>Share</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={componentStyles.footerTab}

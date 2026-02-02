@@ -14,6 +14,7 @@ import DocumentPicker from 'react-native-document-picker';
 import {useNavigation} from '@react-navigation/native';
 import {getStorage, getFunctions} from '../services/firebase';
 import {useAuth} from '../contexts/AuthContext';
+import {useTheme} from '../contexts/ThemeContext';
 import {getUserData} from '../services/userService';
 
 type AnalyzedMetadata = {
@@ -51,6 +52,7 @@ const AddItemOptions = ({
 }: AddItemOptionsProps) => {
   const {user} = useAuth();
   const navigation = useNavigation();
+  const {colors} = useTheme();
 
   const normalizeMetadata = (payload: any): AnalyzedMetadata[] => {
     if (!payload) {
@@ -272,11 +274,11 @@ const AddItemOptions = ({
       animationType="slide"
       onRequestClose={onClose}>
       <View style={styles.overlay}>
-        <View style={styles.modalContent}>
+        <View style={[styles.modalContent, {backgroundColor: colors.surface}]}>
           <View style={styles.header}>
-            <Text style={styles.title}>Add Item</Text>
+            <Text style={[styles.title, {color: colors.text}]}>Add Item</Text>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <Icon name="close" size={24} color="#000000" />
+              <Icon name="close" size={24} color={colors.text} />
             </TouchableOpacity>
           </View>
 
@@ -284,12 +286,16 @@ const AddItemOptions = ({
             {options.map((option, index) => (
               <TouchableOpacity
                 key={option.id}
-                style={[styles.option, index < options.length - 1 && styles.optionSpacing]}
+                style={[
+                  styles.option,
+                  {backgroundColor: colors.surfaceSecondary, borderColor: colors.border},
+                  index < options.length - 1 && styles.optionSpacing,
+                ]}
                 onPress={option.onPress}>
-                <View style={[styles.iconContainer, {backgroundColor: `${option.color}15`}]}>
+                <View style={[styles.iconContainer, {backgroundColor: `${option.color}25`}]}>
                   <Icon name={option.icon} size={32} color={option.color} />
                 </View>
-                <Text style={styles.optionText}>{option.title}</Text>
+                <Text style={[styles.optionText, {color: colors.text}]}>{option.title}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -306,7 +312,6 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     padding: 24,
@@ -321,14 +326,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#000000',
   },
   closeButton: {
     padding: 4,
   },
-  optionsContainer: {
-    // gap: 16, // Using marginBottom instead for better compatibility
-  },
+  optionsContainer: {},
   optionSpacing: {
     marginBottom: 16,
   },
@@ -336,10 +338,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: '#F9F9F9',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
   },
   iconContainer: {
     width: 56,
@@ -352,7 +352,6 @@ const styles = StyleSheet.create({
   optionText: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#000000',
   },
 });
 
