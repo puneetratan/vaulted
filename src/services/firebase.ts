@@ -83,7 +83,7 @@ export const getStorage = () => {
 // ✅ Firebase Functions Configuration
 // Set USE_EMULATOR to true only for local development with Firebase Emulator Suite
 // For production/cloud deployment, keep this as false
-const USE_EMULATOR = true; // Set to true to use local emulator, false to use cloud functions
+const USE_EMULATOR = false; // Set to true to use local emulator, false to use cloud functions
 // const EMULATOR_HOST = '127.0.0.1'; // Use your computer's IP (e.g., '192.168.1.100') for physical devices
 const EMULATOR_HOST =
   Platform.OS === 'android'

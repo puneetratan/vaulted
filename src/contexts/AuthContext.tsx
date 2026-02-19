@@ -1,14 +1,16 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { Platform } from "react-native";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
+import { appleAuth } from "@invertase/react-native-apple-authentication";
 import { getAuth } from "../services/firebase";
-import { GoogleAuthProvider, onAuthStateChanged } from "@react-native-firebase/auth";
+import { GoogleAuthProvider, OAuthProvider, onAuthStateChanged } from "@react-native-firebase/auth";
 
 type AuthContextType = {
   user: any | null;
   loading: boolean;
   isAuthenticated: boolean;
   signInWithGoogle: () => Promise<void>;
+  signInWithApple: () => Promise<void>;
   logout: () => Promise<void>;
 };
 
@@ -17,6 +19,7 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
   isAuthenticated: false,
   signInWithGoogle: async () => {},
+  signInWithApple: async () => {},
   logout: async () => {},
 });
 
@@ -165,6 +168,70 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // ✅ Apple Sign-In handler
+  const signInWithApple = async () => {
+    try {
+      // Only available on iOS
+      if (Platform.OS !== 'ios') {
+        throw new Error('Apple Sign-In is only available on iOS devices');
+      }
+
+      // Check if Apple Sign-In is available on this device
+      if (!appleAuth.isSupported) {
+        throw new Error('Apple Sign-In is not supported on this device. It requires iOS 13 or later.');
+      }
+
+      console.log('Starting Apple Sign-In request...');
+
+      // Start the sign-in request
+      const appleAuthRequestResponse = await appleAuth.performRequest({
+        requestedOperation: appleAuth.Operation.LOGIN,
+        requestedScopes: [appleAuth.Scope.EMAIL, appleAuth.Scope.FULL_NAME],
+      });
+
+      console.log('Apple Sign-In response received:', appleAuthRequestResponse);
+
+      // Ensure Apple returned a user identity token
+      if (!appleAuthRequestResponse.identityToken) {
+        throw new Error('Apple Sign-In failed - no identity token returned');
+      }
+
+      // Create a Firebase credential from the response
+      const { identityToken, nonce } = appleAuthRequestResponse;
+      const appleCredential = OAuthProvider.credential('apple.com', {
+        idToken: identityToken,
+        rawNonce: nonce,
+      });
+
+      // Sign in the user with the credential
+      const authInstance = getAuth();
+      const userCredential = await authInstance.signInWithCredential(appleCredential);
+
+      console.log('✅ Apple Sign-In successful:', userCredential.user?.email);
+      // Auth state listener will automatically update the user state
+    } catch (error: any) {
+      console.error('Apple sign-in error:', error);
+      console.error('Error code:', error?.code);
+      console.error('Error message:', error?.message);
+      console.error('Error details:', JSON.stringify(error, null, 2));
+
+      // Handle specific error cases
+      if (error.code === appleAuth.Error.CANCELED) {
+        throw new Error('Apple Sign-In was cancelled');
+      } else if (error.code === appleAuth.Error.FAILED) {
+        throw new Error('Apple Sign-In failed. Please try again.');
+      } else if (error.code === appleAuth.Error.NOT_HANDLED) {
+        throw new Error('Apple Sign-In could not be handled');
+      } else if (error.code === appleAuth.Error.UNKNOWN) {
+        throw new Error(`Apple Sign-In error: ${error.message || 'Unknown error. This may be a configuration issue.'}`);
+      }
+
+      // If it's a different error, include the message
+      const errorMessage = error.message || error.toString() || 'Unknown error';
+      throw new Error(`Apple Sign-In error: ${errorMessage}`);
+    }
+  };
+
   // ✅ Track auth state changes - this maintains session persistence
   // Using modular API (onAuthStateChanged) instead of deprecated instance method
   useEffect(() => {
@@ -204,13 +271,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider 
-      value={{ 
-        user, 
-        loading, 
-        isAuthenticated: !!user, 
-        signInWithGoogle, 
-        logout 
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        isAuthenticated: !!user,
+        signInWithGoogle,
+        signInWithApple,
+        logout
       }}>
       {children}
     </AuthContext.Provider>
