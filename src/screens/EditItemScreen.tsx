@@ -65,7 +65,6 @@ const EditItemScreen = () => {
   
   const item = route.params?.item;
   
-  const [name, setName] = useState(item?.name || '');
   const [brand, setBrand] = useState(item?.brand || '');
   const [size, setSize] = useState(item?.size || '');
   const [color, setColor] = useState(item?.color || '');
@@ -92,7 +91,6 @@ const EditItemScreen = () => {
 
   useEffect(() => {
     if (item) {
-      setName(item.name);
       setBrand(item.brand);
       setSize(item.size);
       setColor(item.color);
@@ -135,7 +133,6 @@ const EditItemScreen = () => {
 
     // Validate inputs
     if (
-      !name.trim() ||
       !brand.trim() ||
       !silhouette.trim() ||
       !styleId.trim() ||
@@ -231,7 +228,7 @@ const EditItemScreen = () => {
       }
 
       const payload = {
-        name: name.trim(),
+        name: [brand.trim(), silhouette.trim()].filter(Boolean).join(' ') || item?.name || 'Unknown',
         brand: brand.trim(),
         silhouette: silhouette.trim(),
         styleId: styleId.trim(),
@@ -397,17 +394,6 @@ const EditItemScreen = () => {
 
         {/* Form Fields */}
         <View style={styles.form}>
-          <View style={styles.field}>
-            <Text style={styles.label}>Name</Text>
-            <TextInput
-              style={styles.input}
-              value={name}
-              onChangeText={setName}
-              placeholder="Enter shoe name"
-              placeholderTextColor="#999999"
-            />
-          </View>
-
           <View style={styles.field}>
             <Text style={styles.label}>Brand</Text>
             <TextInput

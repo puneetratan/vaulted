@@ -36,7 +36,6 @@ const AddItemScreen = () => {
   const {user} = useAuth();
   const {colors} = useTheme();
   
-  const [name, setName] = useState('');
   const [brand, setBrand] = useState('');
   const [silhouette, setSilhouette] = useState('');
   const [styleId, setStyleId] = useState('');
@@ -108,9 +107,6 @@ const AddItemScreen = () => {
           }
           if (productInfo.color && !color) {
             setColor(productInfo.color);
-          }
-          if (productInfo.name && !name) {
-            setName(productInfo.name);
           }
           if (productInfo.imageUrl && !imagePreview) {
             // Image URL is already uploaded to Firebase Storage by the cloud function
@@ -249,10 +245,6 @@ const AddItemScreen = () => {
 
   const handleSave = async () => {
     // Validation
-    if (!name.trim()) {
-      Alert.alert('Error', 'Please enter item name');
-      return;
-    }
     if (!brand.trim()) {
       Alert.alert('Error', 'Please enter brand');
       return;
@@ -367,7 +359,7 @@ const AddItemScreen = () => {
       const itemSource = route.params?.barcode ? 'barcode' : 'manual';
 
       const itemData = {
-        name: name.trim(),
+        name: [brand.trim(), silhouette.trim()].filter(Boolean).join(' ') || 'Unknown',
         brand: brand.trim(),
         silhouette: silhouette.trim(),
         styleId: styleId.trim(),
@@ -395,7 +387,6 @@ const AddItemScreen = () => {
             text: 'OK',
             onPress: () => {
               // Reset form
-              setName('');
               setBrand('');
               setSilhouette('');
               setStyleId('');
@@ -468,17 +459,6 @@ const AddItemScreen = () => {
 
         {/* Form Fields */}
         <View style={componentStyles.formSection}>
-          <View style={componentStyles.inputGroup}>
-            <Text style={[componentStyles.label, {color: colors.text}]}>Item Name *</Text>
-            <TextInput
-              style={[componentStyles.input, {backgroundColor: colors.input, borderColor: colors.inputBorder, color: colors.text}]}
-              placeholder="Enter item name"
-              value={name}
-              onChangeText={setName}
-              placeholderTextColor={colors.textSecondary}
-            />
-          </View>
-
           <View style={componentStyles.inputGroup}>
             <Text style={[componentStyles.label, {color: colors.text}]}>Brand *</Text>
             <TextInput
