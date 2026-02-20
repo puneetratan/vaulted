@@ -3,7 +3,7 @@ import { Platform } from "react-native";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import { appleAuth } from "@invertase/react-native-apple-authentication";
 import { getAuth } from "../services/firebase";
-import { GoogleAuthProvider, OAuthProvider, onAuthStateChanged } from "@react-native-firebase/auth";
+import { AppleAuthProvider, GoogleAuthProvider, onAuthStateChanged } from "@react-native-firebase/auth";
 
 type AuthContextType = {
   user: any | null;
@@ -181,27 +181,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error('Apple Sign-In is not supported on this device. It requires iOS 13 or later.');
       }
 
+      // Generate a random nonce for security (Apple requires this)
+      const rawNonce = Math.random().toString(36).substring(2, 10);
+
       console.log('Starting Apple Sign-In request...');
 
-      // Start the sign-in request
+      // Start the sign-in request — pass rawNonce, library SHA256 hashes it before sending to Apple
       const appleAuthRequestResponse = await appleAuth.performRequest({
         requestedOperation: appleAuth.Operation.LOGIN,
         requestedScopes: [appleAuth.Scope.EMAIL, appleAuth.Scope.FULL_NAME],
+        nonce: rawNonce,
       });
 
-      console.log('Apple Sign-In response received:', appleAuthRequestResponse);
+      console.log('Apple Sign-In response received');
 
       // Ensure Apple returned a user identity token
       if (!appleAuthRequestResponse.identityToken) {
         throw new Error('Apple Sign-In failed - no identity token returned');
       }
 
-      // Create a Firebase credential from the response
-      const { identityToken, nonce } = appleAuthRequestResponse;
-      const appleCredential = OAuthProvider.credential('apple.com', {
-        idToken: identityToken,
-        rawNonce: nonce,
-      });
+      // Create a Firebase credential using AppleAuthProvider
+      const appleCredential = AppleAuthProvider.credential(
+        appleAuthRequestResponse.identityToken,
+        rawNonce,
+      );
 
       // Sign in the user with the credential
       const authInstance = getAuth();
@@ -213,7 +216,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error('Apple sign-in error:', error);
       console.error('Error code:', error?.code);
       console.error('Error message:', error?.message);
-      console.error('Error details:', JSON.stringify(error, null, 2));
 
       // Handle specific error cases
       if (error.code === appleAuth.Error.CANCELED) {
@@ -222,11 +224,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error('Apple Sign-In failed. Please try again.');
       } else if (error.code === appleAuth.Error.NOT_HANDLED) {
         throw new Error('Apple Sign-In could not be handled');
-      } else if (error.code === appleAuth.Error.UNKNOWN) {
-        throw new Error(`Apple Sign-In error: ${error.message || 'Unknown error. This may be a configuration issue.'}`);
+      } else if (error.code === 'auth/operation-not-allowed') {
+        throw new Error('Apple Sign-In is not enabled in Firebase Console. Please enable it in Authentication → Sign-in methods.');
       }
 
-      // If it's a different error, include the message
       const errorMessage = error.message || error.toString() || 'Unknown error';
       throw new Error(`Apple Sign-In error: ${errorMessage}`);
     }

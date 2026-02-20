@@ -58,5 +58,32 @@ yarn-error.log
 # env files
 .env
 .env.local
+functions/.env
 
+# Firebase
+.firebaserc
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+firestore.rules
+storage.rules
+
+# Firebase config (contains API keys - use environment variables in production)
+# Uncomment the line below if you want to exclude firebaseConfig.json from git
+# firebaseConfig.json
+
+# Logs and temporary files
+*.log
+replay_pid*.log
+hs_err_pid*.log
+
+# VSCode
+.vscode/
+
+# Watchman
+.watchmanconfig
+
+# Boost archive
+boost_*.tar.bz2
 

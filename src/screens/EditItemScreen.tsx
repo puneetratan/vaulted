@@ -23,7 +23,7 @@ import {
   CameraOptions,
   ImageLibraryOptions,
 } from 'react-native-image-picker';
-import {updateInventoryItem} from '../services/inventoryService';
+import {updateInventoryItem, deleteInventoryItem} from '../services/inventoryService';
 import {getStorage} from '../services/firebase';
 import {useAuth} from '../contexts/AuthContext';
 import {Picker} from '@react-native-picker/picker';
@@ -83,6 +83,7 @@ const EditItemScreen = () => {
   const [releaseDate, setReleaseDate] = useState(item?.releaseDate || '');
   const [notes, setNotes] = useState(item?.notes || '');
   const [submitting, setSubmitting] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [quantityModalVisible, setQuantityModalVisible] = useState(false);
   const [releaseDatePickerVisible, setReleaseDatePickerVisible] = useState(false);
   const [releaseDatePickerValue, setReleaseDatePickerValue] = useState<Date | null>(
@@ -261,6 +262,36 @@ const EditItemScreen = () => {
     }
   };
 
+
+  const handleDelete = () => {
+    if (!item?.id) {
+      Alert.alert('Error', 'Unable to determine which item to delete.');
+      return;
+    }
+    Alert.alert(
+      'Delete Item',
+      `Are you sure you want to delete "${item.name}"? This cannot be undone.`,
+      [
+        {text: 'Cancel', style: 'cancel'},
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            setDeleting(true);
+            try {
+              await deleteInventoryItem(item.id, item.imageUrl);
+              navigation.goBack();
+            } catch (error: any) {
+              const message = error?.message || 'Failed to delete item. Please try again.';
+              Alert.alert('Error', message);
+            } finally {
+              setDeleting(false);
+            }
+          },
+        },
+      ],
+    );
+  };
 
   const handleCancel = () => {
     navigation.goBack();
@@ -640,6 +671,16 @@ const EditItemScreen = () => {
             <Text style={styles.submitButtonText}>Save</Text>
           )}
         </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.button, styles.deleteButton, deleting && styles.buttonDisabled]}
+          onPress={handleDelete}
+          disabled={deleting}>
+          {deleting ? (
+            <ActivityIndicator color="#FFFFFF" />
+          ) : (
+            <Text style={styles.deleteButtonText}>Delete Item</Text>
+          )}
+        </TouchableOpacity>
         <TouchableOpacity style={styles.removeButton} onPress={() => navigation.goBack()}>
           <Text style={styles.removeButtonText}>Cancel</Text>
         </TouchableOpacity>
@@ -855,6 +896,15 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   submitButtonText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  deleteButton: {
+    backgroundColor: '#FF3B30',
+    width: '100%',
+  },
+  deleteButtonText: {
     color: '#FFFFFF',
     fontSize: 18,
     fontWeight: '600',

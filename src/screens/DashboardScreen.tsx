@@ -80,6 +80,7 @@ const DashboardScreen = () => {
   const [activeFilters, setActiveFilters] = useState<FilterOptions | null>(null);
   const [availableBrands, setAvailableBrands] = useState<string[]>([]);
   const [availableColors, setAvailableColors] = useState<string[]>([]);
+  const [isCollectionEmpty, setIsCollectionEmpty] = useState<boolean>(true);
   const triggerInventoryRefresh = useCallback(() => {
     setInventoryRefreshToken(prev => prev + 1);
   }, []);
@@ -87,6 +88,10 @@ const DashboardScreen = () => {
   const handleAvailableFiltersChange = useCallback((brands: string[], colors: string[]) => {
     setAvailableBrands(brands);
     setAvailableColors(colors);
+  }, []);
+
+  const handleItemCountChange = useCallback((count: number) => {
+    setIsCollectionEmpty(count === 0);
   }, []);
 
 
@@ -462,6 +467,7 @@ const DashboardScreen = () => {
           refreshToken={inventoryRefreshToken}
           filters={activeFilters}
           onAvailableFiltersChange={handleAvailableFiltersChange}
+          onItemCountChange={handleItemCountChange}
         />
       </View>
 
@@ -475,43 +481,45 @@ const DashboardScreen = () => {
           <Text style={componentStyles.addButtonText}>Add New Item</Text>
         </TouchableOpacity>
 
-        {/* Footer Tabs */}
-        <View style={componentStyles.footerTabs}>
-          <TouchableOpacity
-            style={componentStyles.footerTab}
-            onPress={handleExport}
-            disabled={exporting}>
-            {exporting ? (
-              <>
-                <ActivityIndicator size="small" color={colors.text} />
-                <Text style={[componentStyles.footerTabText, {color: colors.text}]}>Exporting...</Text>
-              </>
-            ) : (
-              <>
-                <Icon name="unarchive" size={24} color={colors.text} />
-                <Text style={[componentStyles.footerTabText, {color: colors.text}]}>Export</Text>
-              </>
-            )}
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={componentStyles.footerTab}
-            onPress={handleFilter}>
-            <View style={componentStyles.footerTabContent}>
-              {activeFilters && (
-                (activeFilters.brands.length > 0 ||
-                 activeFilters.sources.length > 0 ||
-                 activeFilters.colors.length > 0 ||
-                 activeFilters.priceRange !== null) && (
-                  <View style={componentStyles.filterBadge}>
-                    <Icon name="check" size={10} color="#FFFFFF" />
-                  </View>
-                )
+        {/* Footer Tabs - only show when collection has items */}
+        {!isCollectionEmpty && (
+          <View style={componentStyles.footerTabs}>
+            <TouchableOpacity
+              style={componentStyles.footerTab}
+              onPress={handleExport}
+              disabled={exporting}>
+              {exporting ? (
+                <>
+                  <ActivityIndicator size="small" color={colors.text} />
+                  <Text style={[componentStyles.footerTabText, {color: colors.text}]}>Exporting...</Text>
+                </>
+              ) : (
+                <>
+                  <Icon name="unarchive" size={24} color={colors.text} />
+                  <Text style={[componentStyles.footerTabText, {color: colors.text}]}>Export</Text>
+                </>
               )}
-              <Icon name="filter-list" size={24} color={colors.text} />
-            </View>
-            <Text style={[componentStyles.footerTabText, {color: colors.text}]}>Filter</Text>
-          </TouchableOpacity>
-        </View>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={componentStyles.footerTab}
+              onPress={handleFilter}>
+              <View style={componentStyles.footerTabContent}>
+                {activeFilters && (
+                  (activeFilters.brands.length > 0 ||
+                   activeFilters.sources.length > 0 ||
+                   activeFilters.colors.length > 0 ||
+                   activeFilters.priceRange !== null) && (
+                    <View style={componentStyles.filterBadge}>
+                      <Icon name="check" size={10} color="#FFFFFF" />
+                    </View>
+                  )
+                )}
+                <Icon name="filter-list" size={24} color={colors.text} />
+              </View>
+              <Text style={[componentStyles.footerTabText, {color: colors.text}]}>Filter</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
 
       {/* Shoe Size Modal */}

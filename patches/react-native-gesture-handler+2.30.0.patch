@@ -1,0 +1,21 @@
+diff --git a/node_modules/react-native-gesture-handler/android/src/main/java/com/swmansion/gesturehandler/RNGestureHandlerPackage.kt b/node_modules/react-native-gesture-handler/android/src/main/java/com/swmansion/gesturehandler/RNGestureHandlerPackage.kt
+index e271a3e..e8d7c4f 100644
+--- a/node_modules/react-native-gesture-handler/android/src/main/java/com/swmansion/gesturehandler/RNGestureHandlerPackage.kt
++++ b/node_modules/react-native-gesture-handler/android/src/main/java/com/swmansion/gesturehandler/RNGestureHandlerPackage.kt
+@@ -1,6 +1,6 @@
+ package com.swmansion.gesturehandler
+ 
+-import com.facebook.react.BaseReactPackage
++import com.facebook.react.TurboReactPackage
+ import com.facebook.react.ViewManagerOnDemandReactPackage
+ import com.facebook.react.bridge.ModuleSpec
+ import com.facebook.react.bridge.NativeModule
+@@ -20,7 +20,7 @@ import com.swmansion.gesturehandler.react.RNGestureHandlerRootViewManager
+   ],
+ )
+ class RNGestureHandlerPackage :
+-  BaseReactPackage(),
++  TurboReactPackage(),
+   ViewManagerOnDemandReactPackage {
+   private val viewManagers: Map<String, ModuleSpec> by lazy {
+     mapOf(

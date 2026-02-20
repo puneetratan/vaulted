@@ -1,16 +1,17 @@
 import React, {useState, useMemo, useCallback, useEffect} from 'react';
-import {View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, ActivityIndicator, Alert, FlatList} from 'react-native';
+import {View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, ActivityIndicator, Alert, FlatList, Dimensions} from 'react-native';
+
+const {height: SCREEN_HEIGHT} = Dimensions.get('window');
 import {useNavigation, useFocusEffect} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {RootStackParamList} from '../navigation/AppNavigator';
-import {getInventoryItemsPage, InventoryItem, deleteInventoryItem} from '../services/inventoryService';
+import {getInventoryItemsPage, InventoryItem} from '../services/inventoryService';
 import {FilterOptions} from './FilterModal';
 import {useTheme} from '../contexts/ThemeContext';
 
 type DashboardTabsNavigationProp = StackNavigationProp<RootStackParamList>;
 
-type TabType = 'Total Pairs' | 'Brands' | 'Total Value';
 type ShadowStatus = 'processing' | 'complete' | 'error';
 
 interface ShoeItem {
@@ -41,6 +42,7 @@ interface DashboardTabsProps {
   refreshToken?: number;
   filters?: FilterOptions | null;
   onAvailableFiltersChange?: (brands: string[], colors: string[]) => void;
+  onItemCountChange?: (count: number) => void;
 }
 
 const DashboardTabs = ({
@@ -50,13 +52,13 @@ const DashboardTabs = ({
   refreshToken = 0,
   filters = null,
   onAvailableFiltersChange,
+  onItemCountChange,
 }: DashboardTabsProps) => {
   const navigation = useNavigation<DashboardTabsNavigationProp>();
   const {colors} = useTheme();
   const [allShoes, setAllShoes] = useState<ShoeItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [lastDoc, setLastDoc] = useState<any | null>(null);
   const [hasMore, setHasMore] = useState<boolean>(false);
   const [loadingMore, setLoadingMore] = useState<boolean>(false);
@@ -210,6 +212,13 @@ const DashboardTabs = ({
     }
   }, [availableBrands, availableColors, onAvailableFiltersChange]);
 
+  // Notify parent of item count so it can show/hide footer actions
+  useEffect(() => {
+    if (onItemCountChange) {
+      onItemCountChange(allShoes.length);
+    }
+  }, [allShoes.length, onItemCountChange]);
+
   // Apply filters to shoes
   const applyFilters = useCallback((shoes: ShoeItem[]) => {
     if (!filters) {
@@ -276,33 +285,6 @@ const DashboardTabs = ({
     return result;
   }, [allShoes]);
 
-  // Filter shoes based on search query and brand filter
-  const filteredInventoryShoes = useMemo(() => {
-    let result = allShoes;
-    
-    // Apply brand filter
-    if (selectedBrand !== 'All') {
-      result = result.filter(shoe => shoe.brand === selectedBrand);
-    }
-    
-    // Apply search query
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter(
-        (shoe) =>
-          shoe.name.toLowerCase().includes(query) ||
-          shoe.brand.toLowerCase().includes(query) ||
-          shoe.color.toLowerCase().includes(query) ||
-          shoe.size.toLowerCase().includes(query),
-      );
-    }
-
-    // Apply filters
-    result = applyFilters(result);
-    
-    return result;
-  }, [allShoes, searchQuery, selectedBrand, applyFilters]);
-
   const filteredDisplayShoes = useMemo(() => {
     let result = combinedShoes;
     
@@ -328,12 +310,6 @@ const DashboardTabs = ({
     return result;
   }, [combinedShoes, searchQuery, selectedBrand, applyFilters]);
 
-  const shadowCount = normalizedShadowItems.length;
-  const shadowProcessingCount = useMemo(
-    () => normalizedShadowItems.filter((item) => item.shadowStatus === 'processing').length,
-    [normalizedShadowItems],
-  );
-
   // Calculate counts for summary cards
   const uniqueBrands = useMemo(() => [...new Set(allShoes.map((shoe) => shoe.brand))], [allShoes]);
   const totalPairs = useMemo(() => allShoes.reduce((sum, shoe) => sum + (shoe.quantity || 1), 0), [allShoes]);
@@ -342,20 +318,26 @@ const DashboardTabs = ({
     [allShoes],
   );
 
-  const renderLoadingState = () => (
-    <View style={styles.stateContainer}>
-      <ActivityIndicator size="large" color="#007AFF" />
-    </View>
-  );
+  const renderLoadingState = () => {
+    const s = styles(colors);
+    return (
+      <View style={s.stateContainer}>
+        <ActivityIndicator size="large" color="#007AFF" />
+      </View>
+    );
+  };
 
-  const renderErrorState = () => (
-    <View style={styles.stateContainer}>
-      <Text style={styles.errorText}>{error}</Text>
-      <TouchableOpacity style={styles.retryButton} onPress={fetchInventory}>
-        <Text style={styles.retryButtonText}>Retry</Text>
-      </TouchableOpacity>
-    </View>
-  );
+  const renderErrorState = () => {
+    const s = styles(colors);
+    return (
+      <View style={s.stateContainer}>
+        <Text style={s.errorText}>{error}</Text>
+        <TouchableOpacity style={s.retryButton} onPress={fetchInventory}>
+          <Text style={s.retryButtonText}>Retry</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
 
   const renderTabContent = () => {
     if (loading) {
@@ -365,38 +347,6 @@ const DashboardTabs = ({
     if (error) {
       return renderErrorState();
     }
-
-    const confirmDelete = (shoe: ShoeItem) => {
-      if (!shoe.id) {
-        Alert.alert('Error', 'Unable to delete item without a valid identifier.');
-        return;
-      }
-
-      Alert.alert(
-        'Delete Item',
-        `Are you sure you want to delete "${shoe.name}"?`,
-        [
-          {text: 'Cancel', style: 'cancel'},
-          {
-            text: 'Delete',
-            style: 'destructive',
-            onPress: async () => {
-              try {
-                setDeletingId(shoe.id as string);
-                await deleteInventoryItem(shoe.id as string, shoe.imageUrl);
-                await fetchInventory();
-              } catch (deleteError: any) {
-                const message = deleteError?.message || 'Failed to delete item. Please try again.';
-                Alert.alert('Error', message);
-              } finally {
-                setDeletingId(null);
-              }
-            },
-          },
-        ],
-        {cancelable: true},
-      );
-    };
 
     const renderShoeItem = ({item: shoe}: {item: ShoeItem}) => {
       const componentStyles = styles(colors);
@@ -492,8 +442,6 @@ const DashboardTabs = ({
                   <Icon name="close" size={16} color={colors.textSecondary} />
                 </TouchableOpacity>
               </View>
-            ) : deletingId === shoe.id ? (
-              <ActivityIndicator size="small" color={colors.error} />
             ) : (
               <Icon name="chevron-right" size={24} color={colors.textSecondary} />
             )}
@@ -502,21 +450,30 @@ const DashboardTabs = ({
       );
     };
 
-    const renderEmptyComponent = () => (
-      <View style={styles.emptyState}>
-        <Text style={styles.tabContentValue}>0</Text>
-        <Text style={styles.tabContentSubtitle}>
-          No items added yet
-        </Text>
-      </View>
-    );
+    const renderEmptyComponent = () => {
+      const s = styles(colors);
+      return (
+        <View style={s.emptyStateContainer}>
+          <Image
+            source={require('../assets/images/Logo.png')}
+            style={s.emptyStateLogo}
+            resizeMode="contain"
+          />
+          <Text style={s.emptyStateTitle}>Update your vault</Text>
+          <Text style={s.emptyStateSubtitle}>
+            Take a photo of your first shoe to begin organizing your collection.
+          </Text>
+        </View>
+      );
+    };
 
     const renderListFooter = () => {
       if (!hasMore || searchQuery.trim()) {
         return null;
       }
+      const s = styles(colors);
       return (
-        <View style={styles.listFooter}>
+        <View style={s.listFooter}>
           {loadingMore && <ActivityIndicator color="#007AFF" />}
         </View>
       );
@@ -536,48 +493,52 @@ const DashboardTabs = ({
           const componentStyles = styles(colors);
           return (
           <>
-            {/* Summary Statistics Cards */}
-            <View style={componentStyles.summaryCardsContainer}>
-              <View style={componentStyles.summaryCard}>
-                <Text style={componentStyles.summaryCardValue}>{totalPairs}</Text>
-                <Text style={componentStyles.summaryCardLabel}>Total Pairs</Text>
-              </View>
-              <View style={componentStyles.summaryCard}>
-                <Text style={componentStyles.summaryCardValue}>{uniqueBrands.length}</Text>
-                <Text style={componentStyles.summaryCardLabel}>Brands</Text>
-              </View>
-              <View style={componentStyles.summaryCard}>
-                <Text style={componentStyles.summaryCardValue}>
-                  ${Math.round(totalValue).toLocaleString()}
-                </Text>
-                <Text style={componentStyles.summaryCardLabel}>Total Value</Text>
-              </View>
-            </View>
-
-            {/* Brand Filter Buttons */}
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={componentStyles.brandFilterContainer}
-              contentContainerStyle={componentStyles.brandFilterContent}>
-              {availableBrandsForFilter.map((brand) => (
-                <TouchableOpacity
-                  key={brand}
-                  style={[
-                    componentStyles.brandFilterButton,
-                    selectedBrand === brand && componentStyles.brandFilterButtonActive,
-                  ]}
-                  onPress={() => setSelectedBrand(brand)}>
-                  <Text
-                    style={[
-                      componentStyles.brandFilterButtonText,
-                      selectedBrand === brand && componentStyles.brandFilterButtonTextActive,
-                    ]}>
-                    {brand === 'Nike' ? 'Airforce' : brand}
+            {/* Summary Statistics Cards - only show when collection has items */}
+            {allShoes.length > 0 && (
+              <View style={componentStyles.summaryCardsContainer}>
+                <View style={componentStyles.summaryCard}>
+                  <Text style={componentStyles.summaryCardValue}>{totalPairs}</Text>
+                  <Text style={componentStyles.summaryCardLabel}>Total Pairs</Text>
+                </View>
+                <View style={componentStyles.summaryCard}>
+                  <Text style={componentStyles.summaryCardValue}>{uniqueBrands.length}</Text>
+                  <Text style={componentStyles.summaryCardLabel}>Brands</Text>
+                </View>
+                <View style={componentStyles.summaryCard}>
+                  <Text style={componentStyles.summaryCardValue}>
+                    ${Math.round(totalValue).toLocaleString()}
                   </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
+                  <Text style={componentStyles.summaryCardLabel}>Total Value</Text>
+                </View>
+              </View>
+            )}
+
+            {/* Brand Filter Buttons - only show when collection has items */}
+            {allShoes.length > 0 && (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={componentStyles.brandFilterContainer}
+                contentContainerStyle={componentStyles.brandFilterContent}>
+                {availableBrandsForFilter.map((brand) => (
+                  <TouchableOpacity
+                    key={brand}
+                    style={[
+                      componentStyles.brandFilterButton,
+                      selectedBrand === brand && componentStyles.brandFilterButtonActive,
+                    ]}
+                    onPress={() => setSelectedBrand(brand)}>
+                    <Text
+                      style={[
+                        componentStyles.brandFilterButtonText,
+                        selectedBrand === brand && componentStyles.brandFilterButtonTextActive,
+                      ]}>
+                      {brand === 'Nike' ? 'Airforce' : brand}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            )}
           </>
           );
         }}
@@ -702,6 +663,31 @@ const styles = (colors: any) => StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
+  },
+  emptyStateContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 40,
+    paddingVertical: 60,
+    minHeight: SCREEN_HEIGHT * 0.5,
+  },
+  emptyStateLogo: {
+    width: 120,
+    height: 120,
+    marginBottom: 32,
+  },
+  emptyStateTitle: {
+    fontSize: 24,
+    fontWeight: 'bold' as const,
+    color: colors.text,
+    textAlign: 'center' as const,
+    marginBottom: 12,
+  },
+  emptyStateSubtitle: {
+    fontSize: 16,
+    color: colors.textSecondary,
+    textAlign: 'center' as const,
+    lineHeight: 24,
   },
   shoeCard: {
     flexDirection: 'row',

@@ -19,8 +19,14 @@ const db = admin.firestore();
 
 exports.exportInventoryToExcel = functions.https.onCall(async (data, context) => {
   const uid = context.auth?.uid;
+  const userEmail = context.auth?.token?.email;
+
   if (!uid) {
     throw new functions.https.HttpsError("unauthenticated", "User must be logged in.");
+  }
+
+  if (!userEmail) {
+    throw new functions.https.HttpsError("unauthenticated", "User email not found.");
   }
 
   try {
@@ -134,13 +140,13 @@ exports.exportInventoryToExcel = functions.https.onCall(async (data, context) =>
     });
 
     const mailOptions = {
-      from: "puneetratan83@gmail.com",
-      to: "puneetsiet@gmail.com",
-      subject: "Your Inventory Export",
-      text: "Attached is your exported inventory report.",
+      from: process.env.SMTP_USER,
+      to: userEmail,
+      subject: "Your Inventory Export - Vaulted",
+      text: `Hello,\n\nAttached is your exported inventory report from Vaulted.\n\nThis export includes all your items with images and details.\n\nBest regards,\nThe Vaulted Team`,
       attachments: [
         {
-          filename: `inventory_${Date.now()}.xlsx`,
+          filename: `vaulted_inventory_${Date.now()}.xlsx`,
           content: buffer,
         },
       ],
@@ -309,7 +315,7 @@ exports.analyzeShoeMetadata = functions.https.onCall(async (data, context) => {
 
   try {
     const aiResponse = await openai.chat.completions.create({
-      model: "gpt-4.1",
+      model: "gpt-4o",
       temperature: 0.1,
       messages: [
         {
