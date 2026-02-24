@@ -2292,6 +2292,15 @@ PODS:
     - React-Core
   - react-native-safe-area-context (4.14.1):
     - React-Core
+  - react-native-video (6.19.0):
+    - glog
+    - RCT-Folly (= 2022.05.16.00)
+    - React-Core
+    - react-native-video/Video (= 6.19.0)
+  - react-native-video/Video (6.19.0):
+    - glog
+    - RCT-Folly (= 2022.05.16.00)
+    - React-Core
   - React-nativeconfig (0.73.11)
   - React-NativeModulesApple (0.73.11):
     - glog
@@ -2576,6 +2585,7 @@ DEPENDENCIES:
   - react-native-document-picker (from `../node_modules/react-native-document-picker`)
   - react-native-image-picker (from `../node_modules/react-native-image-picker`)
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
+  - react-native-video (from `../node_modules/react-native-video`)
   - React-nativeconfig (from `../node_modules/react-native/ReactCommon`)
   - React-NativeModulesApple (from `../node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios`)
   - React-perflogger (from `../node_modules/react-native/ReactCommon/reactperflogger`)
@@ -2709,6 +2719,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-image-picker"
   react-native-safe-area-context:
     :path: "../node_modules/react-native-safe-area-context"
+  react-native-video:
+    :path: "../node_modules/react-native-video"
   React-nativeconfig:
     :path: "../node_modules/react-native/ReactCommon"
   React-NativeModulesApple:
@@ -2845,6 +2857,7 @@ SPEC CHECKSUMS:
   react-native-document-picker: e2a76951cbc856576d67c5b78efa5298d7bb8a00
   react-native-image-picker: b981b88b807605540b2de3245c76e9729f418b37
   react-native-safe-area-context: 758e894ca5a9bd1868d2a9cfbca7326a2b6bf9dc
+  react-native-video: 3226eff4681715c67bef324da0ff030659fddc44
   React-nativeconfig: 6178939b2ac9010dd2f9f994aab3ab11fa68fbf3
   React-NativeModulesApple: eea6abc6e6ea549faa10d867e44b3eba2d8cec3d
   React-perflogger: 3887a05940ccd34a83457fd153fdeda509b31737

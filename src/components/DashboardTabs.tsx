@@ -455,7 +455,7 @@ const DashboardTabs = ({
       return (
         <View style={s.emptyStateContainer}>
           <Image
-            source={require('../assets/images/Logo.png')}
+            source={require('../assets/images/app_logo.png')}
             style={s.emptyStateLogo}
             resizeMode="contain"
           />
@@ -672,8 +672,8 @@ const styles = (colors: any) => StyleSheet.create({
     minHeight: SCREEN_HEIGHT * 0.5,
   },
   emptyStateLogo: {
-    width: 120,
-    height: 120,
+    width: 240,
+    height: 240,
     marginBottom: 32,
   },
   emptyStateTitle: {

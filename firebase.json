@@ -12,7 +12,8 @@
         "firebase-debug.*.log",
         "*.local"
       ],
-      "source": "functions"
+      "source": "functions",
+      "secrets": ["SMTP_USER", "SMTP_PASS", "OPENAI_API_KEY", "BARCODE_SPIDER_TOKEN"]
     }
   ],
   "emulators": {

@@ -71,21 +71,12 @@ const AppNavigator = () => {
       return;
     }
     
-    // Only navigate when auth state changes after initial load
-    if (!loading && navigationRef.current?.isReady()) {
-      if (isAuthenticated) {
-        // User is authenticated, navigate to Dashboard
-        navigationRef.current.reset({
-          index: 0,
-          routes: [{name: 'Dashboard'}],
-        });
-      } else {
-        // User is not authenticated, navigate to Login
-        navigationRef.current.reset({
-          index: 0,
-          routes: [{name: 'Login'}],
-        });
-      }
+    // Only navigate to Dashboard when user signs IN after being on Login/Splash
+    if (!loading && isAuthenticated && navigationRef.current?.isReady()) {
+      navigationRef.current.reset({
+        index: 0,
+        routes: [{name: 'Dashboard'}],
+      });
     }
   }, [isAuthenticated, loading]);
 
@@ -101,7 +92,7 @@ const AppNavigator = () => {
   return (
     <NavigationContainer ref={navigationRef}>
       <Stack.Navigator
-        initialRouteName={isAuthenticated ? 'Dashboard' : 'Login'}
+        initialRouteName="Splash"
         screenOptions={{
           headerShown: false,
         }}>

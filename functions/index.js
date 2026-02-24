@@ -1,12 +1,15 @@
 // functions/index.js
-require("dotenv").config();
+// dotenv only used for local development; secrets come from Secret Manager in production
+if (process.env.FUNCTIONS_EMULATOR) {
+  require("dotenv").config();
+}
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const ExcelJS = require("exceljs");
 const nodemailer = require("nodemailer");
 const OpenAI = require("openai");
-// const { onCall } = require("firebase-functions/v2/https");
 
+// Secrets are injected by Secret Manager at runtime (process.env is populated automatically)
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
