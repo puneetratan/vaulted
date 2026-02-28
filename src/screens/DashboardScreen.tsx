@@ -72,6 +72,8 @@ const DashboardScreen = () => {
   const [showHamburgerMenu, setShowHamburgerMenu] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
+  const [showEmailPromptModal, setShowEmailPromptModal] = useState(false);
+  const [exportEmail, setExportEmail] = useState('');
   const [showSearchBar, setShowSearchBar] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [exporting, setExporting] = useState(false);
@@ -267,23 +269,36 @@ const DashboardScreen = () => {
     setShadowItems(prev => prev.filter(item => item.id !== id));
   }, []);
 
+  const isAppleRelayEmail = (email: string | null | undefined): boolean => {
+    return !!email && email.endsWith('@privaterelay.appleid.com');
+  };
+
   const handleExport = async () => {
     if (exporting) {
       return;
     }
 
+    if (!user?.uid) {
+      Alert.alert('Error', 'User not authenticated');
+      return;
+    }
+
+    // If user has a relay email, ask for a real email before exporting
+    if (isAppleRelayEmail(user?.email) || !user?.email) {
+      setExportEmail('');
+      setShowEmailPromptModal(true);
+      return;
+    }
+
+    await executeExport();
+  };
+
+  const executeExport = async (overrideEmail?: string) => {
     setExporting(true);
     try {
       const hasPermission = await requestAndroidPermissions();
       if (!hasPermission) {
         Alert.alert('Permission Denied', 'Storage permission denied');
-        setExporting(false);
-        return;
-      }
-
-      if (!user?.uid) {
-        Alert.alert('Error', 'User not authenticated');
-        setExporting(false);
         return;
       }
 
@@ -292,12 +307,12 @@ const DashboardScreen = () => {
       const functions = getFunctions();
       if (!functions) {
         Alert.alert('Error', 'Cloud Functions are not available. Please check your Firebase configuration.');
-        setExporting(false);
         return;
       }
       const exportInventoryToExcel = functions.httpsCallable('exportInventoryToExcel');
       const response = await exportInventoryToExcel({
         uid: user.uid,
+        ...(overrideEmail ? {overrideEmail} : {}),
       });
 
       const payload = response.data as {
@@ -332,6 +347,17 @@ const DashboardScreen = () => {
     } finally {
       setExporting(false);
     }
+  };
+
+  const handleEmailPromptSubmit = async () => {
+    const trimmed = exportEmail.trim();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(trimmed)) {
+      Alert.alert('Invalid Email', 'Please enter a valid email address.');
+      return;
+    }
+    setShowEmailPromptModal(false);
+    await executeExport(trimmed);
   };
 
   const handleFilter = () => {
@@ -556,6 +582,55 @@ const DashboardScreen = () => {
         availableColors={availableColors}
         currentFilters={activeFilters || undefined}
       />
+
+      {/* Email Prompt Modal (shown when Apple Hide My Email is used) */}
+      <Modal
+        visible={showEmailPromptModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowEmailPromptModal(false)}>
+        <View style={exportEmailStyles.overlay}>
+          <View style={[exportEmailStyles.container, {backgroundColor: colors.card}]}>
+            <Text style={[exportEmailStyles.title, {color: colors.text}]}>
+              Enter Your Email
+            </Text>
+            <Text style={[exportEmailStyles.subtitle, {color: colors.textSecondary}]}>
+              Your Apple account uses a private relay email. Please enter your real email to receive the export.
+            </Text>
+            <TextInput
+              style={[exportEmailStyles.input, {
+                color: colors.text,
+                borderColor: colors.border,
+                backgroundColor: colors.background,
+              }]}
+              placeholder="you@example.com"
+              placeholderTextColor={colors.textSecondary}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              value={exportEmail}
+              onChangeText={setExportEmail}
+            />
+            <View style={exportEmailStyles.buttons}>
+              <TouchableOpacity
+                style={[exportEmailStyles.button, exportEmailStyles.cancelButton, {borderColor: colors.border}]}
+                onPress={() => setShowEmailPromptModal(false)}>
+                <Text style={[exportEmailStyles.buttonText, {color: colors.text}]}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[exportEmailStyles.button, exportEmailStyles.submitButton]}
+                onPress={handleEmailPromptSubmit}
+                disabled={exporting}>
+                {exporting ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Text style={[exportEmailStyles.buttonText, {color: '#fff'}]}>Send Export</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -697,6 +772,59 @@ const styles = (colors: any) => StyleSheet.create({
   },
   clearSearchButton: {
     padding: 8,
+  },
+});
+
+const exportEmailStyles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+  },
+  container: {
+    width: '100%',
+    borderRadius: 16,
+    padding: 24,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 14,
+    marginBottom: 20,
+    lineHeight: 20,
+  },
+  input: {
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 16,
+    marginBottom: 20,
+  },
+  buttons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  button: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  cancelButton: {
+    borderWidth: 1,
+  },
+  submitButton: {
+    backgroundColor: '#007AFF',
+  },
+  buttonText: {
+    fontSize: 15,
+    fontWeight: '600',
   },
 });
 

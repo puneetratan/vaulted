@@ -22,7 +22,12 @@ const db = admin.firestore();
 
 exports.exportInventoryToExcel = functions.https.onCall(async (data, context) => {
   const uid = context.auth?.uid;
-  const userEmail = context.auth?.token?.email;
+  const tokenEmail = context.auth?.token?.email;
+  const isRelayEmail = tokenEmail && tokenEmail.endsWith("@privaterelay.appleid.com");
+
+  // Use override email if the token email is a relay address or missing
+  const overrideEmail = data?.overrideEmail?.trim();
+  const userEmail = (isRelayEmail || !tokenEmail) ? overrideEmail : tokenEmail;
 
   if (!uid) {
     throw new functions.https.HttpsError("unauthenticated", "User must be logged in.");
@@ -30,6 +35,11 @@ exports.exportInventoryToExcel = functions.https.onCall(async (data, context) =>
 
   if (!userEmail) {
     throw new functions.https.HttpsError("unauthenticated", "User email not found.");
+  }
+
+  // Basic email format validation for override emails
+  if (overrideEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(overrideEmail)) {
+    throw new functions.https.HttpsError("invalid-argument", "Invalid email address provided.");
   }
 
   try {

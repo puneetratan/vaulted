@@ -3,7 +3,7 @@ import { Platform } from "react-native";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import { appleAuth } from "@invertase/react-native-apple-authentication";
 import { getAuth } from "../services/firebase";
-import { AppleAuthProvider, GoogleAuthProvider, onAuthStateChanged } from "@react-native-firebase/auth";
+import { AppleAuthProvider, GoogleAuthProvider, onAuthStateChanged, signInWithCredential, signOut } from "@react-native-firebase/auth";
 
 type AuthContextType = {
   user: any | null;
@@ -107,7 +107,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       try {
         // Add timeout for network requests (increased to 60 seconds)
-        const signInPromise = authInstance.signInWithCredential(googleCredential);
+        const signInPromise = signInWithCredential(authInstance, googleCredential);
         const timeoutPromise = new Promise((_, reject) => 
           setTimeout(() => reject(new Error("NETWORK_ERROR: Request timed out after 60 seconds. Please check your connection.")), 60000)
         );
@@ -208,7 +208,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       // Sign in the user with the credential
       const authInstance = getAuth();
-      const userCredential = await authInstance.signInWithCredential(appleCredential);
+      const userCredential = await signInWithCredential(authInstance, appleCredential);
 
       console.log('✅ Apple Sign-In successful:', userCredential.user?.email);
       // Auth state listener will automatically update the user state
@@ -264,7 +264,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       // Sign out from Firebase Auth using getAuth from services/firebase.ts
       const authInstance = getAuth();
-      await authInstance.signOut();
+      await signOut(authInstance);
     } catch (error) {
       console.error("Logout error:", error);
       throw error; // Re-throw so UI can handle it

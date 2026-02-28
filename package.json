@@ -31,6 +31,7 @@
     "react-native": "^0.73.11",
     "react-native-barcode-mask": "^1.1.1",
     "react-native-document-picker": "^9.1.1",
+    "react-native-fast-image": "^8.6.3",
     "react-native-file-viewer": "^2.1.5",
     "react-native-fs": "^2.20.0",
     "react-native-gesture-handler": "2.14.1",

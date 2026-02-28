@@ -1,4 +1,4 @@
-import React, {useEffect, useRef} from 'react';
+import React, {useEffect} from 'react';
 import {NavigationContainer} from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack';
 import {Platform, View, ActivityIndicator, StyleSheet} from 'react-native';
@@ -61,22 +61,33 @@ const AppNavigator = () => {
   const {isAuthenticated, loading} = useAuth();
   const navigationRef = React.useRef<any>(null);
 
-  // Handle navigation when auth state changes (after initial load)
   const isInitialMount = React.useRef(true);
-  
+  // Track if user was authenticated this session — distinguishes sign-out from first app open
+  const wasAuthenticated = React.useRef(false);
+
   useEffect(() => {
-    // Skip navigation reset on initial mount (initialRouteName handles it)
+    // Skip on initial mount — SplashScreen handles the first navigation
     if (isInitialMount.current) {
       isInitialMount.current = false;
       return;
     }
-    
-    // Only navigate to Dashboard when user signs IN after being on Login/Splash
-    if (!loading && isAuthenticated && navigationRef.current?.isReady()) {
-      navigationRef.current.reset({
-        index: 0,
-        routes: [{name: 'Dashboard'}],
-      });
+
+    if (!loading && navigationRef.current?.isReady()) {
+      if (isAuthenticated) {
+        wasAuthenticated.current = true;
+        navigationRef.current.reset({
+          index: 0,
+          routes: [{name: 'Dashboard'}],
+        });
+      } else if (wasAuthenticated.current) {
+        // User explicitly signed out — navigate to Login
+        wasAuthenticated.current = false;
+        navigationRef.current.reset({
+          index: 0,
+          routes: [{name: 'Login'}],
+        });
+      }
+      // else: first app open, not authenticated → SplashScreen navigates to Login
     }
   }, [isAuthenticated, loading]);
 

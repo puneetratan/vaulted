@@ -25,7 +25,7 @@ const SplashScreen = () => {
 
   // Navigate after 5 seconds or when video ends, whichever comes first
   useEffect(() => {
-    const fallback = setTimeout(goNext, 5000);
+    const fallback = setTimeout(goNext, 3000);
     return () => clearTimeout(fallback);
   }, [goNext]);
 
