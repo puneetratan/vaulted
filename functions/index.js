@@ -350,15 +350,15 @@ exports.analyzeShoeMetadata = functions.runWith({ secrets: ["OPENAI_API_KEY"] })
               type: "text",
               text:
                 "These are shoe images. For each image, extract the following fields:\n" +
-                "- Brand\n" +
-                "- Model\n" +
-                "- Name\n" +
+                "- Brand: the manufacturer company name only (e.g. Nike, Adidas, Jordan, New Balance, Puma). Never use the silhouette or model name as the brand.\n" +
+                "- Model: the specific model name (e.g. Air Force 1, Yeezy 350, Dunk Low)\n" +
+                "- Name: full descriptive name combining brand + model + colorway (e.g. Nike Air Force 1 Low White)\n" +
                 "- Size\n" +
                 "- Color\n" +
                 "- Release Date\n" +
                 "- Retail Value\n" +
                 "- StyleId\n" +
-                "- Silhouette\n" +
+                "- Silhouette: the shoe silhouette or model line (e.g. Air Force 1, Dunk, Yeezy Boost 350)\n" +
                 "- Condition (New / Like New / Used)\n" +
                 "- Any flaws or damage\n" +
                 "- Estimated resale value range (USD)\n" +
