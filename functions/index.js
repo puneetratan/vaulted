@@ -9,10 +9,14 @@ const ExcelJS = require("exceljs");
 const nodemailer = require("nodemailer");
 const OpenAI = require("openai");
 
-// Secrets are injected by Secret Manager at runtime (process.env is populated automatically)
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
+// Lazy-initialized so the module loads cleanly during Firebase CLI analysis
+let _openai = null;
+const getOpenAI = () => {
+  if (!_openai) {
+    _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  }
+  return _openai;
+};
 
 // node-fetch v3 is ESM-only. Use dynamic import:
 const fetch = (...args) => import("node-fetch").then(({ default: f }) => f(...args));
@@ -20,14 +24,16 @@ const fetch = (...args) => import("node-fetch").then(({ default: f }) => f(...ar
 admin.initializeApp();
 const db = admin.firestore();
 
-exports.exportInventoryToExcel = functions.https.onCall(async (data, context) => {
+exports.exportInventoryToExcel = functions.runWith({ secrets: ["SMTP_USER", "SMTP_PASS"] }).https.onCall(async (data, context) => {
   const uid = context.auth?.uid;
   const tokenEmail = context.auth?.token?.email;
-  const isRelayEmail = tokenEmail && tokenEmail.endsWith("@privaterelay.appleid.com");
+  const isRelayEmail = !!(tokenEmail && tokenEmail.endsWith("@privaterelay.appleid.com"));
 
   // Use override email if the token email is a relay address or missing
-  const overrideEmail = data?.overrideEmail?.trim();
+  const overrideEmail = data?.overrideEmail?.trim() || null;
   const userEmail = (isRelayEmail || !tokenEmail) ? overrideEmail : tokenEmail;
+
+  console.log("[exportInventoryToExcel] tokenEmail:", tokenEmail, "isRelay:", isRelayEmail, "overrideEmail:", overrideEmail, "resolved userEmail:", userEmail);
 
   if (!uid) {
     throw new functions.https.HttpsError("unauthenticated", "User must be logged in.");
@@ -145,10 +151,16 @@ exports.exportInventoryToExcel = functions.https.onCall(async (data, context) =>
     }
 
     const transporter = nodemailer.createTransport({
-      service: "gmail",
+      host: "mail.vaulted-app.com",
+      port: 465,
+      secure: true,
+      authMethod: "LOGIN",
       auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS
+        user: process.env.SMTP_USER.trim(),
+        pass: process.env.SMTP_PASS.trim(),
+      },
+      tls: {
+        rejectUnauthorized: false,
       },
     });
 
@@ -304,7 +316,7 @@ const persistMetadataDocs = async (docs) => {
   await batch.commit();
 };
 
-exports.analyzeShoeMetadata = functions.https.onCall(async (data, context) => {
+exports.analyzeShoeMetadata = functions.runWith({ secrets: ["OPENAI_API_KEY"] }).https.onCall(async (data, context) => {
   const uid = context.auth?.uid;
   if (!uid) {
     throw new functions.https.HttpsError("unauthenticated", "User must be logged in.");
@@ -327,7 +339,7 @@ exports.analyzeShoeMetadata = functions.https.onCall(async (data, context) => {
   console.log('imageUris=====', imageUris);
 
   try {
-    const aiResponse = await openai.chat.completions.create({
+    const aiResponse = await getOpenAI().chat.completions.create({
       model: "gpt-4o",
       temperature: 0.1,
       messages: [
@@ -407,9 +419,7 @@ exports.analyzeShoeMetadata = functions.https.onCall(async (data, context) => {
       })
       .filter(Boolean);
 
-    persistMetadataDocs(docsToSave).catch((err) => {
-      console.error("Failed to persist AI metadata docs:", err);
-    });
+    await persistMetadataDocs(docsToSave);
 
     return {
       success: true,
@@ -427,7 +437,7 @@ exports.analyzeShoeMetadata = functions.https.onCall(async (data, context) => {
  * @param {string} data.barcode - The barcode/UPC to lookup
  * @returns {Object} Product information including title, brand, model, image, etc.
  */
-exports.lookupbarcode = functions.https.onCall(async (data, context) => {
+exports.lookupbarcode = functions.runWith({ secrets: ["BARCODE_SPIDER_TOKEN"] }).https.onCall(async (data, context) => {
   console.log("🔥 lookupbarcode HIT");
   const uid = context.auth?.uid;
   console.log('uid =====', uid);
