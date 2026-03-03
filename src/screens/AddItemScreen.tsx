@@ -7,7 +7,6 @@ import {
   TextInput,
   Alert,
   ScrollView,
-  Image,
   ActivityIndicator,
   Platform,
   Modal,
@@ -18,6 +17,7 @@ import {useNavigation, useRoute, RouteProp} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {launchImageLibrary, ImagePickerResponse} from 'react-native-image-picker';
+import FastImage from 'react-native-fast-image';
 import {saveInventoryItem} from '../services/inventoryService';
 import {getStorage, getFunctions} from '../services/firebase';
 import {useAuth} from '../contexts/AuthContext';
@@ -167,9 +167,6 @@ const AddItemScreen = () => {
         if (isActive && !size && profile?.shoeSize) {
           setSize(String(profile.shoeSize));
         }
-        if (isActive && profile?.releaseDate) {
-          setReleaseDate(profile.releaseDate);
-        }
       } catch (profileError) {
         console.warn('Failed to load user profile for prefill:', profileError);
       }
@@ -253,28 +250,13 @@ const AddItemScreen = () => {
       Alert.alert('Error', 'Please enter silhouette');
       return;
     }
-    if (!styleId.trim()) {
-      Alert.alert('Error', 'Please enter style ID');
-      return;
-    }
-    if (!size.trim()) {
-      Alert.alert('Error', 'Please enter size');
-      return;
-    }
-    if (!retailValue.trim() || isNaN(parseFloat(retailValue))) {
-      Alert.alert('Error', 'Please enter a valid retail value');
-      return;
-    }
-    if (!releaseDate.trim()) {
-      Alert.alert('Error', 'Please enter release date');
-      return;
-    }
-
     const releaseDateTrimmed = releaseDate.trim();
-    const releaseDateRegex = /^\d{4}-\d{2}-\d{2}$/;
-    if (!releaseDateRegex.test(releaseDateTrimmed)) {
-      Alert.alert('Error', 'Release date must be in YYYY-MM-DD format');
-      return;
+    if (releaseDateTrimmed) {
+      const releaseDateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (!releaseDateRegex.test(releaseDateTrimmed)) {
+        Alert.alert('Error', 'Release date must be in YYYY-MM-DD format');
+        return;
+      }
     }
 
     const quantityValue = parseInt(quantity, 10);
@@ -437,7 +419,7 @@ const AddItemScreen = () => {
             style={componentStyles.imagePicker}
             onPress={handleImagePicker}>
             {imagePreview ? (
-              <Image source={{uri: imagePreview}} style={componentStyles.imagePreview} />
+              <FastImage source={{uri: imagePreview, priority: FastImage.priority.normal, cache: FastImage.cacheControl.immutable}} style={componentStyles.imagePreview} />
             ) : (
               <View style={componentStyles.imagePlaceholder}>
                 <Icon name="add-photo-alternate" size={48} color={colors.textSecondary} />
@@ -488,7 +470,7 @@ const AddItemScreen = () => {
 
           <View style={componentStyles.inputGroup}>
             <View style={componentStyles.labelRow}>
-              <Text style={[componentStyles.label, {color: colors.text}]}>Style ID *</Text>
+              <Text style={[componentStyles.label, {color: colors.text}]}>Style ID</Text>
               <TouchableOpacity>
                 <Icon name="info" size={18} color={colors.primary} />
               </TouchableOpacity>
@@ -503,7 +485,7 @@ const AddItemScreen = () => {
           </View>
 
           <View style={componentStyles.inputGroup}>
-            <Text style={[componentStyles.label, {color: colors.text}]}>Size *</Text>
+            <Text style={[componentStyles.label, {color: colors.text}]}>Size</Text>
             <TextInput
               style={[componentStyles.input, {backgroundColor: colors.input, borderColor: colors.inputBorder, color: colors.text}]}
               placeholder="Enter size"
@@ -515,7 +497,7 @@ const AddItemScreen = () => {
           </View>
 
           <View style={componentStyles.inputGroup}>
-            <Text style={[componentStyles.label, {color: colors.text}]}>Quantity *</Text>
+            <Text style={[componentStyles.label, {color: colors.text}]}>Quantity</Text>
             {Platform.OS === 'ios' ? (
               <>
                 <TouchableOpacity
@@ -587,7 +569,7 @@ const AddItemScreen = () => {
           </View>
 
           <View style={componentStyles.inputGroup}>
-            <Text style={[componentStyles.label, {color: colors.text}]}>Cost *</Text>
+            <Text style={[componentStyles.label, {color: colors.text}]}>Cost</Text>
             <View style={[componentStyles.costInputContainer, {backgroundColor: colors.input, borderColor: colors.inputBorder}]}>
               <Text style={[componentStyles.currencySymbol, {color: colors.text}]}>$</Text>
               <TextInput
@@ -602,7 +584,7 @@ const AddItemScreen = () => {
           </View>
 
           <View style={componentStyles.inputGroup}>
-            <Text style={[componentStyles.label, {color: colors.text}]}>Release Date *</Text>
+            <Text style={[componentStyles.label, {color: colors.text}]}>Release Date</Text>
             {Platform.OS === 'ios' ? (
               <>
                 <TouchableOpacity

@@ -84,5 +84,14 @@
    <ArchiveAction
       buildConfiguration = "Release"
       revealArchiveInOrganizer = "YES">
+      <PostActions>
+         <ExecutionAction
+            ActionType = "Xcode.IDEStandardExecutionActionsCore.ExecutionActionType.ShellScriptAction">
+            <ActionContent
+               title = "Run Script"
+               scriptText = "# Type a script or drag a script file from your workspace to insert its path.&#10;HERMES_DSYM_PATH=&quot;${PODS_ROOT}/hermes-engine/destroot/Library/Frameworks/universal/hermes.xcframework/ios-arm64/hermes.framework.dSYM&quot;&#10;&#10;if [ -d &quot;$HERMES_DSYM_PATH&quot; ]; then&#10;  cp -r &quot;$HERMES_DSYM_PATH&quot; &quot;$DWARF_DSYM_FOLDER_PATH/&quot;&#10;fi&#10;">
+            </ActionContent>
+         </ExecutionAction>
+      </PostActions>
    </ArchiveAction>
 </Scheme>

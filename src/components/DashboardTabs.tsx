@@ -1,5 +1,6 @@
 import React, {useState, useMemo, useCallback, useEffect} from 'react';
 import {View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, ActivityIndicator, Alert, FlatList, Dimensions} from 'react-native';
+import FastImage from 'react-native-fast-image';
 
 const {height: SCREEN_HEIGHT} = Dimensions.get('window');
 import {useNavigation, useFocusEffect} from '@react-navigation/native';
@@ -381,7 +382,10 @@ const DashboardTabs = ({
           )}
           <View style={componentStyles.imageContainer}>
             {shoe.imageUrl && (!isShadow || (isShadow && !isProcessing)) ? (
-              <Image source={{uri: shoe.imageUrl}} style={componentStyles.shoeThumbnail} />
+              <FastImage
+                source={{uri: shoe.imageUrl, priority: FastImage.priority.normal, cache: FastImage.cacheControl.immutable}}
+                style={componentStyles.shoeThumbnail}
+              />
             ) : (
               <View style={[componentStyles.shoeThumbnail, componentStyles.shoeThumbnailPlaceholder]}>
                 {isProcessing ? (

@@ -7,12 +7,12 @@ import {
   TextInput,
   Alert,
   ScrollView,
-  Image,
   ActivityIndicator,
   Modal,
   Platform,
   Pressable,
 } from 'react-native';
+import FastImage from 'react-native-fast-image';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {useNavigation, useRoute, RouteProp} from '@react-navigation/native';
 import {SafeAreaView} from 'react-native-safe-area-context';
@@ -377,7 +377,7 @@ const EditItemScreen = () => {
         {/* Item Image */}
         <View style={styles.imageContainer}>
           {imageUrl ? (
-            <Image source={{uri: imageUrl}} style={styles.image} />
+            <FastImage source={{uri: imageUrl, priority: FastImage.priority.normal, cache: FastImage.cacheControl.immutable}} style={styles.image} />
           ) : (
             <View style={styles.placeholderImageContainer}>
               <Icon name="photo" size={80} color="#999999" />

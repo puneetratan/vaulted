@@ -9,7 +9,7 @@ import {
   Alert,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import {launchImageLibrary, ImagePickerResponse} from 'react-native-image-picker';
+import {launchImageLibrary, launchCamera, ImagePickerResponse} from 'react-native-image-picker';
 import DocumentPicker from 'react-native-document-picker';
 import {useNavigation} from '@react-navigation/native';
 import {getStorage, getFunctions} from '../services/firebase';
@@ -236,6 +236,34 @@ const AddItemOptions = ({
     );
   };
 
+  const handleCameraCapture = () => {
+    onClose();
+    if (!user?.uid) {
+      Alert.alert('Error', 'You must be logged in to take a photo.');
+      return;
+    }
+
+    launchCamera(
+      {
+        mediaType: 'photo',
+        quality: 0.8,
+        saveToPhotos: false,
+      },
+      async (response: ImagePickerResponse) => {
+        if (response.didCancel) {
+          return;
+        }
+        if (response.errorMessage) {
+          Alert.alert('Error', response.errorMessage);
+          return;
+        }
+        if (response.assets && response.assets.length > 0) {
+          await uploadImagesAndAnalyze(response.assets);
+        }
+      },
+    );
+  };
+
   const handleAddManually = () => {
     onClose();
     if (onAddManually) {
@@ -257,6 +285,13 @@ const AddItemOptions = ({
       icon: 'qr-code-scanner',
       onPress: handleBarcodeReader,
       color: '#007AFF',
+    },
+    {
+      id: 'camera',
+      title: 'Take Photo',
+      icon: 'camera-alt',
+      onPress: handleCameraCapture,
+      color: '#34C759',
     },
     {
       id: 'image',
