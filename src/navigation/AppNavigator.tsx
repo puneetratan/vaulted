@@ -27,6 +27,9 @@ const AddItemScreen = Platform.OS === 'web'
 const BarcodeScannerScreen = Platform.OS === 'web'
   ? require('../screens/BarcodeScannerScreen.web').default
   : require('../screens/BarcodeScannerScreen').default;
+const PhotoCaptureScreen = Platform.OS === 'web'
+  ? require('../screens/PhotoCaptureScreen.web').default
+  : require('../screens/PhotoCaptureScreen').default;
 
 interface ShoeItem {
   id: string;
@@ -53,6 +56,9 @@ export type RootStackParamList = {
   EditItem: {item: ShoeItem} | undefined;
   AddItem: {barcode?: string} | undefined;
   BarcodeScanner: undefined;
+  PhotoCapture: {
+    onPhotoCapture?: (uri: string, fileName: string, mimeType: string) => void;
+  } | undefined;
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -138,6 +144,11 @@ const AppNavigator = () => {
         <Stack.Screen
           name="BarcodeScanner"
           component={BarcodeScannerScreen}
+          options={{headerShown: false}}
+        />
+        <Stack.Screen
+          name="PhotoCapture"
+          component={PhotoCaptureScreen}
           options={{headerShown: false}}
         />
       </Stack.Navigator>

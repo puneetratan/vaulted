@@ -9,9 +9,11 @@ import {
   Alert,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import {launchImageLibrary, launchCamera, ImagePickerResponse} from 'react-native-image-picker';
+import {launchImageLibrary, ImagePickerResponse} from 'react-native-image-picker';
 import DocumentPicker from 'react-native-document-picker';
 import {useNavigation} from '@react-navigation/native';
+import {StackNavigationProp} from '@react-navigation/stack';
+import {RootStackParamList} from '../navigation/AppNavigator';
 import {getStorage, getFunctions} from '../services/firebase';
 import {useAuth} from '../contexts/AuthContext';
 import {useTheme} from '../contexts/ThemeContext';
@@ -51,7 +53,7 @@ const AddItemOptions = ({
   onImageAnalysisError,
 }: AddItemOptionsProps) => {
   const {user} = useAuth();
-  const navigation = useNavigation();
+  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const {colors} = useTheme();
 
   const normalizeMetadata = (payload: any): AnalyzedMetadata[] => {
@@ -237,31 +239,20 @@ const AddItemOptions = ({
   };
 
   const handleCameraCapture = () => {
-    onClose();
     if (!user?.uid) {
       Alert.alert('Error', 'You must be logged in to take a photo.');
       return;
     }
 
-    launchCamera(
-      {
-        mediaType: 'photo',
-        quality: 0.8,
-        saveToPhotos: false,
+    onClose();
+    navigation.navigate('PhotoCapture', {
+      onPhotoCapture: async (uri: string, fileName: string, mimeType: string) => {
+        const fakeAssets = [{uri, fileName, type: mimeType}];
+        await uploadImagesAndAnalyze(
+          fakeAssets as Exclude<ImagePickerResponse['assets'], undefined>,
+        );
       },
-      async (response: ImagePickerResponse) => {
-        if (response.didCancel) {
-          return;
-        }
-        if (response.errorMessage) {
-          Alert.alert('Error', response.errorMessage);
-          return;
-        }
-        if (response.assets && response.assets.length > 0) {
-          await uploadImagesAndAnalyze(response.assets);
-        }
-      },
-    );
+    });
   };
 
   const handleAddManually = () => {

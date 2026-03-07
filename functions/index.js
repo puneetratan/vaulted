@@ -342,6 +342,7 @@ exports.analyzeShoeMetadata = functions.runWith({ secrets: ["OPENAI_API_KEY"] })
     const aiResponse = await getOpenAI().chat.completions.create({
       model: "gpt-4o",
       temperature: 0.1,
+      response_format: { type: "json_object" },
       messages: [
         {
           role: "user",
@@ -349,20 +350,20 @@ exports.analyzeShoeMetadata = functions.runWith({ secrets: ["OPENAI_API_KEY"] })
             {
               type: "text",
               text:
-                "These are shoe images. For each image, extract the following fields:\n" +
-                "- Brand: the manufacturer company name only (e.g. Nike, Adidas, Jordan, New Balance, Puma). Never use the silhouette or model name as the brand.\n" +
-                "- Model: the specific model name (e.g. Air Force 1, Yeezy 350, Dunk Low)\n" +
-                "- Name: full descriptive name combining brand + model + colorway (e.g. Nike Air Force 1 Low White)\n" +
-                "- Size\n" +
-                "- Color\n" +
-                "- Release Date\n" +
-                "- Retail Value\n" +
-                "- StyleId\n" +
-                "- Silhouette: the shoe silhouette or model line (e.g. Air Force 1, Dunk, Yeezy Boost 350)\n" +
-                "- Condition (New / Like New / Used)\n" +
-                "- Any flaws or damage\n" +
-                "- Estimated resale value range (USD)\n" +
-                "Return a JSON array with one object per image, maintaining order.",
+                "These are shoe images. For each image, extract the following fields and return a JSON object with an \"items\" array containing one object per image (in order):\n" +
+                "- brand: the manufacturer company name only (e.g. Nike, Adidas, Jordan, New Balance, Puma). Never use the silhouette or model name as the brand.\n" +
+                "- model: the specific model name (e.g. Air Force 1, Yeezy 350, Dunk Low)\n" +
+                "- name: full descriptive name combining brand + model + colorway (e.g. Nike Air Force 1 Low White)\n" +
+                "- size: shoe size if visible, otherwise null\n" +
+                "- color: primary colorway\n" +
+                "- releaseDate: release date in YYYY-MM-DD format if known, otherwise null\n" +
+                "- retailValue: original retail price in USD as a number, otherwise null\n" +
+                "- styleId: style code/SKU if visible or known (e.g. 315122-111), otherwise null\n" +
+                "- silhouette: the shoe silhouette or model line (e.g. Air Force 1, Dunk, Yeezy Boost 350)\n" +
+                "- condition: one of New / Like New / Used\n" +
+                "- flaws: any visible flaws or damage, otherwise null\n" +
+                "If an image is not a shoe or cannot be identified, still include an entry with as many fields as possible.\n" +
+                "Example response: {\"items\": [{\"brand\": \"Nike\", \"model\": \"Air Force 1\", ...}]}",
             },
             ...imageUris.map((url) => ({
               type: "image_url",
@@ -373,40 +374,26 @@ exports.analyzeShoeMetadata = functions.runWith({ secrets: ["OPENAI_API_KEY"] })
       ],
     });
 
-    let metadataContent = aiResponse.choices[0]?.message?.content;
-    let metadata = metadataContent;
-    if (typeof metadataContent === "string") {
-      const tryParse = (text) => {
-        try {
-          return JSON.parse(text);
-        } catch (err) {
-          return null;
-        }
-      };
+    const metadataContent = aiResponse.choices[0]?.message?.content;
+    console.log("OpenAI raw response:", metadataContent);
 
-      let cleaned = metadataContent.trim();
-      if (cleaned.startsWith("```")) {
-        cleaned = cleaned.replace(/^```(?:json)?/i, "").replace(/```$/, "").trim();
-      }
-
-      metadata = tryParse(cleaned);
-      
-      if (!metadata) {
-        const firstBracket = cleaned.indexOf("[");
-        const lastBracket = cleaned.lastIndexOf("]");
-        if (firstBracket !== -1 && lastBracket !== -1 && lastBracket > firstBracket) {
-          const possibleJson = cleaned.slice(firstBracket, lastBracket + 1);
-          metadata = tryParse(possibleJson);
-        }
-      }
-
-      if (!metadata) {
-        throw new Error("Unable to parse AI metadata response.");
-      }
+    let parsed;
+    try {
+      parsed = JSON.parse(metadataContent || "{}");
+    } catch (parseErr) {
+      console.error("JSON parse error:", parseErr, "Raw content:", metadataContent);
+      throw new Error("Unable to parse AI metadata response.");
     }
 
-    if (!Array.isArray(metadata)) {
-      throw new Error("Metadata response is not an array.");
+    // Support both {items:[...]} and a bare array (fallback)
+    const metadata = Array.isArray(parsed)
+      ? parsed
+      : Array.isArray(parsed?.items)
+        ? parsed.items
+        : null;
+
+    if (!metadata) {
+      throw new Error("AI response did not contain a valid items array.");
     }
 
     const docsToSave = metadata
