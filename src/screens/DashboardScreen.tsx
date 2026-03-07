@@ -15,6 +15,8 @@ import {useNavigation} from '@react-navigation/native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useAuth} from '../contexts/AuthContext';
 import {useTheme} from '../contexts/ThemeContext';
+import {useSubscription} from '../contexts/SubscriptionContext';
+import {FREE_TIER_ITEM_LIMIT} from '../config/subscriptions';
 import {getUserData, updateUserData} from '../services/userService';
 import ShoeSizeModal from '../components/ShoeSizeModal';
 import DashboardTabs from '../components/DashboardTabs';
@@ -66,6 +68,8 @@ const DashboardScreen = () => {
   const navigation = useNavigation();
   const {logout, user} = useAuth();
   const {colors} = useTheme();
+  const {isSubscribed} = useSubscription();
+  const [itemCount, setItemCount] = useState(0);
   const [showShoeSizeModal, setShowShoeSizeModal] = useState(false);
   const [shoeSize, setShoeSize] = useState('');
   const [showAddItemOptions, setShowAddItemOptions] = useState(false);
@@ -94,6 +98,7 @@ const DashboardScreen = () => {
 
   const handleItemCountChange = useCallback((count: number) => {
     setIsCollectionEmpty(count === 0);
+    setItemCount(count);
   }, []);
 
 
@@ -280,6 +285,12 @@ const DashboardScreen = () => {
 
     if (!user?.uid) {
       Alert.alert('Error', 'User not authenticated');
+      return;
+    }
+
+    // Require subscription to export
+    if (!isSubscribed) {
+      navigation.navigate('Paywall' as never, {reason: 'export'} as never);
       return;
     }
 
@@ -502,7 +513,13 @@ const DashboardScreen = () => {
         {/* Add Item Button */}
         <TouchableOpacity
           style={componentStyles.addButton}
-          onPress={() => setShowAddItemOptions(true)}>
+          onPress={() => {
+            if (!isSubscribed && itemCount >= FREE_TIER_ITEM_LIMIT) {
+              navigation.navigate('Paywall' as never, {reason: 'limit'} as never);
+              return;
+            }
+            setShowAddItemOptions(true);
+          }}>
           <Icon name="camera-alt" size={24} color="#FFFFFF" style={componentStyles.addButtonIcon} />
           <Text style={componentStyles.addButtonText}>Add New Item</Text>
         </TouchableOpacity>

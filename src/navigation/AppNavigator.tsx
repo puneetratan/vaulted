@@ -30,6 +30,9 @@ const BarcodeScannerScreen = Platform.OS === 'web'
 const PhotoCaptureScreen = Platform.OS === 'web'
   ? require('../screens/PhotoCaptureScreen.web').default
   : require('../screens/PhotoCaptureScreen').default;
+const PaywallScreen = Platform.OS === 'web'
+  ? require('../screens/PaywallScreen.web').default
+  : require('../screens/PaywallScreen').default;
 
 interface ShoeItem {
   id: string;
@@ -58,6 +61,9 @@ export type RootStackParamList = {
   BarcodeScanner: undefined;
   PhotoCapture: {
     onPhotoCapture?: (uri: string, fileName: string, mimeType: string) => void;
+  } | undefined;
+  Paywall: {
+    reason?: 'limit' | 'export';
   } | undefined;
 };
 
@@ -150,6 +156,11 @@ const AppNavigator = () => {
           name="PhotoCapture"
           component={PhotoCaptureScreen}
           options={{headerShown: false}}
+        />
+        <Stack.Screen
+          name="Paywall"
+          component={PaywallScreen}
+          options={{headerShown: false, presentation: 'modal'}}
         />
       </Stack.Navigator>
     </NavigationContainer>

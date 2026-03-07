@@ -8,6 +8,15 @@ const admin = require("firebase-admin");
 const ExcelJS = require("exceljs");
 const nodemailer = require("nodemailer");
 const OpenAI = require("openai");
+const {google} = require("googleapis");
+
+// ---------------------------------------------------------------------------
+// Subscription constants
+// ---------------------------------------------------------------------------
+const FREE_TIER_ITEM_LIMIT = 10;
+const APPLE_VERIFY_URL_PROD = "https://buy.itunes.apple.com/verifyReceipt";
+const APPLE_VERIFY_URL_SANDBOX = "https://sandbox.itunes.apple.com/verifyReceipt";
+const BUNDLE_ID = "com.vaultapp"; // UPDATE to match your actual bundle ID
 
 // Lazy-initialized so the module loads cleanly during Firebase CLI analysis
 let _openai = null;
@@ -550,6 +559,300 @@ exports.lookupbarcode = functions.runWith({ secrets: ["BARCODE_SPIDER_TOKEN"] })
     );
   }
 });
+
+// ===========================================================================
+// SUBSCRIPTION FUNCTIONS
+// ===========================================================================
+
+// ---------------------------------------------------------------------------
+// Helper: write/update the subscription document in Firestore
+// ---------------------------------------------------------------------------
+async function upsertSubscription(uid, {isActive, productId, expiresAt, platform, originalTransactionId}) {
+  await db.collection("subscriptions").doc(uid).set({
+    isActive,
+    productId: productId || null,
+    expiresAt: expiresAt ? admin.firestore.Timestamp.fromDate(expiresAt) : null,
+    platform,
+    originalTransactionId: originalTransactionId || null,
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  }, {merge: true});
+}
+
+// ---------------------------------------------------------------------------
+// Helper: validate receipt with Apple's servers
+// Returns the latest receipt info or null
+// ---------------------------------------------------------------------------
+async function verifyAppleReceipt(receiptData, sharedSecret) {
+  const body = JSON.stringify({"receipt-data": receiptData, password: sharedSecret});
+  // Try production first; fall back to sandbox for status 21007
+  let res = await fetch(APPLE_VERIFY_URL_PROD, {method: "POST", body, headers: {"Content-Type": "application/json"}});
+  let json = await res.json();
+  if (json.status === 21007) {
+    res = await fetch(APPLE_VERIFY_URL_SANDBOX, {method: "POST", body, headers: {"Content-Type": "application/json"}});
+    json = await res.json();
+  }
+  if (json.status !== 0) {
+    throw new Error(`Apple receipt validation failed with status ${json.status}`);
+  }
+  // Return latest_receipt_info sorted by expires_date descending
+  const infos = json.latest_receipt_info || [];
+  infos.sort((a, b) => Number(b.expires_date_ms) - Number(a.expires_date_ms));
+  return infos[0] || null;
+}
+
+// ---------------------------------------------------------------------------
+// validateAppleReceipt — called from the app after a purchase
+// ---------------------------------------------------------------------------
+exports.validateAppleReceipt = functions.runWith({secrets: ["APPLE_SHARED_SECRET"]}).https.onCall(async (data, context) => {
+  const uid = context.auth?.uid;
+  if (!uid) throw new functions.https.HttpsError("unauthenticated", "User must be logged in.");
+
+  const receiptData = data?.receiptData;
+  if (!receiptData || typeof receiptData !== "string") {
+    throw new functions.https.HttpsError("invalid-argument", "receiptData is required.");
+  }
+
+  const sharedSecret = process.env.APPLE_SHARED_SECRET;
+  if (!sharedSecret) throw new functions.https.HttpsError("failed-precondition", "Apple shared secret not configured.");
+
+  try {
+    const latestInfo = await verifyAppleReceipt(receiptData, sharedSecret);
+    if (!latestInfo) throw new Error("No receipt info returned by Apple.");
+
+    if (latestInfo.bundle_id && latestInfo.bundle_id !== BUNDLE_ID) {
+      throw new Error(`Bundle ID mismatch: expected ${BUNDLE_ID}, got ${latestInfo.bundle_id}`);
+    }
+
+    const expiresAt = new Date(Number(latestInfo.expires_date_ms));
+    const isActive = expiresAt > new Date();
+
+    await upsertSubscription(uid, {
+      isActive,
+      productId: latestInfo.product_id,
+      expiresAt,
+      platform: "ios",
+      originalTransactionId: latestInfo.original_transaction_id,
+    });
+
+    return {success: true, isActive, expiresAt: expiresAt.toISOString()};
+  } catch (err) {
+    console.error("validateAppleReceipt error:", err);
+    throw new functions.https.HttpsError("internal", err.message);
+  }
+});
+
+// ---------------------------------------------------------------------------
+// validateGooglePurchase — called from the app after a purchase
+// Requires a Google service account JSON stored as GOOGLE_SERVICE_ACCOUNT secret
+// ---------------------------------------------------------------------------
+exports.validateGooglePurchase = functions.runWith({secrets: ["GOOGLE_SERVICE_ACCOUNT"]}).https.onCall(async (data, context) => {
+  const uid = context.auth?.uid;
+  if (!uid) throw new functions.https.HttpsError("unauthenticated", "User must be logged in.");
+
+  const {purchaseToken, productId} = data || {};
+  if (!purchaseToken || !productId) {
+    throw new functions.https.HttpsError("invalid-argument", "purchaseToken and productId are required.");
+  }
+
+  const serviceAccountJson = process.env.GOOGLE_SERVICE_ACCOUNT;
+  if (!serviceAccountJson) throw new functions.https.HttpsError("failed-precondition", "Google service account not configured.");
+
+  try {
+    const serviceAccount = JSON.parse(serviceAccountJson);
+    const auth = new google.auth.GoogleAuth({
+      credentials: serviceAccount,
+      scopes: ["https://www.googleapis.com/auth/androidpublisher"],
+    });
+
+    const androidpublisher = google.androidpublisher({version: "v3", auth});
+    const packageName = serviceAccount.project_id || "com.vaultapp"; // fallback
+    const response = await androidpublisher.purchases.subscriptions.get({
+      packageName,
+      subscriptionId: productId,
+      token: purchaseToken,
+    });
+
+    const purchase = response.data;
+    const expiresAt = new Date(Number(purchase.expiryTimeMillis));
+    const isActive = purchase.paymentState === 1 && expiresAt > new Date();
+
+    await upsertSubscription(uid, {
+      isActive,
+      productId,
+      expiresAt,
+      platform: "android",
+      originalTransactionId: purchaseToken,
+    });
+
+    return {success: true, isActive, expiresAt: expiresAt.toISOString()};
+  } catch (err) {
+    console.error("validateGooglePurchase error:", err);
+    throw new functions.https.HttpsError("internal", err.message);
+  }
+});
+
+// ---------------------------------------------------------------------------
+// handleAppleWebhook — Apple App Store Server Notifications (HTTP endpoint)
+// Set this URL in App Store Connect → App → Subscriptions → Server URL
+// ---------------------------------------------------------------------------
+exports.handleAppleWebhook = functions.runWith({secrets: ["APPLE_SHARED_SECRET"]}).https.onRequest(async (req, res) => {
+  if (req.method !== "POST") {
+    res.status(405).send("Method Not Allowed");
+    return;
+  }
+
+  const sharedSecret = process.env.APPLE_SHARED_SECRET;
+  if (!sharedSecret) {
+    console.error("APPLE_SHARED_SECRET not configured");
+    res.status(500).send("Server misconfiguration");
+    return;
+  }
+
+  try {
+    const payload = req.body;
+    const notificationType = payload.notification_type;
+    const unifiedReceipt = payload.unified_receipt;
+    const latestReceiptInfo = unifiedReceipt?.latest_receipt_info || [];
+    latestReceiptInfo.sort((a, b) => Number(b.expires_date_ms) - Number(a.expires_date_ms));
+    const latest = latestReceiptInfo[0];
+
+    if (!latest) {
+      console.warn("Apple webhook: no receipt info", notificationType);
+      res.status(200).send("OK");
+      return;
+    }
+
+    // Find the user by originalTransactionId
+    const originalTxId = latest.original_transaction_id;
+    const snap = await db.collection("subscriptions")
+      .where("originalTransactionId", "==", originalTxId)
+      .limit(1)
+      .get();
+
+    if (snap.empty) {
+      console.warn("Apple webhook: no user found for transaction", originalTxId);
+      res.status(200).send("OK");
+      return;
+    }
+
+    const uid = snap.docs[0].id;
+    const expiresAt = new Date(Number(latest.expires_date_ms));
+    const cancelledAt = latest.cancellation_date_ms ? new Date(Number(latest.cancellation_date_ms)) : null;
+    const isActive = !cancelledAt && expiresAt > new Date();
+
+    await upsertSubscription(uid, {
+      isActive,
+      productId: latest.product_id,
+      expiresAt,
+      platform: "ios",
+      originalTransactionId: originalTxId,
+    });
+
+    console.log(`Apple webhook [${notificationType}] uid=${uid} isActive=${isActive}`);
+    res.status(200).send("OK");
+  } catch (err) {
+    console.error("Apple webhook error:", err);
+    res.status(500).send("Internal error");
+  }
+});
+
+// ---------------------------------------------------------------------------
+// handleGoogleWebhook — Google Play RTDN via Pub/Sub
+// Set up a Pub/Sub subscription in Google Cloud Console pointing to this function
+// ---------------------------------------------------------------------------
+exports.handleGoogleWebhook = functions.runWith({secrets: ["GOOGLE_SERVICE_ACCOUNT"]}).pubsub
+  .topic("play-billing-notifications")
+  .onPublish(async (message) => {
+    const serviceAccountJson = process.env.GOOGLE_SERVICE_ACCOUNT;
+    if (!serviceAccountJson) {
+      console.error("GOOGLE_SERVICE_ACCOUNT not configured");
+      return;
+    }
+
+    try {
+      const data = message.json;
+      const {subscriptionNotification, packageName} = data;
+      if (!subscriptionNotification) return;
+
+      const {purchaseToken, subscriptionId, notificationType} = subscriptionNotification;
+      // notificationType 1 = SUBSCRIPTION_RECOVERED
+      // notificationType 2 = SUBSCRIPTION_RENEWED
+      // notificationType 3 = SUBSCRIPTION_CANCELED
+      // notificationType 4 = SUBSCRIPTION_PURCHASED
+      // notificationType 13 = SUBSCRIPTION_EXPIRED
+
+      const serviceAccount = JSON.parse(serviceAccountJson);
+      const auth = new google.auth.GoogleAuth({
+        credentials: serviceAccount,
+        scopes: ["https://www.googleapis.com/auth/androidpublisher"],
+      });
+      const androidpublisher = google.androidpublisher({version: "v3", auth});
+      const response = await androidpublisher.purchases.subscriptions.get({
+        packageName: packageName || serviceAccount.project_id,
+        subscriptionId,
+        token: purchaseToken,
+      });
+
+      const purchase = response.data;
+      const expiresAt = new Date(Number(purchase.expiryTimeMillis));
+      const isActive = purchase.paymentState === 1 && expiresAt > new Date();
+
+      // Look up user by purchaseToken
+      const snap = await db.collection("subscriptions")
+        .where("originalTransactionId", "==", purchaseToken)
+        .limit(1)
+        .get();
+
+      if (snap.empty) {
+        console.warn("Google webhook: no user found for token", purchaseToken);
+        return;
+      }
+
+      const uid = snap.docs[0].id;
+      await upsertSubscription(uid, {
+        isActive,
+        productId: subscriptionId,
+        expiresAt,
+        platform: "android",
+        originalTransactionId: purchaseToken,
+      });
+
+      console.log(`Google webhook [type=${notificationType}] uid=${uid} isActive=${isActive}`);
+    } catch (err) {
+      console.error("Google webhook error:", err);
+    }
+  });
+
+// ---------------------------------------------------------------------------
+// getSubscriptionStatus — called on app launch to sync status
+// ---------------------------------------------------------------------------
+exports.getSubscriptionStatus = functions.https.onCall(async (data, context) => {
+  const uid = context.auth?.uid;
+  if (!uid) throw new functions.https.HttpsError("unauthenticated", "User must be logged in.");
+
+  const doc = await db.collection("subscriptions").doc(uid).get();
+  if (!doc.exists) return {isActive: false};
+
+  const d = doc.data();
+  const expiresAt = d.expiresAt?.toDate();
+  const isActive = d.isActive === true && (expiresAt ? expiresAt > new Date() : false);
+
+  // Auto-heal: if Firestore says active but expiry passed, mark inactive
+  if (d.isActive && !isActive) {
+    await db.collection("subscriptions").doc(uid).update({isActive: false});
+  }
+
+  return {
+    isActive,
+    productId: d.productId || null,
+    expiresAt: expiresAt?.toISOString() || null,
+    platform: d.platform || null,
+  };
+});
+
+// ===========================================================================
+// END SUBSCRIPTION FUNCTIONS
+// ===========================================================================
 
 /**
  * Helper function to extract style ID from product title
