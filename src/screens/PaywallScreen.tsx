@@ -7,6 +7,7 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
+  Modal,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -195,6 +196,19 @@ const PaywallScreen = () => {
           App Store / Google Play account settings.
         </Text>
       </ScrollView>
+
+      {/* Full-screen loading overlay during purchase */}
+      <Modal visible={purchasing} transparent animationType="fade">
+        <View style={styles.loadingOverlay}>
+          <View style={styles.loadingCard}>
+            <ActivityIndicator size="large" color="#007AFF" />
+            <Text style={styles.loadingTitle}>Processing Purchase</Text>
+            <Text style={styles.loadingSubtitle}>
+              Please wait while we activate your subscription…
+            </Text>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -333,6 +347,33 @@ const styles = StyleSheet.create({
     fontSize: 11,
     textAlign: 'center',
     lineHeight: 16,
+  },
+  loadingOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingCard: {
+    backgroundColor: '#FFF',
+    borderRadius: 16,
+    paddingVertical: 32,
+    paddingHorizontal: 40,
+    alignItems: 'center',
+    gap: 12,
+    minWidth: 240,
+  },
+  loadingTitle: {
+    fontSize: 17,
+    fontWeight: '600',
+    color: '#000',
+    marginTop: 4,
+  },
+  loadingSubtitle: {
+    fontSize: 13,
+    color: '#666',
+    textAlign: 'center',
+    lineHeight: 18,
   },
 });
 
