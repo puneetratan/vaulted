@@ -8,6 +8,7 @@ import {
   ScrollView,
 } from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import DeviceInfo from 'react-native-device-info';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {useTheme} from '../contexts/ThemeContext';
 
@@ -68,6 +69,18 @@ const HamburgerMenu = ({visible, onClose, onMenuItemPress}: HamburgerMenuProps) 
     menuIcon: {marginRight: 16},
     menuText: {flex: 1, fontSize: 16},
     signOutSpacer: {height: 40},
+    footer: {
+      paddingHorizontal: 20,
+      paddingVertical: 16,
+      paddingBottom: insets.bottom + 16,
+      borderTopWidth: 1,
+      borderTopColor: colors.border,
+      alignItems: 'center',
+    },
+    footerText: {
+      fontSize: 12,
+      color: colors.textSecondary,
+    },
   });
   
   const menuItems = [
@@ -144,6 +157,13 @@ const HamburgerMenu = ({visible, onClose, onMenuItemPress}: HamburgerMenuProps) 
               />
             </TouchableOpacity>
           </ScrollView>
+
+          {/* Footer: app version */}
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>
+              Version {DeviceInfo.getVersion()} ({DeviceInfo.getBuildNumber()})
+            </Text>
+          </View>
         </View>
 
         {/* Overlay to close drawer */}

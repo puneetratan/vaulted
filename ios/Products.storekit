@@ -1,0 +1,115 @@
+{
+  "appPolicies" : {
+    "eula" : "",
+    "policies" : [
+      {
+        "locale" : "en_US",
+        "policyText" : "",
+        "policyURL" : ""
+      }
+    ]
+  },
+  "identifier" : "254FE146",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+
+  ],
+  "settings" : {
+    "_applicationInternalID" : "6759882175",
+    "_askToBuyEnabled" : false,
+    "_billingGracePeriodEnabled" : false,
+    "_billingIssuesEnabled" : false,
+    "_developerTeamID" : "SSG67RLT9S",
+    "_disableDialogs" : false,
+    "_failTransactionsEnabled" : false,
+    "_lastSynchronizedDate" : 796786552.12480295,
+    "_locale" : "en_US",
+    "_renewalBillingIssuesEnabled" : false,
+    "_storefront" : "USA",
+    "_storeKitErrors" : [
+
+    ],
+    "_timeRate" : 0
+  },
+  "subscriptionGroups" : [
+    {
+      "id" : "21967944",
+      "localizations" : [
+        {
+          "description" : "",
+          "displayName" : "Vaulted Premium",
+          "locale" : "en_US"
+        }
+      ],
+      "name" : "Vaulted Premium",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "39.99",
+          "familyShareable" : false,
+          "groupNumber" : 2,
+          "internalID" : "6760272417",
+          "introductoryOffers" : [
+
+          ],
+          "localizations" : [
+            {
+              "description" : "Unlimited vault items and inventory exports",
+              "displayName" : "Vaulted Premium",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "vaulted_premium_annual",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "Vaulted Annual",
+          "subscriptionGroupID" : "21967944",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : [
+
+          ]
+        },
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "4.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "6760272253",
+          "introductoryOffers" : [
+
+          ],
+          "localizations" : [
+            {
+              "description" : "Subscription unlocks unlimited items and export feature",
+              "displayName" : "Vaulted Monthly",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "vaulted_premium_monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Vaulted Monthly",
+          "subscriptionGroupID" : "21967944",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : [
+
+          ]
+        }
+      ]
+    }
+  ],
+  "version" : {
+    "major" : 5,
+    "minor" : 0
+  }
+}
