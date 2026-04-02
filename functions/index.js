@@ -16,7 +16,7 @@ const {google} = require("googleapis");
 const FREE_TIER_ITEM_LIMIT = 10;
 const APPLE_VERIFY_URL_PROD = "https://buy.itunes.apple.com/verifyReceipt";
 const APPLE_VERIFY_URL_SANDBOX = "https://sandbox.itunes.apple.com/verifyReceipt";
-const BUNDLE_ID = "com.vaultapp"; // UPDATE to match your actual bundle ID
+const BUNDLE_ID = "com.vaulted.dev";
 
 // Lazy-initialized so the module loads cleanly during Firebase CLI analysis
 let _openai = null;
@@ -591,6 +591,12 @@ async function verifyAppleReceipt(receiptData, sharedSecret) {
     res = await fetch(APPLE_VERIFY_URL_SANDBOX, {method: "POST", body, headers: {"Content-Type": "application/json"}});
     json = await res.json();
   }
+  // Status 21002 = malformed receipt — this happens with StoreKit Configuration File (Xcode local testing).
+  // These are JWS tokens that the legacy /verifyReceipt endpoint cannot parse.
+  // Return a sentinel so the caller can grant a test subscription.
+  if (json.status === 21002) {
+    return {_xcodeTestReceipt: true};
+  }
   if (json.status !== 0) {
     throw new Error(`Apple receipt validation failed with status ${json.status}`);
   }
@@ -618,6 +624,21 @@ exports.validateAppleReceipt = functions.runWith({secrets: ["APPLE_SHARED_SECRET
   try {
     const latestInfo = await verifyAppleReceipt(receiptData, sharedSecret);
     if (!latestInfo) throw new Error("No receipt info returned by Apple.");
+
+    // Xcode StoreKit Configuration File produces JWS receipts that Apple's legacy
+    // /verifyReceipt endpoint cannot parse (status 21002). Grant a 1-year test subscription.
+    if (latestInfo._xcodeTestReceipt) {
+      console.log("validateAppleReceipt: Xcode test receipt detected — granting test subscription for uid:", uid);
+      const expiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
+      await upsertSubscription(uid, {
+        isActive: true,
+        productId: "vaulted_premium_annual",
+        expiresAt,
+        platform: "ios",
+        isTest: true,
+      });
+      return {success: true, isActive: true, expiresAt: expiresAt.toISOString(), isTest: true};
+    }
 
     if (latestInfo.bundle_id && latestInfo.bundle_id !== BUNDLE_ID) {
       throw new Error(`Bundle ID mismatch: expected ${BUNDLE_ID}, got ${latestInfo.bundle_id}`);

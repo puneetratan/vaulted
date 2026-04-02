@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
   Modal,
   Dimensions,
+  Linking,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {SafeAreaView} from 'react-native-safe-area-context';
@@ -24,6 +25,7 @@ import {
 } from 'react-native-image-picker';
 import {useAuth} from '../contexts/AuthContext';
 import {useTheme} from '../contexts/ThemeContext';
+import {useSubscription} from '../contexts/SubscriptionContext';
 import {getUserData, updateUserData, deleteUserAccount} from '../services/userService';
 import {getStorage, getAuth} from '../services/firebase';
 import ShoeSizeModal from '../components/ShoeSizeModal';
@@ -32,6 +34,7 @@ const ProfileScreen = () => {
   const navigation = useNavigation();
   const {user, logout} = useAuth();
   const {colors} = useTheme();
+  const {isSubscribed, subscriptionStatus} = useSubscription();
   const [shoeSize, setShoeSize] = useState<string | undefined>(undefined);
   const [showShoeSizeModal, setShowShoeSizeModal] = useState(false);
   const [editShoeSize, setEditShoeSize] = useState('');
@@ -95,6 +98,25 @@ const ProfileScreen = () => {
     }
   };
   
+  const handleManageSubscription = async () => {
+    if (Platform.OS === 'ios') {
+      const url = 'itms-apps://apps.apple.com/account/subscriptions';
+      const canOpen = await Linking.canOpenURL(url);
+      if (canOpen) {
+        Linking.openURL(url);
+      } else {
+        Alert.alert(
+          'Manage Subscription',
+          'Open the App Store app on your device, go to your Account, then tap Subscriptions to manage your Vaulted subscription.',
+        );
+      }
+    } else {
+      Linking.openURL(
+        `https://play.google.com/store/account/subscriptions?sku=${subscriptionStatus.productId ?? ''}&package=com.vaulted.dev`,
+      );
+    }
+  };
+
   const handleLogout = async () => {
     try {
       await logout();
@@ -429,6 +451,79 @@ const ProfileScreen = () => {
           </View>
         </View>
 
+        {/* Subscription Section */}
+        <View style={[styles.section, {backgroundColor: colors.surface, borderBottomColor: colors.border}]}>
+          <Text style={[styles.sectionTitle, {color: colors.text}]}>Subscription</Text>
+
+          {/* Status row */}
+          <View style={[styles.infoRow, {borderBottomColor: colors.border}]}>
+            <Icon
+              name={isSubscribed ? 'workspace-premium' : 'lock-outline'}
+              size={20}
+              color={isSubscribed ? '#FFD700' : colors.textSecondary}
+              style={styles.infoIcon}
+            />
+            <View style={styles.infoContent}>
+              <Text style={[styles.infoLabel, {color: colors.textSecondary}]}>Plan</Text>
+              <View style={styles.planRow}>
+                <Text style={[styles.infoValue, {color: colors.text}]}>
+                  {isSubscribed ? 'Vaulted Premium' : 'Free'}
+                </Text>
+                <View
+                  style={[
+                    styles.planBadge,
+                    {backgroundColor: isSubscribed ? '#FFD70022' : colors.border},
+                  ]}>
+                  <Text
+                    style={[
+                      styles.planBadgeText,
+                      {color: isSubscribed ? '#B8860B' : colors.textSecondary},
+                    ]}>
+                    {isSubscribed ? 'ACTIVE' : 'FREE TIER'}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </View>
+
+          {/* Expiry row — only when subscribed */}
+          {isSubscribed && subscriptionStatus.expiresAt && (
+            <View style={[styles.infoRow, {borderBottomColor: colors.border}]}>
+              <Icon name="event" size={20} color={colors.textSecondary} style={styles.infoIcon} />
+              <View style={styles.infoContent}>
+                <Text style={[styles.infoLabel, {color: colors.textSecondary}]}>Renews / Expires</Text>
+                <Text style={[styles.infoValue, {color: colors.text}]}>
+                  {subscriptionStatus.expiresAt.toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  })}
+                </Text>
+              </View>
+            </View>
+          )}
+
+          {/* CTA row */}
+          {isSubscribed ? (
+            <TouchableOpacity
+              style={[styles.settingsItem, {borderBottomColor: colors.border, borderBottomWidth: 0}]}
+              onPress={handleManageSubscription}>
+              <Icon name="settings" size={24} color={colors.primary} />
+              <Text style={[styles.settingsText, {color: colors.text, marginLeft: 16}]}>
+                Manage Subscription
+              </Text>
+              <Icon name="chevron-right" size={24} color={colors.textSecondary} />
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              style={styles.upgradeButton}
+              onPress={() => navigation.navigate('Paywall' as never)}>
+              <Icon name="workspace-premium" size={20} color="#FFF" />
+              <Text style={styles.upgradeButtonText}>Upgrade to Premium</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
         {/* Account Settings */}
         <View style={[styles.section, {backgroundColor: colors.surface}]}>
           <Text style={[styles.sectionTitle, {color: colors.text}]}>Account Settings</Text>
@@ -664,6 +759,37 @@ const styles = StyleSheet.create({
   },
   deleteAccountLoader: {
     marginRight: 16,
+  },
+  planRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 2,
+  },
+  planBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  planBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  upgradeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#007AFF',
+    borderRadius: 10,
+    paddingVertical: 12,
+    gap: 8,
+    marginTop: 12,
+  },
+  upgradeButtonText: {
+    color: '#FFF',
+    fontSize: 15,
+    fontWeight: '700',
   },
 });
 

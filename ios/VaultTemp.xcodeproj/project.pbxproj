@@ -18,6 +18,7 @@
 		9FB99816BA911138E9988C77 /* Pods_VaultTemp.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0BB40F2F475FA41EB9ED160E /* Pods_VaultTemp.framework */; };
 		BCED26B6CA2D4BC69D394AE7 /* Login.png in Resources */ = {isa = PBXBuildFile; fileRef = 2B8E34D5F3C45B9F0D5F7G8H /* Login.png */; };
 		DD8AF4612EC5193400E1DBB4 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = DD8AF4602EC5193400E1DBB4 /* GoogleService-Info.plist */; };
+		DDCD5E612F7DCF100007D04B /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DDCD5E602F7DCF100007D04B /* StoreKit.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -49,7 +50,9 @@
 		C03DBEEEDE7A10CA0810170E /* Pods-VaultTemp-VaultTempTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-VaultTemp-VaultTempTests.debug.xcconfig"; path = "Target Support Files/Pods-VaultTemp-VaultTempTests/Pods-VaultTemp-VaultTempTests.debug.xcconfig"; sourceTree = "<group>"; };
 		D4BF11C1166A5ADDBC3534E8 /* Pods-VaultTemp-VaultTempTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-VaultTemp-VaultTempTests.release.xcconfig"; path = "Target Support Files/Pods-VaultTemp-VaultTempTests/Pods-VaultTemp-VaultTempTests.release.xcconfig"; sourceTree = "<group>"; };
 		DD8AF4602EC5193400E1DBB4 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		DDCD5E602F7DCF100007D04B /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
 		DDE905AC2F46BA4000C01AC3 /* VaultTemp.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = VaultTemp.entitlements; path = VaultTemp/VaultTemp.entitlements; sourceTree = "<group>"; };
+		DDF430852F7DFF7200CDF697 /* Products.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = Products.storekit; sourceTree = "<group>"; };
 		E1005E7E99B28A284FA666D9 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = VaultTemp/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		E60047AC40C9A5A059AEE927 /* Pods_VaultTemp_VaultTempTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_VaultTemp_VaultTempTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
@@ -69,6 +72,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				9FB99816BA911138E9988C77 /* Pods_VaultTemp.framework in Frameworks */,
+				DDCD5E612F7DCF100007D04B /* StoreKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -113,6 +117,7 @@
 		2D16E6871FA4F8E400B85C8A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				DDCD5E602F7DCF100007D04B /* StoreKit.framework */,
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
 				0BB40F2F475FA41EB9ED160E /* Pods_VaultTemp.framework */,
 				E60047AC40C9A5A059AEE927 /* Pods_VaultTemp_VaultTempTests.framework */,
@@ -130,6 +135,7 @@
 		83CBB9F61A601CBA00E9B192 = {
 			isa = PBXGroup;
 			children = (
+				DDF430852F7DFF7200CDF697 /* Products.storekit */,
 				13B07FAE1A68108700A75B9A /* VaultTemp */,
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				00E356EF1AD99517003FC87E /* VaultTempTests */,

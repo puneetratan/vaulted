@@ -20,6 +20,7 @@ import {
   SubscriptionPurchase,
   PurchaseError,
 } from 'react-native-iap';
+import {httpsCallable} from '@react-native-firebase/functions';
 import {useAuth} from './AuthContext';
 import {getFunctions, getFirestore} from '../services/firebase';
 import {ALL_PRODUCT_IDS} from '../config/subscriptions';
@@ -99,7 +100,11 @@ export const SubscriptionProvider: React.FC<{children: React.ReactNode}> = ({
         .get();
 
       if (doc.exists) {
-        const data = doc.data()!;
+        const data = doc.data();
+        if (!data) {
+          setSubscriptionStatus({isActive: false});
+          return;
+        }
         const expiresAt: Date | undefined = data.expiresAt?.toDate();
         const isActive =
           data.isActive === true &&
@@ -133,10 +138,10 @@ export const SubscriptionProvider: React.FC<{children: React.ReactNode}> = ({
         if (Platform.OS === 'ios') {
           const transactionReceipt = purchase.transactionReceipt;
           if (!transactionReceipt) return;
-          const fn = functions.httpsCallable('validateAppleReceipt');
+          const fn = httpsCallable(functions, 'validateAppleReceipt');
           await fn({receiptData: transactionReceipt});
         } else if (Platform.OS === 'android') {
-          const fn = functions.httpsCallable('validateGooglePurchase');
+          const fn = httpsCallable(functions, 'validateGooglePurchase');
           await fn({
             purchaseToken: purchase.purchaseToken,
             productId: purchase.productId,
@@ -169,6 +174,10 @@ export const SubscriptionProvider: React.FC<{children: React.ReactNode}> = ({
 
         // Load available subscriptions
         const products = await getSubscriptions({skus: ALL_PRODUCT_IDS});
+        console.log('[IAP] Available products:', JSON.stringify(products.map(p => ({id: p.productId, title: p.title}))));
+        if (products.length === 0) {
+          console.warn('[IAP] No products returned — check product IDs and App Store Connect status');
+        }
         setAvailableProducts(products);
 
         // Listen for purchase updates
@@ -217,15 +226,23 @@ export const SubscriptionProvider: React.FC<{children: React.ReactNode}> = ({
   // ---------------------------------------------------------------------------
   const subscribe = useCallback(async (productId: string) => {
     try {
+      console.log('[IAP] Requesting subscription:', productId);
       await requestSubscription({sku: productId});
-      // Purchase result is handled by purchaseUpdatedListener above
     } catch (err: any) {
-      if (err.code !== 'E_USER_CANCELLED') {
-        Alert.alert(
-          'Subscription Failed',
-          err?.message || 'Unable to complete the purchase. Please try again.',
-        );
+      console.error('[IAP] Subscribe error — code:', err.code, 'message:', err.message);
+      if (err.code === 'E_USER_CANCELLED') {
+        return;
       }
+      const isInvalidProduct =
+        err.code === 'E_DEVELOPER_ERROR' ||
+        err.message?.toLowerCase().includes('invalid product') ||
+        err.message?.toLowerCase().includes('cannot connect to itunes');
+      Alert.alert(
+        isInvalidProduct ? 'Subscription Unavailable' : 'Purchase Failed',
+        isInvalidProduct
+          ? `Product not found (${productId}). Check App Store Connect status is "Ready to Submit" and product IDs match exactly.`
+          : `${err.code}: ${err?.message || 'Unknown error'}`,
+      );
     }
   }, []);
 
