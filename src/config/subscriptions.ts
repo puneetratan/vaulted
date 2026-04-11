@@ -33,14 +33,14 @@ export const PRICING = {
   monthly: {
     productId: PRODUCT_IDS.monthly,
     label: 'Monthly',
-    price: '$4.99',
+    price: '$9.99',
     period: '/month',
     savings: null as string | null,
   },
   annual: {
     productId: PRODUCT_IDS.annual,
     label: 'Annual',
-    price: '$39.99',
+    price: '$79.99',
     period: '/year',
     savings: 'Save 33%',
   },

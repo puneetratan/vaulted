@@ -42,10 +42,12 @@ const PaywallScreen = () => {
 
   const reason = route.params?.reason ?? 'limit';
 
-  // If the user subscribed while on this screen, go back
+  // When subscription is confirmed, close loader and go back
   React.useEffect(() => {
     if (isSubscribed && !isLoading) {
-      navigation.goBack();
+      setPurchasing(false);
+      const t = setTimeout(() => navigation.goBack(), 300);
+      return () => clearTimeout(t);
     }
   }, [isSubscribed, isLoading, navigation]);
 
@@ -54,8 +56,9 @@ const PaywallScreen = () => {
     try {
       const plan = PRICING[selectedPlan];
       await subscribe(plan.productId);
-      // Success handled by SubscriptionContext listener → Firestore → isSubscribed → goBack
-    } finally {
+      // purchasing stays true — closed by the isSubscribed effect above
+    } catch {
+      // requestSubscription threw (e.g. user cancelled or product error)
       setPurchasing(false);
     }
   };

@@ -8,9 +8,10 @@ import {
   ScrollView,
 } from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import DeviceInfo from 'react-native-device-info';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {useTheme} from '../contexts/ThemeContext';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const {version: appVersion} = require('../../package.json');
 
 interface HamburgerMenuProps {
   visible: boolean;
@@ -161,7 +162,7 @@ const HamburgerMenu = ({visible, onClose, onMenuItemPress}: HamburgerMenuProps) 
           {/* Footer: app version */}
           <View style={styles.footer}>
             <Text style={styles.footerText}>
-              Version {DeviceInfo.getVersion()} ({DeviceInfo.getBuildNumber()})
+              Version {appVersion}
             </Text>
           </View>
         </View>

@@ -617,6 +617,8 @@ exports.validateAppleReceipt = functions.runWith({secrets: ["APPLE_SHARED_SECRET
   if (!receiptData || typeof receiptData !== "string") {
     throw new functions.https.HttpsError("invalid-argument", "receiptData is required.");
   }
+  const clientProductId = data?.productId || null;
+  console.log("validateAppleReceipt: received productId from client:", clientProductId);
 
   const sharedSecret = process.env.APPLE_SHARED_SECRET;
   if (!sharedSecret) throw new functions.https.HttpsError("failed-precondition", "Apple shared secret not configured.");
@@ -628,11 +630,11 @@ exports.validateAppleReceipt = functions.runWith({secrets: ["APPLE_SHARED_SECRET
     // Xcode StoreKit Configuration File produces JWS receipts that Apple's legacy
     // /verifyReceipt endpoint cannot parse (status 21002). Grant a 1-year test subscription.
     if (latestInfo._xcodeTestReceipt) {
-      console.log("validateAppleReceipt: Xcode test receipt detected — granting test subscription for uid:", uid);
+      console.log("validateAppleReceipt: Xcode test receipt detected — granting test subscription for uid:", uid, "productId:", clientProductId);
       const expiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
       await upsertSubscription(uid, {
         isActive: true,
-        productId: "vaulted_premium_annual",
+        productId: clientProductId || "vaulted_premium_annual",
         expiresAt,
         platform: "ios",
         isTest: true,
