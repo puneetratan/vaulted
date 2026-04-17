@@ -19,6 +19,7 @@ import {
   Subscription,
   SubscriptionPurchase,
   PurchaseError,
+  IapIosSk2,
 } from 'react-native-iap';
 import {httpsCallable} from '@react-native-firebase/functions';
 import {useAuth} from './AuthContext';
@@ -134,57 +135,37 @@ export const SubscriptionProvider: React.FC<{children: React.ReactNode}> = ({
   // ---------------------------------------------------------------------------
   const validatePurchaseWithServer = useCallback(
     async (purchase: SubscriptionPurchase) => {
+      // Mark subscribed and finish transaction immediately — don't wait on server
+      setSubscriptionStatus(prev => ({
+        ...prev,
+        isActive: true,
+        productId: purchase.productId,
+        platform: Platform.OS as 'ios' | 'android',
+      }));
+      setIsLoading(false);
+      requestedProductId.current = null;
+
       try {
-        // Attempt server validation — failures are non-fatal, purchase is still granted
-        const functions = getFunctions();
-        if (functions) {
-          if (Platform.OS === 'ios') {
-            const transactionReceipt = purchase.transactionReceipt;
-            if (transactionReceipt) {
-              try {
-                const fn = httpsCallable(functions, 'validateAppleReceipt');
-                await fn({receiptData: transactionReceipt, productId: purchase.productId});
-              } catch (serverErr) {
-                console.warn('[IAP] Server validation failed, accepting client-side:', serverErr);
-              }
-            } else {
-              console.warn('[IAP] No transactionReceipt — skipping server validation');
-            }
-          } else if (Platform.OS === 'android') {
-            try {
-              const fn = httpsCallable(functions, 'validateGooglePurchase');
-              await fn({
-                purchaseToken: purchase.purchaseToken,
-                productId: purchase.productId,
-              });
-            } catch (serverErr) {
-              console.warn('[IAP] Server validation failed, accepting client-side:', serverErr);
-            }
-          }
-        } else {
-          console.warn('[IAP] Firebase functions unavailable — accepting purchase client-side');
-        }
-
-        // Always mark as subscribed — StoreKit/Play already confirmed the purchase
-        setSubscriptionStatus(prev => ({
-          ...prev,
-          isActive: true,
-          productId: purchase.productId,
-          platform: Platform.OS as 'ios' | 'android',
-        }));
-        setIsLoading(false);
-
         await finishTransaction({purchase, isConsumable: false});
-        requestedProductId.current = null;
-        refreshStatus();
-      } catch (err) {
-        console.error('[IAP] validatePurchaseWithServer unexpected error:', err);
-        // Still mark as subscribed and finish the transaction so the user
-        // isn't left in a broken state
-        setSubscriptionStatus(prev => ({...prev, isActive: true, productId: purchase.productId}));
-        setIsLoading(false);
-        requestedProductId.current = null;
-        try { await finishTransaction({purchase, isConsumable: false}); } catch {}
+      } catch (finishErr) {
+        console.warn('[IAP] finishTransaction error (non-fatal):', finishErr);
+      }
+
+      // Server validation in background — non-blocking
+      const functions = getFunctions();
+      if (functions) {
+        try {
+          if (Platform.OS === 'ios' && purchase.transactionReceipt) {
+            const fn = httpsCallable(functions, 'validateAppleReceipt');
+            await fn({receiptData: purchase.transactionReceipt, productId: purchase.productId});
+          } else if (Platform.OS === 'android' && purchase.purchaseToken) {
+            const fn = httpsCallable(functions, 'validateGooglePurchase');
+            await fn({purchaseToken: purchase.purchaseToken, productId: purchase.productId});
+          }
+          refreshStatus();
+        } catch (serverErr) {
+          console.warn('[IAP] Server validation failed, purchase already granted client-side:', serverErr);
+        }
       }
     },
     [refreshStatus],
@@ -203,6 +184,12 @@ export const SubscriptionProvider: React.FC<{children: React.ReactNode}> = ({
 
     const setup = async () => {
       try {
+        // Enable StoreKit 2 on iOS 15+ for more reliable purchase handling
+        if (Platform.OS === 'ios' && IapIosSk2?.isAvailable?.() === 1) {
+          const {storekit2Mode} = require('react-native-iap');
+          storekit2Mode();
+          console.log('[IAP] StoreKit 2 enabled');
+        }
         await initConnection();
         connected = true;
 
@@ -300,7 +287,14 @@ export const SubscriptionProvider: React.FC<{children: React.ReactNode}> = ({
     try {
       console.log('[IAP] Requesting subscription:', productId);
       requestedProductId.current = productId;
-      await requestSubscription({sku: productId});
+      const result = await requestSubscription({sku: productId});
+      // StoreKit 2 returns the purchase directly instead of via the listener
+      if (result && typeof result === 'object' && !Array.isArray(result)) {
+        const purchase = result as SubscriptionPurchase;
+        if (purchase.transactionReceipt || purchase.purchaseToken) {
+          await validatePurchaseRef.current(purchase);
+        }
+      }
     } catch (err: any) {
       console.error('[IAP] Subscribe error — code:', err.code, 'message:', err.message);
       requestedProductId.current = null;
@@ -311,10 +305,13 @@ export const SubscriptionProvider: React.FC<{children: React.ReactNode}> = ({
         err.code === 'E_DEVELOPER_ERROR' ||
         err.message?.toLowerCase().includes('invalid product') ||
         err.message?.toLowerCase().includes('cannot connect to itunes');
+      const isUnknown = err.code === 'E_UNKNOWN';
       Alert.alert(
         isInvalidProduct ? 'Subscription Unavailable' : 'Purchase Failed',
         isInvalidProduct
           ? `Product not found (${productId}). Check App Store Connect status is "Ready to Submit" and product IDs match exactly.`
+          : isUnknown
+          ? 'Unable to complete the purchase. On a real device, make sure you are signed in with a sandbox test account in Settings → App Store. On the simulator, run via Xcode so the StoreKit configuration is active.'
           : `${err.code}: ${err?.message || 'Unknown error'}`,
       );
     }
