@@ -38,18 +38,18 @@ const TermsScreen = () => {
         <View style={[styles.section, {backgroundColor: colors.surface}]}>
           <Text style={[styles.sectionTitle, {color: colors.text}]}>1. Acceptance of Terms</Text>
           <Text style={[styles.sectionText, {color: colors.textSecondary}]}>
-            By accessing and using the Vault application, you accept and agree to be bound by the terms and provision of this agreement.
+            By accessing and using the Vaulted application, you accept and agree to be bound by the terms and provision of this agreement.
           </Text>
         </View>
 
         <View style={[styles.section, {backgroundColor: colors.surface}]}>
           <Text style={[styles.sectionTitle, {color: colors.text}]}>2. Use License</Text>
           <Text style={[styles.sectionText, {color: colors.textSecondary}]}>
-            Permission is granted to temporarily download one copy of the Vault application for personal, non-commercial transitory viewing only. This is the grant of a license, not a transfer of title, and under this license you may not:
+            Permission is granted to temporarily download one copy of the Vaulted application for personal, non-commercial transitory viewing only. This is the grant of a license, not a transfer of title, and under this license you may not:
           </Text>
           <Text style={[styles.bulletPoint, {color: colors.textSecondary}]}>• modify or copy the materials;</Text>
           <Text style={[styles.bulletPoint, {color: colors.textSecondary}]}>• use the materials for any commercial purpose or for any public display;</Text>
-          <Text style={[styles.bulletPoint, {color: colors.textSecondary}]}>• attempt to decompile or reverse engineer any software contained in the Vault application;</Text>
+          <Text style={[styles.bulletPoint, {color: colors.textSecondary}]}>• attempt to decompile or reverse engineer any software contained in the Vaulted application;</Text>
           <Text style={[styles.bulletPoint, {color: colors.textSecondary}]}>• remove any copyright or other proprietary notations from the materials.</Text>
         </View>
 
@@ -63,7 +63,7 @@ const TermsScreen = () => {
         <View style={[styles.section, {backgroundColor: colors.surface}]}>
           <Text style={[styles.sectionTitle, {color: colors.text}]}>4. Privacy Policy</Text>
           <Text style={[styles.sectionText, {color: colors.textSecondary}]}>
-            Your use of the Vault application is also governed by our Privacy Policy. Please review our Privacy Policy to understand our practices.
+            Your use of the Vaulted application is also governed by our Privacy Policy. Please review our Privacy Policy to understand our practices.
           </Text>
         </View>
 
@@ -80,28 +80,28 @@ const TermsScreen = () => {
         <View style={[styles.section, {backgroundColor: colors.surface}]}>
           <Text style={[styles.sectionTitle, {color: colors.text}]}>6. Disclaimer</Text>
           <Text style={[styles.sectionText, {color: colors.textSecondary}]}>
-            The materials on the Vault application are provided on an 'as is' basis. Vault makes no warranties, expressed or implied, and hereby disclaims and negates all other warranties including, without limitation, implied warranties or conditions of merchantability, fitness for a particular purpose, or non-infringement of intellectual property or other violation of rights.
+            The materials on the Vaulted application are provided on an 'as is' basis. Vaulted makes no warranties, expressed or implied, and hereby disclaims and negates all other warranties including, without limitation, implied warranties or conditions of merchantability, fitness for a particular purpose, or non-infringement of intellectual property or other violation of rights.
           </Text>
         </View>
 
         <View style={[styles.section, {backgroundColor: colors.surface}]}>
           <Text style={[styles.sectionTitle, {color: colors.text}]}>7. Limitations</Text>
           <Text style={[styles.sectionText, {color: colors.textSecondary}]}>
-            In no event shall Vault or its suppliers be liable for any damages (including, without limitation, damages for loss of data or profit, or due to business interruption) arising out of the use or inability to use the Vault application.
+            In no event shall Vaulted or its suppliers be liable for any damages (including, without limitation, damages for loss of data or profit, or due to business interruption) arising out of the use or inability to use the Vaulted application.
           </Text>
         </View>
 
         <View style={[styles.section, {backgroundColor: colors.surface}]}>
           <Text style={[styles.sectionTitle, {color: colors.text}]}>8. Revisions</Text>
           <Text style={[styles.sectionText, {color: colors.textSecondary}]}>
-            Vault may revise these terms of service at any time without notice. By using this application, you are agreeing to be bound by the then current version of these terms of service.
+            Vaulted may revise these terms of service at any time without notice. By using this application, you are agreeing to be bound by the then current version of these terms of service.
           </Text>
         </View>
 
         <View style={[styles.section, {backgroundColor: colors.surface}]}>
           <Text style={[styles.sectionTitle, {color: colors.text}]}>9. Contact Information</Text>
           <Text style={[styles.sectionText, {color: colors.textSecondary}]}>
-            If you have any questions about these Terms and Conditions, please contact us at support@vaultapp.com
+            If you have any questions about these Terms and Conditions, please contact us at: support@vaulted-app.com
           </Text>
         </View>
       </ScrollView>

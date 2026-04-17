@@ -86,14 +86,20 @@ const DashboardScreen = () => {
   const [activeFilters, setActiveFilters] = useState<FilterOptions | null>(null);
   const [availableBrands, setAvailableBrands] = useState<string[]>([]);
   const [availableColors, setAvailableColors] = useState<string[]>([]);
+  const [availableSilhouettes, setAvailableSilhouettes] = useState<string[]>([]);
+  const [availableSizes, setAvailableSizes] = useState<string[]>([]);
+  const [availableYears, setAvailableYears] = useState<string[]>([]);
   const [isCollectionEmpty, setIsCollectionEmpty] = useState<boolean>(true);
   const triggerInventoryRefresh = useCallback(() => {
     setInventoryRefreshToken(prev => prev + 1);
   }, []);
 
-  const handleAvailableFiltersChange = useCallback((brands: string[], colors: string[]) => {
-    setAvailableBrands(brands);
-    setAvailableColors(colors);
+  const handleAvailableFiltersChange = useCallback((data: {brands: string[], colors: string[], silhouettes: string[], sizes: string[], years: string[]}) => {
+    setAvailableBrands(data.brands);
+    setAvailableColors(data.colors);
+    setAvailableSilhouettes(data.silhouettes);
+    setAvailableSizes(data.sizes);
+    setAvailableYears(data.years);
   }, []);
 
   const handleItemCountChange = useCallback((count: number) => {
@@ -179,7 +185,7 @@ const DashboardScreen = () => {
     const silhouette = metadata?.silhouette || metadata?.model || 'Unknown';
     const styleId = metadata?.styleId || 'N/A';
     const size = metadata?.size ? String(metadata.size) : 'N/A';
-    const color = metadata?.color || 'Unknown';
+    const color = metadata?.color?.toLowerCase() === 'unknown' ? '' : metadata?.color || '';
     const releaseDate = metadata?.releaseDate;
     const retailValue = parseNumericValue(metadata?.retailValue);
     const quantityValue = Number(metadata?.quantity);
@@ -346,7 +352,7 @@ const DashboardScreen = () => {
       } else if (payload?.success) {
         Alert.alert(
           'Export Complete',
-          payload.message ?? 'Your export has been sent to your email.'
+          "Vaulted just dropped your collection in your inbox — sent to the email in your profile."
         );
       } else {
         console.warn('Unexpected export payload:', payload);
@@ -408,7 +414,7 @@ const DashboardScreen = () => {
         navigation.navigate('Terms');
         break;
       case 'report':
-        Alert.alert('Report a Problem', 'Please contact support at support@vaulted.com');
+        Alert.alert('Report a Problem', 'Please contact support at: support@vaulted-app.com');
         break;
       case 'signout':
         Alert.alert(
@@ -456,7 +462,6 @@ const DashboardScreen = () => {
             <View style={componentStyles.headerRight}>
               <TouchableOpacity style={componentStyles.notificationButton}>
                 <Icon name="notifications" size={28} color={colors.text} />
-                <View style={componentStyles.notificationDot} />
               </TouchableOpacity>
               <TouchableOpacity 
                 style={[componentStyles.iconButton, componentStyles.iconButtonSpacing]}
@@ -549,9 +554,13 @@ const DashboardScreen = () => {
               <View style={componentStyles.footerTabContent}>
                 {activeFilters && (
                   (activeFilters.brands.length > 0 ||
+                   activeFilters.silhouettes?.length > 0 ||
+                   activeFilters.sizes?.length > 0 ||
                    activeFilters.sources.length > 0 ||
                    activeFilters.colors.length > 0 ||
-                   activeFilters.priceRange !== null) && (
+                   activeFilters.priceRange !== null ||
+                   activeFilters.quantity !== null ||
+                   activeFilters.releaseYear !== null) && (
                     <View style={componentStyles.filterBadge}>
                       <Icon name="check" size={10} color="#FFFFFF" />
                     </View>
@@ -596,7 +605,10 @@ const DashboardScreen = () => {
         onClose={() => setShowFilterModal(false)}
         onApply={handleFilterApply}
         availableBrands={availableBrands}
+        availableSilhouettes={availableSilhouettes}
+        availableSizes={availableSizes}
         availableColors={availableColors}
+        availableYears={availableYears}
         currentFilters={activeFilters || undefined}
       />
 

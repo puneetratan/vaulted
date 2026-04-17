@@ -37,7 +37,7 @@ const PrivacyPolicyScreen = () => {
 
         <View style={[styles.section, {backgroundColor: colors.surface}]}>
           <Text style={[styles.intro, {color: colors.textSecondary}]}>
-            At Vault, we take your privacy seriously. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our mobile application.
+            At Vaulted, we take your privacy seriously. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our mobile application.
           </Text>
         </View>
 
@@ -112,7 +112,7 @@ const PrivacyPolicyScreen = () => {
           <Text style={[styles.sectionText, {color: colors.textSecondary}]}>
             If you have questions or concerns about this Privacy Policy, please contact us at:
           </Text>
-          <Text style={[styles.contactInfo, {color: colors.primary}]}>Email: privacy@vaultapp.com</Text>
+          <Text style={[styles.contactInfo, {color: colors.primary}]}>Email: privacy@vaulted-app.com</Text>
           <Text style={[styles.contactInfo, {color: colors.primary}]}>Address: 123 App Street, Tech City, TC 12345</Text>
         </View>
       </ScrollView>

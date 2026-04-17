@@ -36,13 +36,21 @@ interface ShoeItem {
   errorMessage?: string;
 }
 
+interface AvailableFilterData {
+  brands: string[];
+  colors: string[];
+  silhouettes: string[];
+  sizes: string[];
+  years: string[];
+}
+
 interface DashboardTabsProps {
   searchQuery?: string;
   shadowItems?: ShoeItem[];
   onShadowDelete?: (id: string) => void;
   refreshToken?: number;
   filters?: FilterOptions | null;
-  onAvailableFiltersChange?: (brands: string[], colors: string[]) => void;
+  onAvailableFiltersChange?: (data: AvailableFilterData) => void;
   onItemCountChange?: (count: number) => void;
 }
 
@@ -112,7 +120,7 @@ const DashboardTabs = ({
         silhouette: item.silhouette ?? 'Unknown',
         styleId: item.styleId ?? 'N/A',
         size: item.size?.toString() ?? 'N/A',
-        color: item.color ?? 'Unknown',
+        color: item.color?.toLowerCase() === 'unknown' ? '' : item.color ?? '',
         cost: value,
         retailValue: retail,
         releaseDate: item.releaseDate ?? undefined,
@@ -206,12 +214,45 @@ const DashboardTabs = ({
     return Array.from(colors).sort();
   }, [allShoes]);
 
+  const availableSilhouettes = useMemo(() => {
+    const set = new Set<string>();
+    allShoes.forEach(shoe => {
+      if (shoe.silhouette && shoe.silhouette.trim() !== '' && shoe.silhouette.toLowerCase() !== 'unknown' && shoe.silhouette.toLowerCase() !== 'n/a') {
+        set.add(shoe.silhouette);
+      }
+    });
+    return Array.from(set).sort();
+  }, [allShoes]);
+
+  const availableSizes = useMemo(() => {
+    const set = new Set<string>();
+    allShoes.forEach(shoe => {
+      if (shoe.size && shoe.size.trim() !== '' && shoe.size.toLowerCase() !== 'n/a') {
+        set.add(shoe.size);
+      }
+    });
+    return Array.from(set).sort((a, b) => parseFloat(a) - parseFloat(b));
+  }, [allShoes]);
+
+  const availableYears = useMemo(() => {
+    const set = new Set<string>();
+    allShoes.forEach(shoe => {
+      if (shoe.releaseDate) {
+        const year = shoe.releaseDate.substring(0, 4);
+        if (year && year.length === 4 && !isNaN(Number(year))) {
+          set.add(year);
+        }
+      }
+    });
+    return Array.from(set).sort().reverse();
+  }, [allShoes]);
+
   // Notify parent of available filter options
   useEffect(() => {
     if (onAvailableFiltersChange) {
-      onAvailableFiltersChange(availableBrands, availableColors);
+      onAvailableFiltersChange({brands: availableBrands, colors: availableColors, silhouettes: availableSilhouettes, sizes: availableSizes, years: availableYears});
     }
-  }, [availableBrands, availableColors, onAvailableFiltersChange]);
+  }, [availableBrands, availableColors, availableSilhouettes, availableSizes, availableYears, onAvailableFiltersChange]);
 
   // Notify parent of item count so it can show/hide footer actions
   useEffect(() => {
@@ -227,41 +268,53 @@ const DashboardTabs = ({
     }
 
     return shoes.filter((shoe) => {
-      // Brand filter
       if (filters.brands.length > 0 && !filters.brands.includes(shoe.brand)) {
         return false;
       }
-
-      // Source filter
+      if (filters.silhouettes && filters.silhouettes.length > 0 && !filters.silhouettes.includes(shoe.silhouette)) {
+        return false;
+      }
+      if (filters.sizes && filters.sizes.length > 0 && !filters.sizes.includes(shoe.size)) {
+        return false;
+      }
       if (filters.sources.length > 0) {
         const shoeSource = shoe.source || 'manual';
-        const sourceMatch = filters.sources.includes(shoeSource);
-        if (!sourceMatch) {
+        if (!filters.sources.includes(shoeSource)) {
           return false;
         }
       }
-
-      // Color filter
       if (filters.colors.length > 0 && !filters.colors.includes(shoe.color)) {
         return false;
       }
-
-      // Price filter
       if (filters.priceRange) {
         const price = shoe.retailValue || shoe.cost || 0;
         switch (filters.priceRange) {
           case 'Less than $50':
-            if (price >= 50) return false;
+            if (price >= 50) { return false; }
             break;
           case 'Between $50-$100':
-            if (price < 50 || price > 100) return false;
+            if (price < 50 || price > 100) { return false; }
             break;
           case 'Above $100':
-            if (price <= 100) return false;
+            if (price <= 100) { return false; }
             break;
         }
       }
-
+      if (filters.quantity) {
+        const qty = shoe.quantity || 1;
+        if (filters.quantity === '5+') {
+          if (qty < 5) { return false; }
+        } else if (String(qty) !== filters.quantity) {
+          return false;
+        }
+      }
+      if (filters.releaseYear && shoe.releaseDate) {
+        if (!shoe.releaseDate.startsWith(filters.releaseYear)) {
+          return false;
+        }
+      } else if (filters.releaseYear && !shoe.releaseDate) {
+        return false;
+      }
       return true;
     });
   }, [filters]);
@@ -369,17 +422,6 @@ const DashboardTabs = ({
               navigation.navigate('EditItem', {item: shoe});
             }
           }}>
-          {!isShadow && (
-            <View style={componentStyles.sourceIconOverlay}>
-              {shoe.source === 'ai' ? (
-                <Icon name="auto-awesome" size={14} color="#FFFFFF" />
-              ) : shoe.source === 'barcode' ? (
-                <Icon name="qr-code-scanner" size={14} color="#FFFFFF" />
-              ) : (
-                <Icon name="edit" size={14} color="#FFFFFF" />
-              )}
-            </View>
-          )}
           <View style={componentStyles.imageContainer}>
             {shoe.imageUrl && (!isShadow || (isShadow && !isProcessing)) ? (
               <FastImage
@@ -398,17 +440,9 @@ const DashboardTabs = ({
           </View>
           <View style={componentStyles.shoeInfo}>
             <View style={componentStyles.shadowHeaderRow}>
-              <View style={componentStyles.shoeNameContainer}>
-                <Text style={[componentStyles.shoeName, {color: colors.text}]}  numberOfLines={1} ellipsizeMode="tail">
-                  {shoe.silhouette && 
-                   typeof shoe.silhouette === 'string' &&
-                   shoe.silhouette.trim() !== '' && 
-                   shoe.silhouette.trim().toLowerCase() !== 'unknown' && 
-                   shoe.silhouette.trim().toLowerCase() !== 'n/a'
-                    ? shoe.silhouette
-                    : shoe.name}
-                </Text>
-              </View>
+              <Text style={[componentStyles.shoeName, {color: colors.text, flex: 1, textAlign: 'left', flexWrap: 'wrap'}]}>
+                {[shoe.size, shoe.brand, shoe.silhouette, shoe.styleId, shoe.color].filter(v => v && v.toLowerCase() !== 'unknown' && v.toLowerCase() !== 'n/a').join(' | ')}
+              </Text>
               {isShadow && (
                 <View style={componentStyles.shadowBadge}>
                   <Text style={componentStyles.shadowBadgeText}>
@@ -417,10 +451,6 @@ const DashboardTabs = ({
                 </View>
               )}
             </View>
-            <Text style={[componentStyles.shoeBrand, {color: colors.primary}]}>{shoe.brand}</Text>
-            <Text style={[componentStyles.shoeDetails, {color: colors.textSecondary}]}>
-              Size {shoe.size} | {shoe.color} | ${displayRetail}
-            </Text>
           </View>
           <View style={componentStyles.arrowContainer}>
             {isShadow ? (
@@ -456,6 +486,17 @@ const DashboardTabs = ({
 
     const renderEmptyComponent = () => {
       const s = styles(colors);
+      const isFiltered = allShoes.length > 0;
+      if (isFiltered) {
+        return (
+          <View style={s.emptyStateContainer}>
+            <Text style={s.emptyStateTitle}>Nothing in your vault hits this filter yet.</Text>
+            <Text style={s.emptyStateSubtitle}>
+              Try another filter, add a new item, or clear the filter to see the whole collection.
+            </Text>
+          </View>
+        );
+      }
       return (
         <View style={s.emptyStateContainer}>
           <Image
@@ -463,9 +504,9 @@ const DashboardTabs = ({
             style={s.emptyStateLogo}
             resizeMode="contain"
           />
-          <Text style={s.emptyStateTitle}>Update your vault</Text>
+          <Text style={s.emptyStateTitle}>Update Your Vault</Text>
           <Text style={s.emptyStateSubtitle}>
-            Take a photo of your first shoe to begin organizing your collection.
+            Take a photo of your first item to begin organizing your collection.
           </Text>
         </View>
       );
@@ -745,7 +786,7 @@ const styles = (colors: any) => StyleSheet.create({
   shoeInfo: {
     flex: 1,
     marginLeft: 12,
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     paddingRight: 16,
   },
   shadowHeaderRow: {

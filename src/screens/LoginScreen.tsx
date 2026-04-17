@@ -95,13 +95,13 @@ const LoginScreen = () => {
               style={styles.logo}
               resizeMode="contain"
             />
-            <Text style={styles.tagline}>
-              Vault it all. Sneakers, style,{'\n'}and self-expression.
-            </Text>
           </View>
 
           {/* Buttons Section */}
           <View style={styles.buttonsSection}>
+            <Text style={styles.tagline}>
+              Vault it all. Sneakers, style,{'\n'}and self-expression.
+            </Text>
             {/* Google Sign In Button */}
             <TouchableOpacity
               style={[styles.button, styles.googleButton, isLoading && styles.buttonDisabled]}
@@ -188,6 +188,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 20,
     opacity: 0.9,
+    marginBottom: 16,
   },
   buttonsSection: {
     width: '100%',
