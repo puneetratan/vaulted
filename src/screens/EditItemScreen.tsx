@@ -11,6 +11,8 @@ import {
   Modal,
   Platform,
   Pressable,
+  Keyboard,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -355,7 +357,8 @@ const EditItemScreen = () => {
         <View style={styles.placeholder} />
       </View>
 
-      <ScrollView style={styles.content}>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <ScrollView style={styles.content} keyboardShouldPersistTaps="handled">
         {/* Item Image */}
         <View style={styles.imageContainer}>
           {imageUrl ? (
@@ -427,7 +430,9 @@ const EditItemScreen = () => {
               onChangeText={setSize}
               placeholder="Enter size"
               placeholderTextColor="#999999"
-              keyboardType="numeric"
+              keyboardType="decimal-pad"
+              returnKeyType="done"
+              onSubmitEditing={Keyboard.dismiss}
             />
           </View>
 
@@ -510,6 +515,8 @@ const EditItemScreen = () => {
                 placeholder="Enter retail value"
                 placeholderTextColor="#999999"
                 keyboardType="decimal-pad"
+                returnKeyType="done"
+                onSubmitEditing={Keyboard.dismiss}
               />
             </View>
           </View>
@@ -626,6 +633,7 @@ const EditItemScreen = () => {
           </View>
         </View>
       </ScrollView>
+      </TouchableWithoutFeedback>
 
       {/* Action Buttons */}
       <View style={styles.actions}>

@@ -53,13 +53,16 @@ const PaywallScreen = () => {
 
   const handleSubscribe = async () => {
     setPurchasing(true);
+    // Safety timeout — never spin forever
+    const timeout = setTimeout(() => setPurchasing(false), 30000);
     try {
       const plan = PRICING[selectedPlan];
       await subscribe(plan.productId);
       // purchasing stays true — closed by the isSubscribed effect above
     } catch {
-      // requestSubscription threw (e.g. user cancelled or product error)
       setPurchasing(false);
+    } finally {
+      clearTimeout(timeout);
     }
   };
 

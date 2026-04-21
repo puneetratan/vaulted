@@ -426,22 +426,24 @@ const DashboardTabs = ({
             {shoe.imageUrl && (!isShadow || (isShadow && !isProcessing)) ? (
               <FastImage
                 source={{uri: shoe.imageUrl, priority: FastImage.priority.normal, cache: FastImage.cacheControl.immutable}}
-                style={componentStyles.shoeThumbnail}
+                style={isShadow ? componentStyles.shoeThumbnailSmall : componentStyles.shoeThumbnail}
               />
             ) : (
-              <View style={[componentStyles.shoeThumbnail, componentStyles.shoeThumbnailPlaceholder]}>
+              <View style={[isShadow ? componentStyles.shoeThumbnailSmall : componentStyles.shoeThumbnail, componentStyles.shoeThumbnailPlaceholder]}>
                 {isProcessing ? (
                   <ActivityIndicator color={colors.primary} />
                 ) : (
-                  <Icon name="image" size={32} color={colors.textSecondary} />
+                  <Icon name="image" size={24} color={colors.textSecondary} />
                 )}
               </View>
             )}
           </View>
           <View style={componentStyles.shoeInfo}>
             <View style={componentStyles.shadowHeaderRow}>
-              <Text style={[componentStyles.shoeName, {color: colors.text, flex: 1, textAlign: 'left', flexWrap: 'wrap'}]}>
-                {[shoe.size, shoe.brand, shoe.silhouette, shoe.styleId, shoe.color].filter(v => v && v.toLowerCase() !== 'unknown' && v.toLowerCase() !== 'n/a').join(' | ')}
+              <Text style={[componentStyles.shoeName, {color: colors.text, flex: 1, textAlign: 'left', flexWrap: isShadow ? 'nowrap' : 'wrap'}]} numberOfLines={isShadow ? 1 : undefined} ellipsizeMode="tail">
+                {isShadow
+                  ? (isProcessing ? 'Analyzing your item...' : [shoe.size, shoe.brand, shoe.silhouette, shoe.styleId, shoe.color].filter(v => v && v.toLowerCase() !== 'unknown' && v.toLowerCase() !== 'n/a').join(' | '))
+                  : [shoe.size, shoe.brand, shoe.silhouette, shoe.styleId, shoe.color].filter(v => v && v.toLowerCase() !== 'unknown' && v.toLowerCase() !== 'n/a').join(' | ')}
               </Text>
               {isShadow && (
                 <View style={componentStyles.shadowBadge}>
@@ -752,6 +754,8 @@ const styles = (colors: any) => StyleSheet.create({
     borderWidth: 1,
     borderColor: '#D0E2FF',
     backgroundColor: '#F5F9FF',
+    minHeight: 0,
+    paddingVertical: 10,
   },
   imageContainer: {
     position: 'relative',
@@ -760,6 +764,12 @@ const styles = (colors: any) => StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 8,
+    backgroundColor: '#F0F0F0',
+  },
+  shoeThumbnailSmall: {
+    width: 44,
+    height: 44,
+    borderRadius: 6,
     backgroundColor: '#F0F0F0',
   },
   shoeThumbnailPlaceholder: {
