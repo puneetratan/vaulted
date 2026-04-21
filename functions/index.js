@@ -71,12 +71,13 @@ exports.exportInventoryToExcel = functions.runWith({ secrets: ["SMTP_USER", "SMT
     const sheet = workbook.addWorksheet("Inventory");
 
     sheet.columns = [
+      { header: "Brand", key: "brand", width: 15 },
+      { header: "Silhouette", key: "silhouette", width: 25 },
       { header: "Name", key: "name", width: 35 },
       { header: "Size", key: "size", width: 5 },
       { header: "Color", key: "color", width: 20 },
       { header: "Quantity", key: "quantity", width: 10 },
       { header: "Release Date", key: "releaseDate", width: 15 },
-      { header: "Brand", key: "brand", width: 15 },
       { header: "Retail Value", key: "retailValue", width: 10 },
       { header: "Image", key: "imageUrl", width: 30 },
     ];
@@ -89,6 +90,7 @@ exports.exportInventoryToExcel = functions.runWith({ secrets: ["SMTP_USER", "SMT
         quantity,
         releaseDate,
         brand,
+        silhouette,
         retailValue,
         imageUrl,
       } = item;
@@ -101,12 +103,13 @@ exports.exportInventoryToExcel = functions.runWith({ secrets: ["SMTP_USER", "SMT
             : `$${retailValue}`;
 
       const row = sheet.addRow({
+        brand,
+        silhouette,
         name,
         size,
         color,
         quantity,
         releaseDate,
-        brand,
         retailValue: retailValueDisplay,
         imageUrl: "",
       });
@@ -137,7 +140,7 @@ exports.exportInventoryToExcel = functions.runWith({ secrets: ["SMTP_USER", "SMT
           });
 
           sheet.addImage(imageId, {
-            tl: { col: 7, row: rowIndex - 1 },
+            tl: { col: 8, row: rowIndex - 1 },
             ext: { width: 40, height: 40 },
           });
 
@@ -174,10 +177,10 @@ exports.exportInventoryToExcel = functions.runWith({ secrets: ["SMTP_USER", "SMT
     });
 
     const mailOptions = {
-      from: process.env.SMTP_USER,
+      from: `"Vaulted App" <${process.env.SMTP_USER}>`,
       to: userEmail,
-      subject: "Your Inventory Export - Vaulted",
-      text: `Hello,\n\nAttached is your exported inventory report from Vaulted.\n\nThis export includes all your items with images and details.\n\nBest regards,\nThe Vaulted Team`,
+      subject: "Your Vaulted Export Is Ready",
+      text: `Hello,\n\nAttached is your exported inventory report from Vaulted.\n\nThis export includes all your items with images and details.\n\nEnjoy!\nThe Vaulted Team\nsupport@vaulted-app.com`,
       attachments: [
         {
           filename: `vaulted_inventory_${Date.now()}.xlsx`,
@@ -617,6 +620,8 @@ exports.validateAppleReceipt = functions.runWith({secrets: ["APPLE_SHARED_SECRET
   if (!receiptData || typeof receiptData !== "string") {
     throw new functions.https.HttpsError("invalid-argument", "receiptData is required.");
   }
+  const clientProductId = data?.productId || null;
+  console.log("validateAppleReceipt: received productId from client:", clientProductId);
 
   const sharedSecret = process.env.APPLE_SHARED_SECRET;
   if (!sharedSecret) throw new functions.https.HttpsError("failed-precondition", "Apple shared secret not configured.");
@@ -628,11 +633,11 @@ exports.validateAppleReceipt = functions.runWith({secrets: ["APPLE_SHARED_SECRET
     // Xcode StoreKit Configuration File produces JWS receipts that Apple's legacy
     // /verifyReceipt endpoint cannot parse (status 21002). Grant a 1-year test subscription.
     if (latestInfo._xcodeTestReceipt) {
-      console.log("validateAppleReceipt: Xcode test receipt detected — granting test subscription for uid:", uid);
+      console.log("validateAppleReceipt: Xcode test receipt detected — granting test subscription for uid:", uid, "productId:", clientProductId);
       const expiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
       await upsertSubscription(uid, {
         isActive: true,
-        productId: "vaulted_premium_annual",
+        productId: clientProductId || "vaulted_premium_annual",
         expiresAt,
         platform: "ios",
         isTest: true,

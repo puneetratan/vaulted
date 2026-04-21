@@ -11,6 +11,8 @@ import {
   Modal,
   Platform,
   Pressable,
+  Keyboard,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -67,7 +69,7 @@ const EditItemScreen = () => {
   
   const [brand, setBrand] = useState(item?.brand || '');
   const [size, setSize] = useState(item?.size || '');
-  const [color, setColor] = useState(item?.color || '');
+  const [color, setColor] = useState(item?.color?.toLowerCase() === 'unknown' ? '' : item?.color || '');
   const [cost, setCost] = useState(item?.cost.toString() || '');
   const [imageUrl, setImageUrl] = useState(item?.imageUrl || '');
   const [imageAsset, setImageAsset] = useState<ImageAsset | null>(null);
@@ -93,7 +95,7 @@ const EditItemScreen = () => {
     if (item) {
       setBrand(item.brand);
       setSize(item.size);
-      setColor(item.color);
+      setColor(item.color?.toLowerCase() === 'unknown' ? '' : item.color || '');
       setCost(item.cost.toString());
       setImageUrl(item.imageUrl || '');
       setImageAsset(null);
@@ -131,45 +133,27 @@ const EditItemScreen = () => {
       return;
     }
 
-    // Validate inputs
-    if (
-      !brand.trim() ||
-      !silhouette.trim() ||
-      !styleId.trim() ||
-      !size.trim() ||
-      !color.trim() ||
-      !cost.trim() ||
-      !retailValue.trim() ||
-      !releaseDate.trim() ||
-      !quantity.trim()
-    ) {
-      Alert.alert('Error', 'Please fill in all fields');
+    // Only Brand and Silhouette are required
+    if (!brand.trim()) {
+      Alert.alert('Error', 'Please enter brand');
+      return;
+    }
+    if (!silhouette.trim()) {
+      Alert.alert('Error', 'Please enter silhouette');
       return;
     }
 
-    const costNum = parseFloat(cost);
-    if (isNaN(costNum) || costNum <= 0) {
-      Alert.alert('Error', 'Please enter a valid cost');
-      return;
-    }
-
-    const quantityNum = parseInt(quantity, 10);
-    if (Number.isNaN(quantityNum) || quantityNum <= 0) {
-      Alert.alert('Error', 'Please enter a valid quantity');
-      return;
-    }
-
-    const retailValueNum = parseFloat(retailValue);
-    if (Number.isNaN(retailValueNum) || retailValueNum < 0) {
-      Alert.alert('Error', 'Please enter a valid retail value');
-      return;
-    }
+    const costNum = cost.trim() ? parseFloat(cost) : 0;
+    const quantityNum = quantity.trim() ? parseInt(quantity, 10) : 1;
+    const retailValueNum = retailValue.trim() ? parseFloat(retailValue) : 0;
 
     const releaseDateTrimmed = releaseDate.trim();
-    const releaseDateRegex = /^\d{4}-\d{2}-\d{2}$/;
-    if (!releaseDateRegex.test(releaseDateTrimmed)) {
-      Alert.alert('Error', 'Release date must be in YYYY-MM-DD format');
-      return;
+    if (releaseDateTrimmed) {
+      const releaseDateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (!releaseDateRegex.test(releaseDateTrimmed)) {
+        Alert.alert('Error', 'Release date must be in YYYY-MM-DD format');
+        return;
+      }
     }
 
     if (imageAsset && !user?.uid) {
@@ -247,7 +231,7 @@ const EditItemScreen = () => {
       if (finalImageUrl) {
         setImageUrl(finalImageUrl);
       }
-      Alert.alert('Success', 'Item updated successfully', [
+      Alert.alert('Success', "Update saved — your Vault's looking fresh.", [
         {text: 'OK', onPress: () => navigation.goBack()},
       ]);
     } catch (error: any) {
@@ -267,7 +251,7 @@ const EditItemScreen = () => {
     }
     Alert.alert(
       'Delete Item',
-      `Are you sure you want to delete "${item.name}"? This cannot be undone.`,
+      'Are you sure you want to drop this item from your Vault?',
       [
         {text: 'Cancel', style: 'cancel'},
         {
@@ -373,7 +357,8 @@ const EditItemScreen = () => {
         <View style={styles.placeholder} />
       </View>
 
-      <ScrollView style={styles.content}>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <ScrollView style={styles.content} keyboardShouldPersistTaps="handled">
         {/* Item Image */}
         <View style={styles.imageContainer}>
           {imageUrl ? (
@@ -395,7 +380,7 @@ const EditItemScreen = () => {
         {/* Form Fields */}
         <View style={styles.form}>
           <View style={styles.field}>
-            <Text style={styles.label}>Brand</Text>
+            <Text style={styles.label}>Brand *</Text>
             <TextInput
               style={styles.input}
               value={brand}
@@ -407,9 +392,9 @@ const EditItemScreen = () => {
 
           <View style={styles.field}>
             <View style={styles.labelRow}>
-              <Text style={styles.label}>Silhouette</Text>
+              <Text style={styles.label}>Silhouette *</Text>
               <TouchableOpacity>
-                <Icon name="info" size={18} color="#007AFF" />
+                <Icon name="info" size={18} color="#34C759" />
               </TouchableOpacity>
             </View>
             <TextInput
@@ -425,7 +410,7 @@ const EditItemScreen = () => {
             <View style={styles.labelRow}>
               <Text style={styles.label}>Style ID</Text>
               <TouchableOpacity>
-                <Icon name="info" size={18} color="#007AFF" />
+                <Icon name="info" size={18} color="#34C759" />
               </TouchableOpacity>
             </View>
             <TextInput
@@ -445,7 +430,9 @@ const EditItemScreen = () => {
               onChangeText={setSize}
               placeholder="Enter size"
               placeholderTextColor="#999999"
-              keyboardType="numeric"
+              keyboardType="decimal-pad"
+              returnKeyType="done"
+              onSubmitEditing={Keyboard.dismiss}
             />
           </View>
 
@@ -518,16 +505,18 @@ const EditItemScreen = () => {
           </View>
 
           <View style={styles.field}>
-            <Text style={styles.label}>Cost</Text>
+            <Text style={styles.label}>Retail Value</Text>
             <View style={styles.costInputContainer}>
               <Text style={styles.currencySymbol}>$</Text>
               <TextInput
                 style={styles.costInput}
                 value={cost}
                 onChangeText={setCost}
-                placeholder="120.00"
+                placeholder="Enter retail value"
                 placeholderTextColor="#999999"
                 keyboardType="decimal-pad"
+                returnKeyType="done"
+                onSubmitEditing={Keyboard.dismiss}
               />
             </View>
           </View>
@@ -635,7 +624,7 @@ const EditItemScreen = () => {
               style={[styles.input, styles.textArea]}
               value={notes}
               onChangeText={setNotes}
-              placeholder="Enter notes (optional)"
+              placeholder="Enter notes"
               placeholderTextColor="#999999"
               multiline
               numberOfLines={4}
@@ -644,6 +633,7 @@ const EditItemScreen = () => {
           </View>
         </View>
       </ScrollView>
+      </TouchableWithoutFeedback>
 
       {/* Action Buttons */}
       <View style={styles.actions}>
@@ -825,6 +815,7 @@ const styles = StyleSheet.create({
   },
   pickerItem: {
     fontSize: 16,
+    color: '#FFFFFF',
   },
   modalOverlay: {
     flex: 1,

@@ -285,6 +285,13 @@ export const updateInventoryItem = async (
       cleanUpdates.notes = trimmed.length > 0 ? trimmed : undefined;
     }
 
+    // Remove any undefined values that may have been set during processing
+    Object.keys(cleanUpdates).forEach(key => {
+      if (cleanUpdates[key] === undefined) {
+        delete cleanUpdates[key];
+      }
+    });
+
     if (Object.keys(cleanUpdates).length === 0) {
       return;
     }

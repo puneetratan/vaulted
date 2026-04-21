@@ -363,7 +363,7 @@ const AddItemScreen = () => {
 
       Alert.alert(
         'Success',
-        'Item added successfully',
+        "Update saved — your Vault's looking fresh.",
         [
           {
             text: 'OK',
@@ -525,7 +525,7 @@ const AddItemScreen = () => {
                       <Picker
                         selectedValue={quantity}
                         onValueChange={value => setQuantity(String(value))}
-                        style={[componentStyles.modalPicker, {backgroundColor: colors.surface}]}
+                        style={[componentStyles.modalPicker, {backgroundColor: colors.surface, color: colors.text}]}
                         itemStyle={componentStyles.pickerItem}>
                         {Array.from({length: 20}, (_, index) => {
                           const value = String(index + 1);
@@ -569,12 +569,12 @@ const AddItemScreen = () => {
           </View>
 
           <View style={componentStyles.inputGroup}>
-            <Text style={[componentStyles.label, {color: colors.text}]}>Cost</Text>
+            <Text style={[componentStyles.label, {color: colors.text}]}>Retail Value</Text>
             <View style={[componentStyles.costInputContainer, {backgroundColor: colors.input, borderColor: colors.inputBorder}]}>
               <Text style={[componentStyles.currencySymbol, {color: colors.text}]}>$</Text>
               <TextInput
                 style={[componentStyles.costInput, {color: colors.text}]}
-                placeholder="120.00"
+                placeholder="Enter retail value"
                 value={retailValue}
                 onChangeText={setRetailValue}
                 placeholderTextColor={colors.textSecondary}
@@ -684,7 +684,7 @@ const AddItemScreen = () => {
             <Text style={[componentStyles.label, {color: colors.text}]}>Barcode</Text>
             <TextInput
               style={[componentStyles.input, {backgroundColor: colors.input, borderColor: colors.inputBorder, color: colors.text}]}
-              placeholder="Enter barcode (optional)"
+              placeholder="Enter barcode"
               value={barcode}
               onChangeText={setBarcode}
               placeholderTextColor={colors.textSecondary}
@@ -695,7 +695,7 @@ const AddItemScreen = () => {
             <Text style={[componentStyles.label, {color: colors.text}]}>Notes</Text>
             <TextInput
               style={[componentStyles.input, componentStyles.textArea, {backgroundColor: colors.input, borderColor: colors.inputBorder, color: colors.text}]}
-              placeholder="Enter notes (optional)"
+              placeholder="Enter notes"
               value={notes}
               onChangeText={setNotes}
               placeholderTextColor={colors.textSecondary}
@@ -863,6 +863,7 @@ const styles = (colors: any) => StyleSheet.create({
   },
   pickerItem: {
     fontSize: 16,
+    color: '#FFFFFF',
   },
   modalOverlay: {
     flex: 1,

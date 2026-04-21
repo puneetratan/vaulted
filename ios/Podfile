@@ -59,8 +59,18 @@ target 'VaultTemp' do
   # end
 
   post_install do |installer|
-    # Fix for gRPC module map issue
+    # Fix for BoringSSL-GRPC: source files include <openssl_grpc/...> but headers
+    # are installed under <openssl/...> — create a symlink to bridge the gap
     require 'fileutils'
+    boringssl_include = File.join(installer.sandbox.root, 'BoringSSL-GRPC/src/include')
+    openssl_grpc_dir  = File.join(boringssl_include, 'openssl_grpc')
+    openssl_dir       = File.join(boringssl_include, 'openssl')
+    if Dir.exist?(openssl_dir) && !File.exist?(openssl_grpc_dir)
+      FileUtils.ln_s(openssl_dir, openssl_grpc_dir)
+      puts "Created symlink: openssl_grpc -> openssl"
+    end
+
+    # Fix for gRPC module map issue
     grpc_headers_dir = File.join(installer.sandbox.root, 'Headers/Private/grpc')
     grpc_modulemap_src = File.join(installer.sandbox.root, 'Target Support Files/gRPC-Core/gRPC-Core.modulemap')
     grpc_modulemap_dst = File.join(grpc_headers_dir, 'gRPC-Core.modulemap')
@@ -124,6 +134,17 @@ target 'VaultTemp' do
           config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17'
           config.build_settings['CLANG_CXX_LIBRARY'] = 'libc++'
           config.build_settings['CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER'] = 'NO'
+          # Fix clang segfault (Segmentation fault: 11) on these targets with newer Xcode
+          config.build_settings['GCC_OPTIMIZATION_LEVEL'] = '0'
+        end
+
+        # Add abseil header search paths so gRPC-Core can find absl/log/check.h etc.
+        if target.name == 'gRPC-Core'
+          config.build_settings['HEADER_SEARCH_PATHS'] ||= ['$(inherited)']
+          config.build_settings['HEADER_SEARCH_PATHS'] << File.join(installer.sandbox.root, 'Headers/Public/abseil')
+          config.build_settings['HEADER_SEARCH_PATHS'] << File.join(installer.sandbox.root, 'Headers/Public')
+          config.build_settings['HEADER_SEARCH_PATHS'] << '$(PODS_ROOT)/abseil'
+          config.build_settings['HEADER_SEARCH_PATHS'] << '$(PODS_ROOT)/Headers/Public/abseil'
         end
         
         # Fix for Firebase Swift compatibility with Xcode 26 / Swift 6
@@ -132,6 +153,14 @@ target 'VaultTemp' do
           config.build_settings['DEFINES_MODULE'] = 'YES'
           config.build_settings['SWIFT_STRICT_CONCURRENCY'] = 'minimal'
           config.build_settings['OTHER_SWIFT_FLAGS'] = '$(inherited) -disable-availability-checking'
+          # Fix for Command Libtool failed with static frameworks
+          config.build_settings['BUILD_LIBRARY_FOR_DISTRIBUTION'] = 'NO'
+        end
+
+        # Fix for FirebaseAuth Libtool failure with use_frameworks! :linkage => :static
+        if target.name == 'FirebaseAuth'
+          config.build_settings['BUILD_LIBRARY_FOR_DISTRIBUTION'] = 'NO'
+          config.build_settings['ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES'] = 'NO'
         end
         
         # Fix for react-native-worklets-core

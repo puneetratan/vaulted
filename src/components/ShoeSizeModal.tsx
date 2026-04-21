@@ -32,7 +32,7 @@ const ShoeSizeModal = ({
         <View style={styles.modalContent}>
           <Text style={styles.title}>Enter Your Shoe Size</Text>
           <Text style={styles.subtitle}>
-            We'll use this to help organize your collection
+            We'll use this to help organize your collection.
           </Text>
           <TextInput
             style={styles.input}

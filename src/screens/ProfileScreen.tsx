@@ -129,7 +129,7 @@ const ProfileScreen = () => {
   const handleDeleteAccount = () => {
     Alert.alert(
       'Delete Account',
-      'Are you sure you want to delete your account? This action cannot be undone. All your data, including inventory items and profile information, will be permanently deleted.',
+      "Just a heads-up — deleting your account will permanently erase your vault and all stored data.\nIf you're sure, we'll take care of it right away.",
       [
         {
           text: 'Cancel',
@@ -139,67 +139,47 @@ const ProfileScreen = () => {
           text: 'Delete',
           style: 'destructive',
           onPress: async () => {
-            // Second confirmation
-            Alert.alert(
-              'Final Confirmation',
-              'This will permanently delete your account and all associated data. Are you absolutely sure?',
-              [
-                {
-                  text: 'Cancel',
-                  style: 'cancel',
-                },
-                {
-                  text: 'Yes, Delete My Account',
-                  style: 'destructive',
-                  onPress: async () => {
-                    if (!user?.uid) {
-                      Alert.alert('Error', 'User not authenticated');
-                      return;
-                    }
+            if (!user?.uid) {
+              Alert.alert('Error', 'User not authenticated');
+              return;
+            }
 
-                    setDeletingAccount(true);
-                    try {
-                      // Delete all user data (inventory, profile, storage)
-                      await deleteUserAccount(user.uid, photoURL);
+            setDeletingAccount(true);
+            try {
+              await deleteUserAccount(user.uid, photoURL);
 
-                      // Delete Firebase Auth account
-                      const authInstance = getAuth();
-                      const currentUser = authInstance.currentUser;
-                      if (currentUser) {
-                        await currentUser.delete();
-                      }
+              const authInstance = getAuth();
+              const currentUser = authInstance.currentUser;
+              if (currentUser) {
+                await currentUser.delete();
+              }
 
-                      // Logout will happen automatically when auth state changes
-                      Alert.alert(
-                        'Account Deleted',
-                        'Your account has been successfully deleted.',
-                        [
-                          {
-                            text: 'OK',
-                            onPress: async () => {
-                              await logout();
-                            },
-                          },
-                        ],
-                      );
-                    } catch (error: any) {
-                      console.error('Error deleting account:', error);
-                      let errorMessage = 'Failed to delete account. Please try again.';
-                      
-                      if (error?.code === 'auth/requires-recent-login') {
-                        errorMessage = 'For security reasons, please sign out and sign back in before deleting your account.';
-                      } else if (error?.message) {
-                        errorMessage = error.message;
-                      }
-                      
-                      Alert.alert('Error', errorMessage);
-                    } finally {
-                      setDeletingAccount(false);
-                    }
+              Alert.alert(
+                'Account Deleted',
+                'Your account and all associated data have been permanently deleted.',
+                [
+                  {
+                    text: 'OK',
+                    onPress: async () => {
+                      await logout();
+                    },
                   },
-                },
-              ],
-            );
+                ],
+              );
+            } catch (error: any) {
+              console.error('Error deleting account:', error);
+              let errorMessage = 'Failed to delete account. Please try again.';
+
+              if (error?.code === 'auth/requires-recent-login') {
+                errorMessage = 'For security reasons, please sign out and sign back in before deleting your account.';
+              } else if (error?.message) {
+                errorMessage = error.message;
+              }
+
+              Alert.alert('Error', errorMessage);
+            } finally {
+              setDeletingAccount(false);
+            }
           },
         },
       ],
@@ -369,7 +349,7 @@ const ProfileScreen = () => {
         <View style={styles.content}>
         {/* Profile Avatar Section */}
         <View style={[styles.avatarSection, {backgroundColor: colors.surface}]}>
-          <View style={styles.avatarTouchable}>
+          <View style={styles.avatarWrapper}>
             <View style={[styles.avatarContainer, {backgroundColor: colors.surfaceSecondary}]}>
               {uploadingImage ? (
                 <View style={[styles.avatarLoadingContainer, {backgroundColor: colors.surfaceSecondary}]}>
@@ -387,34 +367,18 @@ const ProfileScreen = () => {
               ) : (
                 <Icon name="account-circle" size={100} color={colors.primary} />
               )}
-              {!uploadingImage && photoURL && (
-                <TouchableOpacity
-                  onPress={handleImagePicker}
-                  style={[styles.cameraIconOverlay, {backgroundColor: colors.primary}]}
-                  activeOpacity={0.8}>
-                  <Icon name="camera-alt" size={24} color="#FFFFFF" />
-                </TouchableOpacity>
-              )}
-              {!uploadingImage && !photoURL && (
-                <TouchableOpacity
-                  onPress={handleImagePicker}
-                  style={[styles.cameraIconOverlay, {backgroundColor: colors.primary}]}
-                  activeOpacity={0.8}>
-                  <Icon name="camera-alt" size={24} color="#FFFFFF" />
-                </TouchableOpacity>
-              )}
             </View>
+            {!uploadingImage && (
+              <TouchableOpacity
+                onPress={handleImagePicker}
+                style={[styles.cameraIconOverlay, {backgroundColor: colors.primary}]}
+                activeOpacity={0.8}>
+                <Icon name="camera-alt" size={18} color="#FFFFFF" />
+              </TouchableOpacity>
+            )}
           </View>
           <Text style={[styles.userName, {color: colors.text}]}>{displayName}</Text>
           <Text style={[styles.userEmail, {color: colors.textSecondary}]}>{email}</Text>
-          <TouchableOpacity
-            onPress={handleImagePicker}
-            disabled={uploadingImage}
-            style={styles.changePhotoButton}>
-            <Text style={[styles.changePhotoText, {color: colors.primary}]}>
-              {uploadingImage ? 'Uploading...' : photoURL ? 'Change Photo' : 'Upload Photo'}
-            </Text>
-          </TouchableOpacity>
         </View>
 
         {/* Profile Information */}
@@ -543,7 +507,9 @@ const ProfileScreen = () => {
             {!deletingAccount && <Icon name="chevron-right" size={24} color={colors.textSecondary} />}
           </TouchableOpacity>
 
-          <TouchableOpacity style={[styles.settingsItem, {borderBottomColor: colors.border}]}>
+          <TouchableOpacity
+            style={[styles.settingsItem, {borderBottomColor: colors.border}]}
+            onPress={() => Linking.openSettings()}>
             <Icon name="notifications" size={24} color={colors.primary} />
             <Text style={[styles.settingsText, {color: colors.text}]}>Notification Settings</Text>
             <Icon name="chevron-right" size={24} color={colors.textSecondary} />
@@ -631,15 +597,17 @@ const styles = StyleSheet.create({
     padding: 24,
     marginBottom: 16,
   },
-  avatarTouchable: {
+  avatarWrapper: {
+    width: 100,
+    height: 100,
     marginBottom: 16,
+    position: 'relative',
   },
   avatarContainer: {
     width: 100,
     height: 100,
     borderRadius: 50,
     overflow: 'hidden',
-    position: 'relative',
     alignSelf: 'center',
   },
   avatarImage: {
@@ -657,12 +625,12 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     right: 0,
-    borderRadius: 20,
-    width: 36,
-    height: 36,
+    borderRadius: 16,
+    width: 32,
+    height: 32,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 3,
+    borderWidth: 2,
     borderColor: '#FFFFFF',
     zIndex: 1,
   },
