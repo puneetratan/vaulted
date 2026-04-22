@@ -569,6 +569,7 @@ const EditItemScreen = () => {
                         }
                         mode="date"
                         display="spinner"
+                        textColor="#FFFFFF"
                         onChange={(_: DateTimePickerEvent, selectedDate?: Date) => {
                           if (selectedDate) {
                             setReleaseDatePickerValue(selectedDate);

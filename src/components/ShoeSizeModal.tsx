@@ -41,7 +41,6 @@ const ShoeSizeModal = ({
             value={shoeSize}
             onChangeText={onShoeSizeChange}
             keyboardType="decimal-pad"
-            autoFocus={true}
           />
           <TouchableOpacity style={styles.submitButton} onPress={onSubmit}>
             <Text style={styles.submitButtonText}>Continue</Text>

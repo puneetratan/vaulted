@@ -306,8 +306,10 @@ const styles = StyleSheet.create({
   savingsBadge: {
     backgroundColor: '#34C759',
     borderRadius: 6,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    marginLeft: 6,
+    marginRight: 8,
   },
   savingsText: {
     color: '#FFF',

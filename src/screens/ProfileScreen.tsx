@@ -509,7 +509,15 @@ const ProfileScreen = () => {
 
           <TouchableOpacity
             style={[styles.settingsItem, {borderBottomColor: colors.border}]}
-            onPress={() => Linking.openSettings()}>
+            onPress={() => {
+              if (Platform.OS === 'android') {
+                Linking.sendIntent('android.settings.APP_NOTIFICATION_SETTINGS', [
+                  {key: 'android.provider.extra.APP_PACKAGE', value: 'com.vault.dev'},
+                ]).catch(() => Linking.openSettings());
+              } else {
+                Linking.openSettings();
+              }
+            }}>
             <Icon name="notifications" size={24} color={colors.primary} />
             <Text style={[styles.settingsText, {color: colors.text}]}>Notification Settings</Text>
             <Icon name="chevron-right" size={24} color={colors.textSecondary} />
