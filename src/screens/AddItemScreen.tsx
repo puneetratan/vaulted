@@ -52,6 +52,7 @@ const AddItemScreen = () => {
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const [quantityModalVisible, setQuantityModalVisible] = useState(false);
+  const [tooltip, setTooltip] = useState<'silhouette' | 'styleId' | null>(null);
 
   // Fetch product details when barcode is received via route params
   useEffect(() => {
@@ -455,7 +456,7 @@ const AddItemScreen = () => {
           <View style={componentStyles.inputGroup}>
             <View style={componentStyles.labelRow}>
               <Text style={[componentStyles.label, {color: colors.text}]}>Silhouette *</Text>
-              <TouchableOpacity>
+              <TouchableOpacity onPress={() => setTooltip('silhouette')}>
                 <Icon name="info" size={18} color={colors.primary} />
               </TouchableOpacity>
             </View>
@@ -471,7 +472,7 @@ const AddItemScreen = () => {
           <View style={componentStyles.inputGroup}>
             <View style={componentStyles.labelRow}>
               <Text style={[componentStyles.label, {color: colors.text}]}>Style ID</Text>
-              <TouchableOpacity>
+              <TouchableOpacity onPress={() => setTooltip('styleId')}>
                 <Icon name="info" size={18} color={colors.primary} />
               </TouchableOpacity>
             </View>
@@ -724,6 +725,24 @@ const AddItemScreen = () => {
           <Text style={[componentStyles.removeButtonText, {color: colors.text}]}>Cancel</Text>
         </TouchableOpacity>
       </View>
+
+      <Modal visible={tooltip !== null} transparent animationType="fade">
+        <Pressable style={tooltipStyles.overlay} onPress={() => setTooltip(null)}>
+          <View style={[tooltipStyles.card, {backgroundColor: colors.surface}]}>
+            <Text style={[tooltipStyles.title, {color: colors.text}]}>
+              {tooltip === 'silhouette' ? 'Silhouette' : 'Style ID'}
+            </Text>
+            <Text style={[tooltipStyles.body, {color: colors.textSecondary}]}>
+              {tooltip === 'silhouette'
+                ? 'The overall shape and structure of a shoe—the base model that stays recognizable across colors and materials. Example: the Nike Air Force 1 low-top silhouette.'
+                : 'A unique code used to identify a specific sneaker version, including its model, colorway, and release. Example: Nike Dunk Low Panda Style ID DD1391-100.'}
+            </Text>
+            <TouchableOpacity style={tooltipStyles.dismiss} onPress={() => setTooltip(null)}>
+              <Text style={[tooltipStyles.dismissText, {color: colors.primary}]}>Got it</Text>
+            </TouchableOpacity>
+          </View>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   );
 };

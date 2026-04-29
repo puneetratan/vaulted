@@ -286,7 +286,7 @@ const AddItemOptions = ({
     },
     {
       id: 'image',
-      title: 'Image Upload',
+      title: 'Upload Image(s) ',
       icon: 'image',
       onPress: handleImageUpload,
       color: '#FF9500',
