@@ -231,7 +231,7 @@ const EditItemScreen = () => {
       if (finalImageUrl) {
         setImageUrl(finalImageUrl);
       }
-      Alert.alert('Success', "Update saved — your Vault's looking fresh.", [
+      Alert.alert('Success', "Update saved — your vault's looking fresh.", [
         {text: 'OK', onPress: () => navigation.goBack()},
       ]);
     } catch (error: any) {

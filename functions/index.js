@@ -73,7 +73,6 @@ exports.exportInventoryToExcel = functions.runWith({ secrets: ["SMTP_USER", "SMT
     sheet.columns = [
       { header: "Brand", key: "brand", width: 15 },
       { header: "Silhouette", key: "silhouette", width: 25 },
-      { header: "Name", key: "name", width: 35 },
       { header: "Size", key: "size", width: 5 },
       { header: "Color", key: "color", width: 20 },
       { header: "Quantity", key: "quantity", width: 10 },
@@ -84,7 +83,6 @@ exports.exportInventoryToExcel = functions.runWith({ secrets: ["SMTP_USER", "SMT
     for (const doc of snapshot.docs) {
       const item = doc.data();
       const {
-        name,
         size,
         color,
         quantity,
@@ -105,7 +103,6 @@ exports.exportInventoryToExcel = functions.runWith({ secrets: ["SMTP_USER", "SMT
       const row = sheet.addRow({
         brand,
         silhouette,
-        name,
         size,
         color,
         quantity,

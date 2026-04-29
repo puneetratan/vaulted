@@ -108,12 +108,11 @@ const PrivacyPolicyScreen = () => {
         </View>
 
         <View style={[styles.section, {backgroundColor: colors.surface}]}>
-          <Text style={[styles.sectionTitle, {color: colors.text}]}>8. Contact Us</Text>
+          <Text style={[styles.sectionTitle, {color: colors.text}]}>8. Contact Information</Text>
           <Text style={[styles.sectionText, {color: colors.textSecondary}]}>
             If you have questions or concerns about this Privacy Policy, please contact us at:
           </Text>
-          <Text style={[styles.contactInfo, {color: colors.primary}]}>Email: privacy@vaulted-app.com</Text>
-          <Text style={[styles.contactInfo, {color: colors.primary}]}>Address: 123 App Street, Tech City, TC 12345</Text>
+          <Text style={[styles.contactInfo, {color: colors.primary}]}>Email: support@vaulted-app.com</Text>
         </View>
       </ScrollView>
     </SafeAreaView>

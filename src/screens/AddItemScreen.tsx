@@ -363,7 +363,7 @@ const AddItemScreen = () => {
 
       Alert.alert(
         'Success',
-        "Update saved — your Vault's looking fresh.",
+        "Update saved — your vault's looking fresh.",
         [
           {
             text: 'OK',

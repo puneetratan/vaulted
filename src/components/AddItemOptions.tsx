@@ -206,7 +206,7 @@ const AddItemOptions = ({
         return;
       }
 
-      Alert.alert('Upload Complete', `${uploadedUris.length} image(s) uploaded and sent for analysis.`);
+      Alert.alert('Success', "Update saved — your vault's looking fresh!");
     }
   };
 
