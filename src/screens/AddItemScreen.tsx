@@ -944,5 +944,37 @@ const styles = (colors: any) => StyleSheet.create({
   },
 });
 
+const tooltipStyles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  card: {
+    width: '100%',
+    borderRadius: 16,
+    padding: 24,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 12,
+  },
+  body: {
+    fontSize: 14,
+    lineHeight: 22,
+    marginBottom: 20,
+  },
+  dismiss: {
+    alignSelf: 'flex-end',
+  },
+  dismissText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+});
+
 export default AddItemScreen;
 

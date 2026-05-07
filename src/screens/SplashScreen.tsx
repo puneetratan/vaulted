@@ -35,17 +35,18 @@ const SplashScreen = () => {
       <Video
         source={require('../assets/images/Logo-Ani.mp4')}
         style={styles.video}
-        resizeMode="contain"
+        resizeMode="cover"
         repeat={false}
-        muted={false}
+        muted={true}
         controls={false}
         paused={false}
         onEnd={goNext}
+        onLoad={() => console.log('[SplashScreen] video loaded')}
         onError={(e: any) => {
           console.log('[SplashScreen] video error:', JSON.stringify(e));
           goNext();
         }}
-        ignoreSilentSwitch="ignore"
+        ignoreSilentSwitch="obey"
         playInBackground={false}
         playWhenInactive={false}
       />

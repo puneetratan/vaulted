@@ -78,7 +78,7 @@ const PaywallScreen = () => {
   const headerMessage =
     reason === 'export'
       ? 'Export requires a Vaulted Premium subscription.'
-      : `Free accounts are limited to ${FREE_TIER_ITEM_LIMIT} items.`;
+      : `Free accounts are limited to ${FREE_TIER_ITEM_LIMIT} items in your vault.`;
 
   return (
     <SafeAreaView
@@ -149,12 +149,14 @@ const PaywallScreen = () => {
                     </View>
                   )}
                 </View>
-                <Text style={[styles.planPrice, {color: colors.text}]}>
-                  {plan.price}
+                <View style={styles.planPriceRow}>
+                  <Text style={[styles.planPrice, {color: colors.text}]}>
+                    {plan.price}
+                  </Text>
                   <Text style={[styles.planPeriod, {color: colors.textSecondary}]}>
                     {plan.period}
                   </Text>
-                </Text>
+                </View>
                 {selected && (
                   <Icon
                     name="check-circle"
@@ -315,6 +317,11 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontSize: 11,
     fontWeight: '700',
+  },
+  planPriceRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 2,
   },
   planPrice: {
     fontSize: 18,

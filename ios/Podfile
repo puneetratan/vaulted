@@ -85,6 +85,11 @@ target 'VaultTemp' do
         config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17'
         config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
         config.build_settings['CLANG_CXX_LIBRARY'] = 'libc++'
+        # Global fix for Clang 21 (Xcode 26) segfaults across all C++ pod targets
+        config.build_settings['GCC_OPTIMIZATION_LEVEL'] = '0'
+        config.build_settings['OTHER_CPLUSPLUSFLAGS'] = '$(inherited) -O0 -Wno-error'
+        config.build_settings['OTHER_CFLAGS'] = '$(inherited) -O0 -Wno-error'
+        config.build_settings['COMPILER_INDEX_STORE_ENABLE'] = 'NO'
         
         # Fix for non-modular header errors with use_frameworks!
         # Allow non-modular includes for React Native and related pods
@@ -134,8 +139,11 @@ target 'VaultTemp' do
           config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17'
           config.build_settings['CLANG_CXX_LIBRARY'] = 'libc++'
           config.build_settings['CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER'] = 'NO'
-          # Fix clang segfault (Segmentation fault: 11) on these targets with newer Xcode
+          # Fix clang segfault (Segmentation fault: 11) with Xcode 26 / Clang 21
           config.build_settings['GCC_OPTIMIZATION_LEVEL'] = '0'
+          config.build_settings['OTHER_CPLUSPLUSFLAGS'] = '$(inherited) -O0 -Wno-error'
+          config.build_settings['OTHER_CFLAGS'] = '$(inherited) -O0 -Wno-error'
+          config.build_settings['COMPILER_INDEX_STORE_ENABLE'] = 'NO'
         end
 
         # Add abseil header search paths so gRPC-Core can find absl/log/check.h etc.

@@ -267,23 +267,25 @@ const DashboardTabs = ({
       return shoes;
     }
 
+    const norm = (s: string | undefined | null) => (s ?? '').trim().toLowerCase();
+
     return shoes.filter((shoe) => {
-      if (filters.brands.length > 0 && !filters.brands.includes(shoe.brand)) {
+      if (filters.brands.length > 0 && !filters.brands.some(b => norm(b) === norm(shoe.brand))) {
         return false;
       }
-      if (filters.silhouettes && filters.silhouettes.length > 0 && !filters.silhouettes.includes(shoe.silhouette)) {
+      if (filters.silhouettes && filters.silhouettes.length > 0 && !filters.silhouettes.some(s => norm(s) === norm(shoe.silhouette))) {
         return false;
       }
-      if (filters.sizes && filters.sizes.length > 0 && !filters.sizes.includes(shoe.size)) {
+      if (filters.sizes && filters.sizes.length > 0 && !filters.sizes.some(s => norm(s) === norm(shoe.size))) {
         return false;
       }
       if (filters.sources.length > 0) {
         const shoeSource = shoe.source || 'manual';
-        if (!filters.sources.includes(shoeSource)) {
+        if (!filters.sources.some(s => norm(s) === norm(shoeSource))) {
           return false;
         }
       }
-      if (filters.colors.length > 0 && !filters.colors.includes(shoe.color)) {
+      if (filters.colors.length > 0 && !filters.colors.some(c => norm(c) === norm(shoe.color))) {
         return false;
       }
       if (filters.priceRange) {
@@ -344,7 +346,7 @@ const DashboardTabs = ({
     
     // Apply brand filter
     if (selectedBrand !== 'All') {
-      result = result.filter(shoe => shoe.brand === selectedBrand);
+      result = result.filter(shoe => (shoe.brand ?? '').trim().toLowerCase() === selectedBrand.trim().toLowerCase());
     }
     
     // Apply search query
@@ -501,11 +503,14 @@ const DashboardTabs = ({
       }
       return (
         <View style={s.emptyStateContainer}>
-          <Image
-            source={require('../assets/images/app_logo.png')}
-            style={s.emptyStateLogo}
-            resizeMode="contain"
-          />
+          <View style={s.emptyStateLogoWrapper}>
+            <Image
+              source={require('../assets/images/app_logo.png')}
+              style={s.emptyStateLogo}
+              resizeMode="contain"
+            />
+            <Text style={s.emptyStateLogoText}>VAULTED</Text>
+          </View>
           <Text style={s.emptyStateTitle}>Update Your Vault</Text>
           <Text style={s.emptyStateSubtitle}>
             Take a photo of your first item to begin organizing your collection.
@@ -718,10 +723,20 @@ const styles = (colors: any) => StyleSheet.create({
     paddingVertical: 60,
     minHeight: SCREEN_HEIGHT * 0.5,
   },
-  emptyStateLogo: {
-    width: 240,
-    height: 240,
+  emptyStateLogoWrapper: {
+    alignItems: 'center',
     marginBottom: 32,
+  },
+  emptyStateLogo: {
+    width: 180,
+    height: 180,
+    marginBottom: -10,
+  },
+  emptyStateLogoText: {
+    fontSize: 24,
+    fontWeight: '700' as const,
+    color: colors.text,
+    letterSpacing: 2,
   },
   emptyStateTitle: {
     fontSize: 24,
