@@ -9,6 +9,7 @@ const ExcelJS = require("exceljs");
 const nodemailer = require("nodemailer");
 const OpenAI = require("openai");
 const {google} = require("googleapis");
+const sharp = require("sharp");
 
 // ---------------------------------------------------------------------------
 // Subscription constants
@@ -33,7 +34,7 @@ const fetch = (...args) => import("node-fetch").then(({ default: f }) => f(...ar
 admin.initializeApp();
 const db = admin.firestore();
 
-exports.exportInventoryToExcel = functions.runWith({ secrets: ["SMTP_USER", "SMTP_PASS"] }).https.onCall(async (data, context) => {
+exports.exportInventoryToExcel = functions.runWith({ secrets: ["SMTP_USER", "SMTP_PASS"], memory: "512MB" }).https.onCall(async (data, context) => {
   const uid = context.auth?.uid;
   const tokenEmail = context.auth?.token?.email;
   const isRelayEmail = !!(tokenEmail && tokenEmail.endsWith("@privaterelay.appleid.com"));
@@ -116,23 +117,15 @@ exports.exportInventoryToExcel = functions.runWith({ secrets: ["SMTP_USER", "SMT
       // ✅ fixed variable name
       if (imageUrl && imageUrl.startsWith("https")) {
         try {
-          let imageDownloadUrl = imageUrl;
-          // if (imageDownloadUrl.includes('.firebasestorage.app')) {
-          //   imageDownloadUrl = imageDownloadUrl.replace(
-          //     '.firebasestorage.app',
-          //     '.appspot.com'
-          //   );
-          // }
-          console.log('Image Download URL:', imageDownloadUrl);
-          const response = await fetch(imageDownloadUrl);
-          const buffer = Buffer.from(await response.arrayBuffer());
+          const response = await fetch(imageUrl);
+          const rawBuffer = Buffer.from(await response.arrayBuffer());
+          const thumbBuffer = await sharp(rawBuffer)
+            .resize(80, 80, { fit: "cover" })
+            .jpeg({ quality: 70 })
+            .toBuffer();
 
-          console.log('Fetching image-1:', imageDownloadUrl);
-          console.log('Response status-2:', response.status);
-          console.log('Content-Type-3:', response.headers.get('content-type'));
-            
           const imageId = workbook.addImage({
-            buffer,
+            buffer: thumbBuffer,
             extension: "jpeg",
           });
 
@@ -142,9 +135,8 @@ exports.exportInventoryToExcel = functions.runWith({ secrets: ["SMTP_USER", "SMT
           });
 
           sheet.getRow(rowIndex).height = 40;
-          
         } catch (err) {
-          console.warn(`Image fetch failed for ${name}:`, err.message);
+          console.warn(`Image fetch failed:`, err.message);
         }
       }
     }

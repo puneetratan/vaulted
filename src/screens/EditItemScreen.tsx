@@ -86,6 +86,7 @@ const EditItemScreen = () => {
   const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [quantityModalVisible, setQuantityModalVisible] = useState(false);
+  const [tooltip, setTooltip] = useState<'silhouette' | 'styleId' | null>(null);
   const [releaseDatePickerVisible, setReleaseDatePickerVisible] = useState(false);
   const [releaseDatePickerValue, setReleaseDatePickerValue] = useState<Date | null>(
     item?.releaseDate ? new Date(item.releaseDate) : null,
@@ -393,7 +394,7 @@ const EditItemScreen = () => {
           <View style={styles.field}>
             <View style={styles.labelRow}>
               <Text style={styles.label}>Silhouette *</Text>
-              <TouchableOpacity>
+              <TouchableOpacity onPress={() => setTooltip('silhouette')}>
                 <Icon name="info" size={18} color="#34C759" />
               </TouchableOpacity>
             </View>
@@ -409,7 +410,7 @@ const EditItemScreen = () => {
           <View style={styles.field}>
             <View style={styles.labelRow}>
               <Text style={styles.label}>Style ID</Text>
-              <TouchableOpacity>
+              <TouchableOpacity onPress={() => setTooltip('styleId')}>
                 <Icon name="info" size={18} color="#34C759" />
               </TouchableOpacity>
             </View>
@@ -662,9 +663,62 @@ const EditItemScreen = () => {
           <Text style={styles.removeButtonText}>Cancel</Text>
         </TouchableOpacity>
       </View>
+      <Modal visible={tooltip !== null} transparent animationType="fade">
+        <Pressable style={tooltipStyles.overlay} onPress={() => setTooltip(null)}>
+          <View style={tooltipStyles.card}>
+            <Text style={tooltipStyles.title}>
+              {tooltip === 'silhouette' ? 'Silhouette' : 'Style ID'}
+            </Text>
+            <Text style={tooltipStyles.body}>
+              {tooltip === 'silhouette'
+                ? 'The overall shape and structure of a shoe—the base model that stays recognizable across colors and materials. Example: the Nike Air Force 1 low-top silhouette.'
+                : 'A unique code used to identify a specific sneaker version, including its model, colorway, and release. Example: Nike Dunk Low Panda Style ID DD1391-100.'}
+            </Text>
+            <TouchableOpacity style={tooltipStyles.dismiss} onPress={() => setTooltip(null)}>
+              <Text style={tooltipStyles.dismissText}>Got it</Text>
+            </TouchableOpacity>
+          </View>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   );
 };
+
+const tooltipStyles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  card: {
+    width: '100%',
+    borderRadius: 16,
+    padding: 24,
+    backgroundColor: '#1C1C1E',
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 12,
+    color: '#FFFFFF',
+  },
+  body: {
+    fontSize: 14,
+    lineHeight: 22,
+    marginBottom: 20,
+    color: '#8E8E93',
+  },
+  dismiss: {
+    alignSelf: 'flex-end',
+  },
+  dismissText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#34C759',
+  },
+});
 
 const styles = StyleSheet.create({
   container: {
