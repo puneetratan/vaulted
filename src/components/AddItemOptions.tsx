@@ -211,31 +211,33 @@ const AddItemOptions = ({
   };
 
   const handleImageUpload = () => {
-    onClose();
     if (!user?.uid) {
       Alert.alert('Error', 'You must be logged in to upload images.');
       return;
     }
 
-    launchImageLibrary(
-      {
-        mediaType: 'photo',
-        quality: 0.8,
-        selectionLimit: 10,
-      },
-      async (response: ImagePickerResponse) => {
-        if (response.didCancel) {
-          return;
-        }
-        if (response.errorMessage) {
-          Alert.alert('Error', response.errorMessage);
-          return;
-        }
-        if (response.assets && response.assets.length > 0) {
-          await uploadImagesAndAnalyze(response.assets);
-        }
-      },
-    );
+    onClose();
+    setTimeout(() => {
+      launchImageLibrary(
+        {
+          mediaType: 'photo',
+          quality: 0.8,
+          selectionLimit: 10,
+        },
+        async (response: ImagePickerResponse) => {
+          if (response.didCancel) {
+            return;
+          }
+          if (response.errorMessage) {
+            Alert.alert('Error', response.errorMessage);
+            return;
+          }
+          if (response.assets && response.assets.length > 0) {
+            await uploadImagesAndAnalyze(response.assets);
+          }
+        },
+      );
+    }, 300);
   };
 
   const handleCameraCapture = () => {

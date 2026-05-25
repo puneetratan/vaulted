@@ -421,14 +421,13 @@ exports.analyzeShoeMetadata = functions.runWith({ secrets: ["OPENAI_API_KEY"] })
 });
 
 /**
- * Lookup product details by barcode using BarcodeSpider API
+ * Lookup product details by barcode using Go-UPC API
  * @param {string} data.barcode - The barcode/UPC to lookup
- * @returns {Object} Product information including title, brand, model, image, etc.
+ * @returns {Object} Product information including title, brand, image, etc.
  */
-exports.lookupbarcode = functions.runWith({ secrets: ["BARCODE_SPIDER_TOKEN"] }).https.onCall(async (data, context) => {
+exports.lookupbarcode = functions.runWith({ secrets: ["GO_UPC_TOKEN"] }).https.onCall(async (data, context) => {
   console.log("🔥 lookupbarcode HIT");
   const uid = context.auth?.uid;
-  console.log('uid =====', uid);
   if (!uid) {
     throw new functions.https.HttpsError("unauthenticated", "User must be logged in.");
   }
@@ -441,9 +440,8 @@ exports.lookupbarcode = functions.runWith({ secrets: ["BARCODE_SPIDER_TOKEN"] })
     );
   }
 
-  // Clean the barcode (remove spaces, dashes)
   const cleanBarcode = barcode.replace(/[\s-]/g, "").trim();
-  
+
   if (cleanBarcode.length < 8) {
     throw new functions.https.HttpsError(
       "invalid-argument",
@@ -451,10 +449,9 @@ exports.lookupbarcode = functions.runWith({ secrets: ["BARCODE_SPIDER_TOKEN"] })
     );
   }
 
-  // Get API token from environment variable
-  const apiToken = process.env.BARCODE_SPIDER_TOKEN;
+  const apiToken = process.env.GO_UPC_TOKEN;
   if (!apiToken) {
-    console.error("BARCODE_SPIDER_TOKEN environment variable is not set");
+    console.error("GO_UPC_TOKEN environment variable is not set");
     throw new functions.https.HttpsError(
       "failed-precondition",
       "Barcode lookup service is not configured. Please contact support."
@@ -462,14 +459,20 @@ exports.lookupbarcode = functions.runWith({ secrets: ["BARCODE_SPIDER_TOKEN"] })
   }
 
   try {
-    const apiUrl = `https://api.barcodespider.com/v1/lookup?token=${apiToken}&upc=${cleanBarcode}`;
-    
+    const apiUrl = `https://go-upc.com/api/v1/code/${cleanBarcode}`;
+
     console.log(`Looking up barcode: ${cleanBarcode}`);
-    
-    const response = await fetch(apiUrl);
-    
+
+    const response = await fetch(apiUrl, {
+      headers: { Authorization: `Bearer ${apiToken}` },
+    });
+
+    if (response.status === 404) {
+      return { success: false, barcode: cleanBarcode, message: "Product not found" };
+    }
+
     if (!response.ok) {
-      console.error(`BarcodeSpider API error: ${response.status} ${response.statusText}`);
+      console.error(`Go-UPC API error: ${response.status} ${response.statusText}`);
       throw new functions.https.HttpsError(
         "internal",
         `Barcode lookup service returned an error: ${response.status}`
@@ -477,23 +480,22 @@ exports.lookupbarcode = functions.runWith({ secrets: ["BARCODE_SPIDER_TOKEN"] })
     }
 
     const apiData = await response.json();
+    console.log({ apiData });
 
-    console.log({apiData});
-    // Check if API returned an error
-    if (apiData.item_response && apiData.item_response.code !== 200) {
-      console.log(`No product found for barcode: ${cleanBarcode}`);
-      return {
-        success: false,
-        barcode: cleanBarcode,
-        message: apiData.item_response.message || "Product not found",
-      };
+    const product = apiData.product;
+    if (!product) {
+      return { success: false, barcode: cleanBarcode, message: "Product not found" };
     }
 
-    // Extract product information from API response
-    const itemAttributes = apiData.item_attributes || {};
-    
+    // Pull spec values (color, size, etc.) from the specs array
+    const specs = Array.isArray(product.specs) ? product.specs : [];
+    const specMap = {};
+    specs.forEach(({ key, value }) => {
+      if (key && value) specMap[key.toLowerCase()] = value;
+    });
+
     // Download and upload image to Firebase Storage if image URL exists
-    let imageUrl = itemAttributes.image || undefined;
+    let imageUrl = product.imageUrl || undefined;
     if (imageUrl) {
       console.log(`📷 Image URL found, uploading to Firebase Storage: ${imageUrl}`);
       const uploadedImageUrl = await downloadAndUploadImageToStorage(imageUrl, uid);
@@ -504,47 +506,39 @@ exports.lookupbarcode = functions.runWith({ secrets: ["BARCODE_SPIDER_TOKEN"] })
         console.warn(`⚠️ Failed to upload image, keeping original URL: ${imageUrl}`);
       }
     }
-    
-    // Map API response to our format
+
+    // Pick lowest store price as retail value estimate
+    const stores = Array.isArray(product.stores) ? product.stores : [];
+    const prices = stores.map((s) => s.price).filter((p) => typeof p === "number" && p > 0);
+    const lowestPrice = prices.length ? Math.min(...prices) : undefined;
+    const highestPrice = prices.length ? Math.max(...prices) : undefined;
+
     const productInfo = {
       success: true,
       barcode: cleanBarcode,
-      name: itemAttributes.title || itemAttributes.description || undefined,
-      brand: itemAttributes.brand || undefined,
-      model: itemAttributes.model || undefined,
-      mpn: itemAttributes.mpn || undefined,
-      manufacturer: itemAttributes.manufacturer || undefined,
-      category: itemAttributes.category || itemAttributes.parent_category || undefined,
-      imageUrl: imageUrl,
-      description: itemAttributes.description || undefined,
-      color: itemAttributes.color || undefined,
-      size: itemAttributes.size || undefined,
-      weight: itemAttributes.weight || undefined,
-      // Extract style ID from model or MPN if available
-      styleId: itemAttributes.mpn || itemAttributes.model || extractStyleId(itemAttributes.title || ""),
-      // Use lowest price as retail value estimate
-      retailValue: itemAttributes.lowest_price 
-        ? parseFloat(itemAttributes.lowest_price) 
-        : undefined,
-      // Store additional info
-      stores: apiData.Stores || [],
-      lowestPrice: itemAttributes.lowest_price ? parseFloat(itemAttributes.lowest_price) : undefined,
-      highestPrice: itemAttributes.highest_price ? parseFloat(itemAttributes.highest_price) : undefined,
-      asin: itemAttributes.asin || undefined,
-      ean: itemAttributes.ean || undefined,
+      name: product.name || product.alias || undefined,
+      brand: product.brand || undefined,
+      category: product.category || undefined,
+      imageUrl,
+      description: product.description || undefined,
+      color: specMap["color"] || specMap["colour"] || undefined,
+      size: specMap["size"] || undefined,
+      styleId: specMap["style"] || specMap["style number"] || specMap["model number"] || extractStyleId(product.name || ""),
+      retailValue: lowestPrice,
+      stores,
+      lowestPrice,
+      highestPrice,
     };
 
     console.log(`Product found for barcode ${cleanBarcode}:`, productInfo.name);
-    
     return productInfo;
   } catch (error) {
     console.error("Error in barcode lookup:", error);
-    
-    // If it's already an HttpsError, re-throw it
+
     if (error instanceof functions.https.HttpsError) {
       throw error;
     }
-    
+
     throw new functions.https.HttpsError(
       "internal",
       `Failed to lookup barcode: ${error.message}`

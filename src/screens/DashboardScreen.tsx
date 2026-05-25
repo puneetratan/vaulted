@@ -460,10 +460,7 @@ const DashboardScreen = () => {
             </TouchableOpacity>
             <Text style={[componentStyles.headerTitle, {color: colors.text}]}>My Vault</Text>
             <View style={componentStyles.headerRight}>
-              <TouchableOpacity style={componentStyles.notificationButton}>
-                <Icon name="notifications" size={28} color={colors.text} />
-              </TouchableOpacity>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[componentStyles.iconButton, componentStyles.iconButtonSpacing]}
                 onPress={handleSearchIconPress}>
                 <Icon name="search" size={28} color={colors.text} />

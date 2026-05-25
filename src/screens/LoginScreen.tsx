@@ -8,7 +8,6 @@ import {
   Alert,
   ImageBackground,
   ActivityIndicator,
-  Image,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import Svg, {Path} from 'react-native-svg';
@@ -16,6 +15,7 @@ import {useNavigation} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {RootStackParamList} from '../navigation/AppNavigator';
 import {useAuth} from '../contexts/AuthContext';
+import VaultedLogo from '../components/VaultedLogo';
 
 type LoginScreenNavigationProp = StackNavigationProp<
   RootStackParamList,
@@ -90,11 +90,7 @@ const LoginScreen = () => {
         <View style={styles.overlay}>
           {/* Logo and Branding Section */}
           <View style={styles.brandingSection}>
-            <Image
-              source={require('../assets/images/Logo.png')}
-              style={styles.logo}
-              resizeMode="contain"
-            />
+            <VaultedLogo width={176} height={172} />
           </View>
 
           {/* Buttons Section */}

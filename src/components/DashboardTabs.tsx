@@ -1,5 +1,5 @@
 import React, {useState, useMemo, useCallback, useEffect} from 'react';
-import {View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, ActivityIndicator, Alert, FlatList, Dimensions} from 'react-native';
+import {View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Alert, FlatList, Dimensions} from 'react-native';
 import FastImage from 'react-native-fast-image';
 
 const {height: SCREEN_HEIGHT} = Dimensions.get('window');
@@ -10,6 +10,7 @@ import {RootStackParamList} from '../navigation/AppNavigator';
 import {getInventoryItemsPage, InventoryItem} from '../services/inventoryService';
 import {FilterOptions} from './FilterModal';
 import {useTheme} from '../contexts/ThemeContext';
+import VaultedLogo from './VaultedLogo';
 
 type DashboardTabsNavigationProp = StackNavigationProp<RootStackParamList>;
 
@@ -504,12 +505,7 @@ const DashboardTabs = ({
       return (
         <View style={s.emptyStateContainer}>
           <View style={s.emptyStateLogoWrapper}>
-            <Image
-              source={require('../assets/images/app_logo.png')}
-              style={s.emptyStateLogo}
-              resizeMode="contain"
-            />
-            <Text style={s.emptyStateLogoText}>VAULTED</Text>
+            <VaultedLogo width={176} height={172} />
           </View>
           <Text style={s.emptyStateTitle}>Update Your Vault</Text>
           <Text style={s.emptyStateSubtitle}>
@@ -585,7 +581,7 @@ const DashboardTabs = ({
                         componentStyles.brandFilterButtonText,
                         selectedBrand === brand && componentStyles.brandFilterButtonTextActive,
                       ]}>
-                      {brand === 'Nike' ? 'Airforce' : brand}
+                      {brand}
                     </Text>
                   </TouchableOpacity>
                 ))}
