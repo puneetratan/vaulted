@@ -420,13 +420,37 @@ exports.analyzeShoeMetadata = functions.runWith({ secrets: ["OPENAI_API_KEY"] })
   }
 });
 
-/**
- * Lookup product details by barcode using Go-UPC API
- * @param {string} data.barcode - The barcode/UPC to lookup
- * @returns {Object} Product information including title, brand, image, etc.
- */
-exports.lookupbarcode = functions.runWith({ secrets: ["GO_UPC_TOKEN"] }).https.onCall(async (data, context) => {
-  console.log("🔥 lookupbarcode HIT");
+// StockX OAuth token cache (reused across warm function instances)
+let _stockxToken = null;
+let _stockxTokenExpiry = 0;
+
+async function getStockXToken() {
+  if (_stockxToken && Date.now() < _stockxTokenExpiry) {
+    return _stockxToken;
+  }
+  const res = await fetch("https://accounts.stockx.com/oauth/token", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+      client_id: process.env.STOCKX_CLIENT_ID?.trim(),
+      client_secret: process.env.STOCKX_CLIENT_SECRET_ID?.trim(),
+      audience: "https://api.stockx.com",
+      grant_type: "client_credentials",
+    }),
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`StockX auth failed ${res.status}: ${body}`);
+  }
+  const json = await res.json();
+  _stockxToken = json.access_token;
+  // Expire 60s early to avoid edge expiry issues
+  _stockxTokenExpiry = Date.now() + (json.expires_in - 60) * 1000;
+  return _stockxToken;
+}
+
+exports.lookupbarcode = functions.runWith({secrets: ["STOCKX_CLIENT_ID", "STOCKX_CLIENT_SECRET_ID", "STOCKX_API_KEY"]}).https.onCall(async (data, context) => {
+  console.log("🔥 lookupbarcode (StockX) HIT");
   const uid = context.auth?.uid;
   if (!uid) {
     throw new functions.https.HttpsError("unauthenticated", "User must be logged in.");
@@ -434,115 +458,101 @@ exports.lookupbarcode = functions.runWith({ secrets: ["GO_UPC_TOKEN"] }).https.o
 
   const barcode = data?.barcode;
   if (!barcode || typeof barcode !== "string" || barcode.trim().length === 0) {
-    throw new functions.https.HttpsError(
-      "invalid-argument",
-      "Barcode is required and must be a non-empty string."
-    );
+    throw new functions.https.HttpsError("invalid-argument", "Barcode is required and must be a non-empty string.");
   }
 
   const cleanBarcode = barcode.replace(/[\s-]/g, "").trim();
-
   if (cleanBarcode.length < 8) {
-    throw new functions.https.HttpsError(
-      "invalid-argument",
-      "Invalid barcode format. Barcode must be at least 8 characters."
-    );
-  }
-
-  const apiToken = process.env.GO_UPC_TOKEN;
-  if (!apiToken) {
-    console.error("GO_UPC_TOKEN environment variable is not set");
-    throw new functions.https.HttpsError(
-      "failed-precondition",
-      "Barcode lookup service is not configured. Please contact support."
-    );
+    throw new functions.https.HttpsError("invalid-argument", "Invalid barcode format. Barcode must be at least 8 characters.");
   }
 
   try {
-    const apiUrl = `https://go-upc.com/api/v1/code/${cleanBarcode}`;
+    const apiKey = process.env.STOCKX_API_KEY?.trim();
 
-    console.log(`Looking up barcode: ${cleanBarcode}`);
-
-    const response = await fetch(apiUrl, {
-      headers: { Authorization: `Bearer ${apiToken}` },
-    });
-
-    if (response.status === 404) {
-      return { success: false, barcode: cleanBarcode, message: "Product not found" };
+    let authHeader;
+    try {
+      const token = await getStockXToken();
+      authHeader = `Bearer ${token}`;
+    } catch (authErr) {
+      console.warn("StockX OAuth unavailable:", authErr.message);
     }
 
-    if (!response.ok) {
-      console.error(`Go-UPC API error: ${response.status} ${response.statusText}`);
-      throw new functions.https.HttpsError(
-        "internal",
-        `Barcode lookup service returned an error: ${response.status}`
-      );
-    }
-
-    const apiData = await response.json();
-    console.log({ apiData });
-
-    const product = apiData.product;
-    if (!product) {
-      return { success: false, barcode: cleanBarcode, message: "Product not found" };
-    }
-
-    // Pull spec values (color, size, etc.) from the specs array
-    const specs = Array.isArray(product.specs) ? product.specs : [];
-    const specMap = {};
-    specs.forEach(({ key, value }) => {
-      if (key && value) specMap[key.toLowerCase()] = value;
-    });
-
-    // Download and upload image to Firebase Storage if image URL exists
-    let imageUrl = product.imageUrl || undefined;
-    if (imageUrl) {
-      console.log(`📷 Image URL found, uploading to Firebase Storage: ${imageUrl}`);
-      const uploadedImageUrl = await downloadAndUploadImageToStorage(imageUrl, uid);
-      if (uploadedImageUrl) {
-        imageUrl = uploadedImageUrl;
-        console.log(`✅ Image uploaded to Firebase Storage: ${imageUrl}`);
-      } else {
-        console.warn(`⚠️ Failed to upload image, keeping original URL: ${imageUrl}`);
-      }
-    }
-
-    // Pick lowest store price as retail value estimate
-    const stores = Array.isArray(product.stores) ? product.stores : [];
-    const prices = stores.map((s) => s.price).filter((p) => typeof p === "number" && p > 0);
-    const lowestPrice = prices.length ? Math.min(...prices) : undefined;
-    const highestPrice = prices.length ? Math.max(...prices) : undefined;
-
-    const productInfo = {
-      success: true,
-      barcode: cleanBarcode,
-      name: product.name || product.alias || undefined,
-      brand: product.brand || undefined,
-      category: product.category || undefined,
-      imageUrl,
-      description: product.description || undefined,
-      color: specMap["color"] || specMap["colour"] || undefined,
-      size: specMap["size"] || undefined,
-      styleId: specMap["style"] || specMap["style number"] || specMap["model number"] || extractStyleId(product.name || ""),
-      retailValue: lowestPrice,
-      stores,
-      lowestPrice,
-      highestPrice,
+    const headers = {
+      ...(authHeader ? {"Authorization": authHeader} : {}),
+      "x-api-key": apiKey,
+      "Content-Type": "application/json",
     };
 
-    console.log(`Product found for barcode ${cleanBarcode}:`, productInfo.name);
-    return productInfo;
-  } catch (error) {
-    console.error("Error in barcode lookup:", error);
+    console.log(`Searching StockX for barcode: ${cleanBarcode}`);
+    const searchRes = await fetch(
+      `https://api.stockx.com/v3/catalog/search?query=${encodeURIComponent(cleanBarcode)}&limit=1`,
+      {headers}
+    );
 
-    if (error instanceof functions.https.HttpsError) {
-      throw error;
+    if (!searchRes.ok) {
+      const body = await searchRes.text();
+      console.error(`StockX search error ${searchRes.status}:`, body);
+      throw new functions.https.HttpsError("internal", `StockX search failed: ${searchRes.status}`);
     }
 
-    throw new functions.https.HttpsError(
-      "internal",
-      `Failed to lookup barcode: ${error.message}`
-    );
+    const searchData = await searchRes.json();
+    console.log("StockX search response:", JSON.stringify(searchData));
+
+    const product = searchData?.Products?.[0] || searchData?.products?.[0] || null;
+    if (!product) {
+      await db.collection("missingBarcodes").doc(cleanBarcode).set({
+        barcode: cleanBarcode,
+        scannedBy: uid,
+        scannedAt: admin.firestore.FieldValue.serverTimestamp(),
+        resolved: false,
+        resolvedData: null,
+      }, {merge: true});
+      console.log(`Stored missing barcode: ${cleanBarcode}`);
+      return {success: false, barcode: cleanBarcode, message: "Product not found on StockX"};
+    }
+
+    const productId = product.id || product.productId;
+    let lowestAsk, highestBid, lastSale;
+
+    try {
+      const marketRes = await fetch(
+        `https://api.stockx.com/v3/products/${productId}/market-data`,
+        {headers}
+      );
+      if (marketRes.ok) {
+        const marketData = await marketRes.json();
+        lowestAsk = marketData?.LowestAsk || marketData?.lowestAsk;
+        highestBid = marketData?.HighestBid || marketData?.highestBid;
+        lastSale = marketData?.LastSale || marketData?.lastSale;
+      }
+    } catch (marketErr) {
+      console.warn("StockX market data fetch failed:", marketErr.message);
+    }
+
+    let imageUrl = product.media?.imageUrl || product.imageUrl || undefined;
+    if (imageUrl) {
+      const uploadedUrl = await downloadAndUploadImageToStorage(imageUrl, uid);
+      if (uploadedUrl) imageUrl = uploadedUrl;
+    }
+
+    console.log(`StockX product found for barcode ${cleanBarcode}:`, product.title || product.name);
+    return {
+      success: true,
+      barcode: cleanBarcode,
+      name: product.title || product.name || undefined,
+      brand: product.brand || undefined,
+      styleId: product.styleId || undefined,
+      color: product.colorway || product.color || undefined,
+      imageUrl,
+      retailValue: product.retailPrice || lastSale || undefined,
+      lowestAsk,
+      highestBid,
+      lastSale,
+    };
+  } catch (error) {
+    console.error("Error in StockX barcode lookup:", error);
+    if (error instanceof functions.https.HttpsError) throw error;
+    throw new functions.https.HttpsError("internal", `Failed to lookup barcode: ${error.message}`);
   }
 });
 
@@ -674,7 +684,7 @@ exports.validateGooglePurchase = functions.runWith({secrets: ["GOOGLE_SERVICE_AC
     });
 
     const androidpublisher = google.androidpublisher({version: "v3", auth});
-    const packageName = serviceAccount.project_id || "com.vaultapp"; // fallback
+    const packageName = "com.vaultapp";
     const response = await androidpublisher.purchases.subscriptions.get({
       packageName,
       subscriptionId: productId,

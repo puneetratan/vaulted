@@ -209,9 +209,9 @@ export const SubscriptionProvider: React.FC<{children: React.ReactNode}> = ({
 
         // Load available subscriptions
         const products = await getSubscriptions({skus: ALL_PRODUCT_IDS});
-        console.log('[IAP] Available products:', JSON.stringify(products.map(p => ({id: p.productId, title: p.title}))));
+        console.log('[IAP] Available products full:', JSON.stringify(products, null, 2));
         if (products.length === 0) {
-          console.warn('[IAP] No products returned — check product IDs and App Store Connect status');
+          console.warn('[IAP] No products returned — check product IDs and Play Console status');
         }
         setAvailableProducts(products);
 
@@ -287,7 +287,28 @@ export const SubscriptionProvider: React.FC<{children: React.ReactNode}> = ({
     try {
       console.log('[IAP] Requesting subscription:', productId);
       requestedProductId.current = productId;
-      const result = await requestSubscription({sku: productId});
+
+      let subscriptionRequest: Parameters<typeof requestSubscription>[0] = {sku: productId};
+
+      if (Platform.OS === 'android') {
+        const product = availableProducts.find(p => p.productId === productId) as any;
+        const offerDetails = product?.subscriptionOfferDetails;
+        console.log('[IAP] offerDetails for', productId, ':', JSON.stringify(offerDetails));
+        const offerToken = offerDetails?.[0]?.offerToken;
+        if (!offerToken) {
+          throw new Error(
+            `No offer token for ${productId}. ` +
+            `This app must be installed from the Play Store (internal testing track), ` +
+            `not sideloaded. offerDetails: ${JSON.stringify(offerDetails)}`
+          );
+        }
+        subscriptionRequest = {
+          sku: productId,
+          subscriptionOffers: [{sku: productId, offerToken}],
+        };
+      }
+
+      const result = await requestSubscription(subscriptionRequest);
       // StoreKit 2 returns the purchase directly instead of via the listener
       if (result && typeof result === 'object' && !Array.isArray(result)) {
         const purchase = result as SubscriptionPurchase;
@@ -297,7 +318,18 @@ export const SubscriptionProvider: React.FC<{children: React.ReactNode}> = ({
       }
     } catch (err: any) {
       console.error('[IAP] Subscribe error — code:', err.code, 'message:', err.message);
-      requestedProductId.current = null;
+
+      if (Platform.OS === 'android') {
+        // On Android: only clear requestedProductId for definitive failures.
+        // For other errors, the purchase may still complete via purchaseUpdatedListener.
+        if (err.code === 'E_USER_CANCELLED' || err.code === 'E_DEVELOPER_ERROR' || err.message?.includes('No offer token')) {
+          requestedProductId.current = null;
+        }
+      } else {
+        // On iOS: always clear — StoreKit delivers the purchase directly, not via listener.
+        requestedProductId.current = null;
+      }
+
       if (err.code === 'E_USER_CANCELLED') {
         return;
       }
@@ -315,7 +347,7 @@ export const SubscriptionProvider: React.FC<{children: React.ReactNode}> = ({
           : `${err.code}: ${err?.message || 'Unknown error'}`,
       );
     }
-  }, []);
+  }, [availableProducts]);
 
   // ---------------------------------------------------------------------------
   // Restore Purchases

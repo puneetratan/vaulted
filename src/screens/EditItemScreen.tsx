@@ -17,7 +17,7 @@ import {
 import FastImage from 'react-native-fast-image';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {useNavigation, useRoute, RouteProp} from '@react-navigation/native';
-import {SafeAreaView} from 'react-native-safe-area-context';
+import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
 import {
   launchCamera,
   launchImageLibrary,
@@ -61,6 +61,7 @@ interface ImageAsset {
 }
 
 const EditItemScreen = () => {
+  const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const route = useRoute<RouteProp<{params: RouteParams}, 'params'>>();
   const {user} = useAuth();
@@ -638,7 +639,7 @@ const EditItemScreen = () => {
       </TouchableWithoutFeedback>
 
       {/* Action Buttons */}
-      <View style={styles.actions}>
+      <View style={[styles.actions, {paddingBottom: insets.bottom + 16}]}>
         <TouchableOpacity
           style={[styles.button, styles.submitButton, submitting && styles.buttonDisabled]}
           onPress={handleSubmit}
@@ -908,7 +909,8 @@ const styles = StyleSheet.create({
   },
   actions: {
     flexDirection: 'column',
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingTop: 16,
     backgroundColor: '#000000',
     borderTopWidth: 1,
     borderTopColor: '#2C2C2E',

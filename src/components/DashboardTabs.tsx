@@ -7,7 +7,7 @@ import {useNavigation, useFocusEffect} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {RootStackParamList} from '../navigation/AppNavigator';
-import {getInventoryItemsPage, InventoryItem} from '../services/inventoryService';
+import {getInventoryItemsPage, getTotalItemCount, InventoryItem} from '../services/inventoryService';
 import {FilterOptions} from './FilterModal';
 import {useTheme} from '../contexts/ThemeContext';
 import VaultedLogo from './VaultedLogo';
@@ -255,11 +255,12 @@ const DashboardTabs = ({
     }
   }, [availableBrands, availableColors, availableSilhouettes, availableSizes, availableYears, onAvailableFiltersChange]);
 
-  // Notify parent of item count so it can show/hide footer actions
+  // Notify parent of real total count from Firestore (not just the loaded page)
   useEffect(() => {
-    if (onItemCountChange) {
-      onItemCountChange(allShoes.length);
-    }
+    if (!onItemCountChange) return;
+    getTotalItemCount().then(count => {
+      onItemCountChange(count > 0 ? count : allShoes.length);
+    });
   }, [allShoes.length, onItemCountChange]);
 
   // Apply filters to shoes
@@ -369,7 +370,15 @@ const DashboardTabs = ({
 
   // Calculate counts for summary cards
   const uniqueBrands = useMemo(() => [...new Set(allShoes.map((shoe) => shoe.brand))], [allShoes]);
-  const totalPairs = useMemo(() => allShoes.reduce((sum, shoe) => sum + (shoe.quantity || 1), 0), [allShoes]);
+  // With no brand filter: show item count. With a brand filter: show total quantity for that brand.
+  const totalPairs = useMemo(() => {
+    if (selectedBrand === 'All') {
+      return allShoes.length;
+    }
+    return allShoes
+      .filter(shoe => (shoe.brand ?? '').trim().toLowerCase() === selectedBrand.trim().toLowerCase())
+      .reduce((sum, shoe) => sum + (shoe.quantity || 1), 0);
+  }, [allShoes, selectedBrand]);
   const totalValue = useMemo(
     () => allShoes.reduce((sum, shoe) => sum + (Number(shoe.retailValue || shoe.cost) || 0), 0),
     [allShoes],

@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Alert,
   Modal,
+  Platform,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -53,16 +54,21 @@ const PaywallScreen = () => {
 
   const handleSubscribe = async () => {
     setPurchasing(true);
-    // Safety timeout — never spin forever
-    const timeout = setTimeout(() => setPurchasing(false), 30000);
+    // Safety timeout — clears loader if purchase never completes (e.g. listener doesn't fire)
+    // NOT cleared in finally because on Android requestSubscription returns before the
+    // Google Play sheet is dismissed, so finally fires too early.
+    const timeout = setTimeout(() => setPurchasing(false), 60000);
     try {
       const plan = PRICING[selectedPlan];
       await subscribe(plan.productId);
-      // purchasing stays true — closed by the isSubscribed effect above
+      // On iOS (StoreKit 2) subscribe() resolves with the purchase — clear timeout.
+      // On Android the purchase comes via the listener — keep timeout running.
+      if (Platform.OS === 'ios') {
+        clearTimeout(timeout);
+      }
     } catch {
-      setPurchasing(false);
-    } finally {
       clearTimeout(timeout);
+      setPurchasing(false);
     }
   };
 

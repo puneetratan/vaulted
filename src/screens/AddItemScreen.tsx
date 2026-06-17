@@ -15,7 +15,7 @@ import {
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {useNavigation, useRoute, RouteProp} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
-import {SafeAreaView} from 'react-native-safe-area-context';
+import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
 import {launchImageLibrary, ImagePickerResponse} from 'react-native-image-picker';
 import FastImage from 'react-native-fast-image';
 import {saveInventoryItem} from '../services/inventoryService';
@@ -401,6 +401,7 @@ const AddItemScreen = () => {
   };
 
   const componentStyles = styles(colors);
+  const insets = useSafeAreaInsets();
 
   return (
     <SafeAreaView style={componentStyles.container} edges={['top']}>
@@ -710,7 +711,7 @@ const AddItemScreen = () => {
       </ScrollView>
 
       {/* Save and Cancel Buttons */}
-      <View style={[componentStyles.footer, {backgroundColor: colors.footer, borderTopColor: colors.border}]}>
+      <View style={[componentStyles.footer, {backgroundColor: colors.footer, borderTopColor: colors.border, paddingBottom: insets.bottom + 16}]}>
         <TouchableOpacity
           style={[componentStyles.saveButton, {backgroundColor: colors.success}, loading && componentStyles.saveButtonDisabled]}
           onPress={handleSave}
@@ -916,7 +917,7 @@ const styles = (colors: any) => StyleSheet.create({
   },
   footer: {
     paddingHorizontal: 16,
-    paddingVertical: 16,
+    paddingTop: 16,
     borderTopWidth: 1,
   },
   saveButton: {

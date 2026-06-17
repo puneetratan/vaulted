@@ -12,7 +12,7 @@ import {
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {Platform, PermissionsAndroid} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
-import {SafeAreaView} from 'react-native-safe-area-context';
+import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useAuth} from '../contexts/AuthContext';
 import {useTheme} from '../contexts/ThemeContext';
 import {useSubscription} from '../contexts/SubscriptionContext';
@@ -446,6 +446,7 @@ const DashboardScreen = () => {
   };
 
   const componentStyles = styles(colors);
+  const insets = useSafeAreaInsets();
 
   return (
     <SafeAreaView style={componentStyles.container} edges={['top']}>
@@ -511,7 +512,7 @@ const DashboardScreen = () => {
       </View>
 
       {/* Bottom Footer Tabs */}
-      <View style={componentStyles.bottomActionsContainer}>
+      <View style={[componentStyles.bottomActionsContainer, {paddingBottom: insets.bottom}]}>
         {/* Add Item Button */}
         <TouchableOpacity
           style={componentStyles.addButton}

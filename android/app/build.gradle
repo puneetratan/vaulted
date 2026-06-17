@@ -78,8 +78,8 @@ android {
         applicationId "com.vault.dev"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode 3
+        versionName "1.21.0"
         missingDimensionStrategy 'store', 'play'
         ndk {
             abiFilters "armeabi-v7a", "arm64-v8a"
@@ -96,15 +96,19 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
+        release {
+            storeFile file('release.keystore')
+            storePassword 'Vaulted@2024!'
+            keyAlias 'vaulted-app'
+            keyPassword 'Vaulted@2024!'
+        }
     }
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
         }
         release {
-            // Caution! In production, you need to generate your own keystore file.
-            // see https://reactnative.dev/docs/signed-apk-android.
-            signingConfig signingConfigs.debug
+            signingConfig signingConfigs.release
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
         }

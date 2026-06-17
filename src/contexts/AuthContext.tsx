@@ -66,7 +66,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } catch (googleSignInError: any) {
         console.error("GoogleSignin.signIn() failed:", googleSignInError);
         // Check if it's a network error
-        if (googleSignInError.code === '10' || googleSignInError.message?.includes('network') || googleSignInError.message?.includes('NETWORK')) {
+        if (googleSignInError.code === '10' || googleSignInError.message?.includes('DEVELOPER_ERROR')) {
+          throw new Error("DEVELOPER_ERROR: SHA fingerprint not registered in Firebase Console. Please add the release SHA-1 and SHA-256 to your Firebase project.");
+        }
+        if (googleSignInError.message?.includes('network') || googleSignInError.message?.includes('NETWORK')) {
           throw new Error("NETWORK_ERROR: Unable to connect to Google Sign-In services. Please check your internet connection.");
         }
         throw googleSignInError;

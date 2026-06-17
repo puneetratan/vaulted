@@ -213,6 +213,34 @@ export const getInventoryItems = async (): Promise<InventoryItem[]> => {
   return items;
 };
 
+export const getTotalItemCount = async (): Promise<number> => {
+  try {
+    const user = getAuth().currentUser;
+    if (!user) return 0;
+
+    const firestoreDb = getFirestore();
+    if (!firestoreDb) return 0;
+
+    const isWebSDK = !firestoreDb.collection || typeof firestoreDb.collection !== 'function';
+
+    if (isWebSDK) {
+      const {collection, query, where, getDocs} = require('firebase/firestore');
+      const q = query(collection(firestoreDb, 'inventory'), where('userId', '==', user.uid));
+      const snapshot = await getDocs(q);
+      return snapshot.size;
+    } else {
+      const snapshot = await firestoreDb
+        .collection('inventory')
+        .where('userId', '==', user.uid)
+        .get();
+      return snapshot.size;
+    }
+  } catch (err) {
+    console.warn('[getTotalItemCount] error:', err);
+    return 0;
+  }
+};
+
 // Update existing inventory item
 export const updateInventoryItem = async (
   itemId: string,

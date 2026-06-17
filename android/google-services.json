@@ -31,6 +31,22 @@
           }
         },
         {
+          "client_id": "872715867979-71jug22kcb53uomgbto8dsmm2k2boatv.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.vault.dev",
+            "certificate_hash": "ec22eeecb719f1c64ff28d0f32091598e832d30a"
+          }
+        },
+        {
+          "client_id": "872715867979-l0f2rqaco2ch4vuhhgovj7udqsa1k96v.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.vault.dev",
+            "certificate_hash": "c78346d04cd51ffc2549a1da42dd5b1cbd6abf6e"
+          }
+        },
+        {
           "client_id": "872715867979-rmth3jpbic8jorgksr6i9r6j83vjqpdo.apps.googleusercontent.com",
           "client_type": 3
         }
@@ -48,10 +64,10 @@
               "client_type": 3
             },
             {
-              "client_id": "872715867979-r9b7b05lutnkblrstufbrh00aaqehgb8.apps.googleusercontent.com",
+              "client_id": "872715867979-gqmqscns9e54q6e345p4fvp3tvehecn8.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.vault.dev"
+                "bundle_id": "com.vaulted.dev"
               }
             }
           ]
