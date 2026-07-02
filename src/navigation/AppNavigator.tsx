@@ -33,6 +33,7 @@ const PhotoCaptureScreen = Platform.OS === 'web'
 const PaywallScreen = Platform.OS === 'web'
   ? require('../screens/PaywallScreen.web').default
   : require('../screens/PaywallScreen').default;
+import ImportScreen from '../screens/ImportScreen';
 
 interface ShoeItem {
   id: string;
@@ -65,6 +66,7 @@ export type RootStackParamList = {
   Paywall: {
     reason?: 'limit' | 'export';
   } | undefined;
+  Import: undefined;
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -161,6 +163,11 @@ const AppNavigator = () => {
           name="Paywall"
           component={PaywallScreen}
           options={{headerShown: false, presentation: 'modal'}}
+        />
+        <Stack.Screen
+          name="Import"
+          component={ImportScreen}
+          options={{headerShown: false}}
         />
       </Stack.Navigator>
     </NavigationContainer>

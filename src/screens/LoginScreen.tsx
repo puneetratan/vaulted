@@ -39,9 +39,7 @@ const LoginScreen = () => {
       } else if (error.message?.includes('DEVELOPER_ERROR') || error.code === '10') {
         Alert.alert(
           'Configuration Error',
-          Platform.OS === 'android'
-            ? 'DEVELOPER_ERROR: Please add SHA-1 and SHA-256 fingerprints to Firebase Console.\n\nRun: cd android && ./gradlew signingReport\n\nSee GOOGLE_SIGNIN_FIX.md for details.'
-            : 'DEVELOPER_ERROR: Please check your iOS OAuth client ID in Firebase Console.',
+          `Code: ${error.code}\nMessage: ${error.message}\nOriginal: ${JSON.stringify(error?.userInfo || error?.nativeError || '')}`,
           [{text: 'OK'}]
         );
       } else if (error.code === 'auth/network-request-failed' || error.message?.includes('NETWORK_ERROR') || error.message?.includes('network')) {

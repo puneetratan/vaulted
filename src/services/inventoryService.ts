@@ -241,6 +241,74 @@ export const getTotalItemCount = async (): Promise<number> => {
   }
 };
 
+export const getTotalInventoryStats = async (): Promise<{count: number; totalValue: number; brandCount: number}> => {
+  try {
+    const user = getAuth().currentUser;
+    if (!user) return {count: 0, totalValue: 0, brandCount: 0};
+
+    const firestoreDb = getFirestore();
+    if (!firestoreDb) return {count: 0, totalValue: 0, brandCount: 0};
+
+    const isWebSDK = !firestoreDb.collection || typeof firestoreDb.collection !== 'function';
+
+    let docs: any[] = [];
+    if (isWebSDK) {
+      const {collection, query, where, getDocs} = require('firebase/firestore');
+      const q = query(collection(firestoreDb, 'inventory'), where('userId', '==', user.uid));
+      const snapshot = await getDocs(q);
+      snapshot.forEach((doc: any) => docs.push(doc.data()));
+    } else {
+      const snapshot = await firestoreDb
+        .collection('inventory')
+        .where('userId', '==', user.uid)
+        .get();
+      snapshot.forEach((doc: any) => docs.push(doc.data()));
+    }
+
+    const totalValue = docs.reduce((sum, data) => sum + (Number(data.value || data.retailValue || 0) || 0), 0);
+    const brandCount = new Set(docs.map(d => (d.brand ?? '').trim()).filter(Boolean)).size;
+
+    return {count: docs.length, totalValue, brandCount};
+  } catch (err) {
+    console.warn('[getTotalInventoryStats] error:', err);
+    return {count: 0, totalValue: 0, brandCount: 0};
+  }
+};
+
+export const getBrandStats = async (brand: string): Promise<{count: number; totalValue: number}> => {
+  try {
+    const user = getAuth().currentUser;
+    if (!user) return {count: 0, totalValue: 0};
+
+    const firestoreDb = getFirestore();
+    if (!firestoreDb) return {count: 0, totalValue: 0};
+
+    const isWebSDK = !firestoreDb.collection || typeof firestoreDb.collection !== 'function';
+
+    let docs: any[] = [];
+    if (isWebSDK) {
+      const {collection, query, where, getDocs} = require('firebase/firestore');
+      const q = query(collection(firestoreDb, 'inventory'), where('userId', '==', user.uid), where('brand', '==', brand));
+      const snapshot = await getDocs(q);
+      snapshot.forEach((doc: any) => docs.push(doc.data()));
+    } else {
+      const snapshot = await firestoreDb
+        .collection('inventory')
+        .where('userId', '==', user.uid)
+        .where('brand', '==', brand)
+        .get();
+      snapshot.forEach((doc: any) => docs.push(doc.data()));
+    }
+
+    const count = docs.reduce((sum, data) => sum + (Number(data.quantity) > 0 ? Math.floor(Number(data.quantity)) : 1), 0);
+    const totalValue = docs.reduce((sum, data) => sum + (Number(data.value || data.retailValue || 0) || 0), 0);
+    return {count, totalValue};
+  } catch (err) {
+    console.warn('[getBrandStats] error:', err);
+    return {count: 0, totalValue: 0};
+  }
+};
+
 // Update existing inventory item
 export const updateInventoryItem = async (
   itemId: string,

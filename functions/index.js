@@ -902,6 +902,246 @@ function extractStyleId(title) {
  * @param {string} userId - The user ID to organize the storage path
  * @returns {Promise<string|undefined>} Firebase Storage URL or undefined if upload fails
  */
+// ===========================================================================
+// IMPORT — SHARED HELPERS
+// ===========================================================================
+
+const REQUIRED_COLUMNS = [
+  { key: "brand",      aliases: ["brand"] },
+  { key: "silhouette", aliases: ["silhouette", "model", "name"] },
+  { key: "color",      aliases: ["color", "colorway"] },
+];
+
+const OPTIONAL_COLUMNS = [
+  { key: "styleId",     aliases: ["styleid", "style id", "style"] },
+  { key: "size",        aliases: ["size"] },
+  { key: "quantity",    aliases: ["quantity", "qty"] },
+  { key: "releaseDate", aliases: ["releasedate", "release date", "date"] },
+  { key: "retailValue", aliases: ["retailvalue", "retail value", "retail", "price"] },
+  { key: "imageUrl",    aliases: ["imageurl", "image url", "image"] },
+];
+
+function normalizeHeader(s) {
+  return String(s || "").toLowerCase().replace(/[\s_-]+/g, "");
+}
+
+async function parseWorkbook(buffer, fileName) {
+  const workbook = new ExcelJS.Workbook();
+  const isCSV = fileName.toLowerCase().endsWith(".csv");
+  if (isCSV) {
+    const { Readable } = require("stream");
+    await workbook.csv.read(Readable.from(buffer.toString("utf8")));
+  } else {
+    await workbook.xlsx.load(buffer);
+  }
+  return workbook;
+}
+
+function mapColumns(worksheet) {
+  const headerMap = {};
+  worksheet.getRow(1).eachCell((cell, colNumber) => {
+    const key = normalizeHeader(cell.value);
+    if (key) headerMap[key] = colNumber;
+  });
+
+  const findCol = (aliases) => {
+    for (const a of aliases) {
+      const col = headerMap[normalizeHeader(a)];
+      if (col !== undefined) return col;
+    }
+    return null;
+  };
+
+  const found = {};
+  for (const { key, aliases } of [...REQUIRED_COLUMNS, ...OPTIONAL_COLUMNS]) {
+    found[key] = findCol(aliases);
+  }
+  return { headerMap, found };
+}
+
+// ===========================================================================
+// VALIDATE IMPORT FILE — fast header-only check
+// ===========================================================================
+
+exports.validateImportFile = functions.https.onCall(async (data, context) => {
+  if (!context.auth?.uid) {
+    throw new functions.https.HttpsError("unauthenticated", "Login required.");
+  }
+
+  const { fileContent, fileName } = data;
+  if (!fileContent || !fileName) {
+    throw new functions.https.HttpsError("invalid-argument", "fileContent and fileName are required.");
+  }
+
+  const buffer = Buffer.from(fileContent, "base64");
+  const workbook = await parseWorkbook(buffer, fileName);
+  const worksheet = workbook.worksheets[0];
+
+  if (!worksheet) {
+    return { valid: false, error: "No worksheet found in file." };
+  }
+
+  const { found } = mapColumns(worksheet);
+
+  // Count data rows (excluding header)
+  let rowCount = 0;
+  worksheet.eachRow((_, rowNumber) => { if (rowNumber > 1) rowCount++; });
+
+  const missing = REQUIRED_COLUMNS.filter(c => !found[c.key]).map(c => c.key);
+  const presentRequired = REQUIRED_COLUMNS.filter(c => !!found[c.key]).map(c => c.key);
+  const presentOptional = OPTIONAL_COLUMNS.filter(c => !!found[c.key]).map(c => c.key);
+
+  return {
+    valid: missing.length === 0,
+    rowCount,
+    missing,
+    presentRequired,
+    presentOptional,
+  };
+});
+
+// ===========================================================================
+// IMPORT INVENTORY FUNCTION
+// ===========================================================================
+
+exports.importInventory = functions
+  .runWith({ secrets: ["OPENAI_API_KEY"], memory: "512MB", timeoutSeconds: 540 })
+  .https.onCall(async (data, context) => {
+    const uid = context.auth?.uid;
+    if (!uid) throw new functions.https.HttpsError("unauthenticated", "Login required.");
+
+    const { jobId, fileContent, fileName } = data;
+    if (!jobId || !fileContent || !fileName) {
+      throw new functions.https.HttpsError("invalid-argument", "jobId, fileContent, and fileName are required.");
+    }
+
+    const jobRef = db.collection("importJobs").doc(jobId);
+    await jobRef.set({
+      status: "processing",
+      total: 0,
+      processed: 0,
+      currentItem: "",
+      errors: [],
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    try {
+      const buffer = Buffer.from(fileContent, "base64");
+      const workbook = await parseWorkbook(buffer, fileName);
+      const worksheet = workbook.worksheets[0];
+
+      if (!worksheet) {
+        await jobRef.update({ status: "failed", error: "No worksheet found in file." });
+        throw new functions.https.HttpsError("invalid-argument", "No worksheet found in file.");
+      }
+
+      const { found } = mapColumns(worksheet);
+
+      // Guard: reject if any required column is missing
+      const missing = REQUIRED_COLUMNS.filter(c => !found[c.key]).map(c => c.key);
+      if (missing.length > 0) {
+        const msg = `Missing required columns: ${missing.join(", ")}`;
+        await jobRef.update({ status: "failed", error: msg });
+        throw new functions.https.HttpsError("invalid-argument", msg);
+      }
+
+      const rows = [];
+      worksheet.eachRow((row, rowNumber) => {
+        if (rowNumber === 1) return;
+        const get = (key) => (found[key] ? row.getCell(found[key]).value : null);
+        rows.push({
+          brand:       String(get("brand")       || "").trim(),
+          silhouette:  String(get("silhouette")  || "").trim(),
+          styleId:     String(get("styleId")     || "").trim(),
+          color:       String(get("color")       || "").trim(),
+          size:        String(get("size")        || "").trim(),
+          quantity:    parseInt(String(get("quantity") || "1")) || 1,
+          releaseDate: String(get("releaseDate") || "").trim(),
+          retailValue: parseFloat(String(get("retailValue") || "0").replace(/[$,]/g, "")) || 0,
+          imageUrl:    String(get("imageUrl")    || "").trim(),
+        });
+      });
+
+      const validRows = rows.filter(r => r.brand || r.silhouette);
+      await jobRef.update({ total: validRows.length });
+
+      const errors = [];
+
+      for (let i = 0; i < validRows.length; i++) {
+        const row = validRows[i];
+        try {
+          let imageUrl = row.imageUrl;
+
+          // Fetch image via OpenAI DALL-E if no image provided
+          if (!imageUrl && (row.brand || row.silhouette)) {
+            try {
+              const openai = getOpenAI();
+              const prompt = `Professional studio product photo of ${[row.brand, row.silhouette, row.color].filter(Boolean).join(" ")} sneaker, clean white background, high resolution`;
+              const imgResponse = await openai.images.generate({
+                model: "dall-e-3",
+                prompt,
+                n: 1,
+                size: "1024x1024",
+              });
+              const tempUrl = imgResponse.data[0]?.url;
+              if (tempUrl) {
+                imageUrl = await downloadAndUploadImageToStorage(tempUrl, uid) || "";
+              }
+            } catch (imgErr) {
+              console.warn(`[importInventory] DALL-E failed for row ${i + 1}:`, imgErr.message);
+            }
+          }
+
+          const itemName = [row.brand, row.silhouette].filter(Boolean).join(" ");
+          await db.collection("inventory").add({
+            name:        itemName || "Imported Item",
+            brand:       row.brand,
+            silhouette:  row.silhouette,
+            styleId:     row.styleId,
+            color:       row.color,
+            size:        row.size,
+            quantity:    row.quantity,
+            releaseDate: row.releaseDate,
+            retailValue: row.retailValue,
+            value:       0,
+            imageUrl:    imageUrl || "",
+            userId:      uid,
+            source:      "import",
+            createdAt:   admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt:   admin.firestore.FieldValue.serverTimestamp(),
+          });
+
+          await jobRef.update({
+            processed: i + 1,
+            currentItem: itemName || "Item",
+          });
+        } catch (rowErr) {
+          console.error(`[importInventory] Row ${i + 1} failed:`, rowErr);
+          errors.push({ row: i + 1, error: rowErr.message });
+          await jobRef.update({
+            errors: admin.firestore.FieldValue.arrayUnion({ row: i + 1, error: rowErr.message }),
+          });
+        }
+      }
+
+      await jobRef.update({
+        status: "complete",
+        completedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      return { success: true, total: validRows.length, errors };
+    } catch (err) {
+      if (!(err instanceof functions.https.HttpsError)) {
+        await jobRef.update({ status: "failed", error: err.message }).catch(() => {});
+      }
+      throw err;
+    }
+  });
+
+// ===========================================================================
+// END IMPORT FUNCTIONS
+// ===========================================================================
+
 async function downloadAndUploadImageToStorage(imageUrl, userId) {
   try {
     if (!imageUrl || !userId) {

@@ -31,6 +31,14 @@
           }
         },
         {
+          "client_id": "872715867979-71jug22kcb53uomgbto8dsmm2k2boatv.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.vault.dev",
+            "certificate_hash": "ec22eeecb719f1c64ff28d0f32091598e832d30a"
+          }
+        },
+        {
           "client_id": "872715867979-l0f2rqaco2ch4vuhhgovj7udqsa1k96v.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {

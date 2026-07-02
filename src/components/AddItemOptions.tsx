@@ -10,12 +10,12 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {launchImageLibrary, ImagePickerResponse} from 'react-native-image-picker';
-import DocumentPicker from 'react-native-document-picker';
 import {useNavigation} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {RootStackParamList} from '../navigation/AppNavigator';
 import {getStorage, getFunctions} from '../services/firebase';
 import {useAuth} from '../contexts/AuthContext';
+import {useSubscription} from '../contexts/SubscriptionContext';
 import {useTheme} from '../contexts/ThemeContext';
 import {getUserData} from '../services/userService';
 
@@ -53,6 +53,7 @@ const AddItemOptions = ({
   onImageAnalysisError,
 }: AddItemOptionsProps) => {
   const {user} = useAuth();
+  const {isSubscribed} = useSubscription();
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const {colors} = useTheme();
 
@@ -80,34 +81,18 @@ const AddItemOptions = ({
     return [];
   };
 
-  const handleBarcodeReader = () => {
-    onClose();
-    navigation.navigate('BarcodeScanner' as never);
-  };
+  // const handleBarcodeReader = () => {
+  //   onClose();
+  //   navigation.navigate('BarcodeScanner' as never);
+  // };
 
-  const handleXLSImport = async () => {
-    try {
-      onClose();
-      const pickerResult = await DocumentPicker.pick({
-        type: [
-          DocumentPicker.types.xls,
-          DocumentPicker.types.xlsx,
-          DocumentPicker.types.csv,
-        ],
-      });
-      Alert.alert(
-        'XLS Import',
-        `File selected: ${pickerResult[0].name}`,
-        [{text: 'OK'}],
-      );
-      // TODO: Process the XLS file
-    } catch (err) {
-      if (DocumentPicker.isCancel(err)) {
-        // User cancelled
-      } else {
-        Alert.alert('Error', 'Failed to pick file');
-      }
+  const handleXLSImport = () => {
+    onClose();
+    if (!isSubscribed) {
+      navigation.navigate('Paywall' as never);
+      return;
     }
+    navigation.navigate('Import' as never);
   };
 
   const uploadImagesAndAnalyze = async (assets: Exclude<ImagePickerResponse['assets'], undefined>) => {
@@ -272,13 +257,14 @@ const AddItemOptions = ({
       onPress: handleAddManually,
       color: '#5856D6',
     },
-    {
-      id: 'barcode',
-      title: 'Barcode Reader',
-      icon: 'qr-code-scanner',
-      onPress: handleBarcodeReader,
-      color: '#007AFF',
-    },
+    // Barcode Reader — reserved for next release
+    // {
+    //   id: 'barcode',
+    //   title: 'Barcode Reader',
+    //   icon: 'qr-code-scanner',
+    //   onPress: handleBarcodeReader,
+    //   color: '#007AFF',
+    // },
     {
       id: 'camera',
       title: 'Take Photo',
@@ -288,10 +274,17 @@ const AddItemOptions = ({
     },
     {
       id: 'image',
-      title: 'Upload Image(s) ',
+      title: 'Upload Image(s)',
       icon: 'image',
       onPress: handleImageUpload,
       color: '#FF9500',
+    },
+    {
+      id: 'import',
+      title: isSubscribed ? 'Import CSV / XLS' : 'Import CSV / XLS 🔒',
+      icon: 'upload-file',
+      onPress: handleXLSImport,
+      color: '#FF2D55',
     },
   ];
 

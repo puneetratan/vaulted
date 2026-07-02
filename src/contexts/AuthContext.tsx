@@ -67,7 +67,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.error("GoogleSignin.signIn() failed:", googleSignInError);
         // Check if it's a network error
         if (googleSignInError.code === '10' || googleSignInError.message?.includes('DEVELOPER_ERROR')) {
-          throw new Error("DEVELOPER_ERROR: SHA fingerprint not registered in Firebase Console. Please add the release SHA-1 and SHA-256 to your Firebase project.");
+          throw googleSignInError;
         }
         if (googleSignInError.message?.includes('network') || googleSignInError.message?.includes('NETWORK')) {
           throw new Error("NETWORK_ERROR: Unable to connect to Google Sign-In services. Please check your internet connection.");
@@ -155,10 +155,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       // Provide more helpful error messages
       if (error.code === '10' || error.message?.includes('DEVELOPER_ERROR')) {
-        const errorMessage = Platform.OS === 'android' 
-          ? 'DEVELOPER_ERROR: Please ensure:\n1. SHA-1 and SHA-256 fingerprints are added to Firebase Console\n2. Package name matches (com.vault.dev)\n3. google-services.json is in android/app/\n\nGet SHA-1: cd android && ./gradlew signingReport'
-          : 'DEVELOPER_ERROR: Please check your iOS OAuth client ID in Firebase Console';
-        throw new Error(errorMessage);
+        throw error;
       }
       
       // Handle network errors specifically

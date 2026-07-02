@@ -78,8 +78,8 @@ android {
         applicationId "com.vault.dev"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 3
-        versionName "1.21.0"
+        versionCode 16
+        versionName "2.3"
         missingDimensionStrategy 'store', 'play'
         ndk {
             abiFilters "armeabi-v7a", "arm64-v8a"

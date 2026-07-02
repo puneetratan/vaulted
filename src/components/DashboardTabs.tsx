@@ -7,7 +7,7 @@ import {useNavigation, useFocusEffect} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {RootStackParamList} from '../navigation/AppNavigator';
-import {getInventoryItemsPage, getTotalItemCount, InventoryItem} from '../services/inventoryService';
+import {getInventoryItemsPage, getTotalInventoryStats, getBrandStats, InventoryItem} from '../services/inventoryService';
 import {FilterOptions} from './FilterModal';
 import {useTheme} from '../contexts/ThemeContext';
 import VaultedLogo from './VaultedLogo';
@@ -255,13 +255,38 @@ const DashboardTabs = ({
     }
   }, [availableBrands, availableColors, availableSilhouettes, availableSizes, availableYears, onAvailableFiltersChange]);
 
-  // Notify parent of real total count from Firestore (not just the loaded page)
+  const [realStats, setRealStats] = useState<{count: number; totalValue: number; brandCount: number}>({count: 0, totalValue: 0, brandCount: 0});
+  const [brandStats, setBrandStats] = useState<{count: number; totalValue: number}>({count: 0, totalValue: 0});
+
   useEffect(() => {
-    if (!onItemCountChange) return;
-    getTotalItemCount().then(count => {
-      onItemCountChange(count > 0 ? count : allShoes.length);
+    getTotalInventoryStats().then(stats => {
+      setRealStats(stats);
+      if (onItemCountChange) {
+        onItemCountChange(stats.count > 0 ? stats.count : allShoes.length);
+      }
     });
   }, [allShoes.length, onItemCountChange]);
+
+  useEffect(() => {
+    if (selectedBrand === 'All') {
+      setBrandStats({count: 0, totalValue: 0});
+      return;
+    }
+    getBrandStats(selectedBrand).then(setBrandStats);
+  }, [selectedBrand]);
+
+  // If brand filter is active but no loaded items match yet (brand items may be past page 1),
+  // keep loading more pages automatically until items appear or all pages are exhausted.
+  useEffect(() => {
+    if (!loading && !loadingMore && selectedBrand !== 'All' && hasMore) {
+      const hasMatchInLoaded = allShoes.some(
+        s => (s.brand ?? '').trim().toLowerCase() === selectedBrand.trim().toLowerCase(),
+      );
+      if (!hasMatchInLoaded) {
+        loadMore();
+      }
+    }
+  }, [loading, loadingMore, selectedBrand, allShoes, hasMore]);
 
   // Apply filters to shoes
   const applyFilters = useCallback((shoes: ShoeItem[]) => {
@@ -370,19 +395,19 @@ const DashboardTabs = ({
 
   // Calculate counts for summary cards
   const uniqueBrands = useMemo(() => [...new Set(allShoes.map((shoe) => shoe.brand))], [allShoes]);
-  // With no brand filter: show item count. With a brand filter: show total quantity for that brand.
   const totalPairs = useMemo(() => {
     if (selectedBrand === 'All') {
-      return allShoes.length;
+      return realStats.count > 0 ? realStats.count : allShoes.length;
     }
-    return allShoes
-      .filter(shoe => (shoe.brand ?? '').trim().toLowerCase() === selectedBrand.trim().toLowerCase())
-      .reduce((sum, shoe) => sum + (shoe.quantity || 1), 0);
-  }, [allShoes, selectedBrand]);
-  const totalValue = useMemo(
-    () => allShoes.reduce((sum, shoe) => sum + (Number(shoe.retailValue || shoe.cost) || 0), 0),
-    [allShoes],
-  );
+    return brandStats.count;
+  }, [selectedBrand, realStats.count, allShoes.length, brandStats.count]);
+
+  const totalValue = useMemo(() => {
+    if (selectedBrand === 'All') {
+      return realStats.totalValue > 0 ? realStats.totalValue : allShoes.reduce((sum, shoe) => sum + (Number(shoe.retailValue || shoe.cost) || 0), 0);
+    }
+    return brandStats.totalValue;
+  }, [selectedBrand, realStats.totalValue, allShoes, brandStats.totalValue]);
 
   const renderLoadingState = () => {
     const s = styles(colors);
@@ -419,10 +444,6 @@ const DashboardTabs = ({
       const isShadow = Boolean(shoe.isShadow);
       const isProcessing = isShadow && shoe.shadowStatus === 'processing';
       const hasError = isShadow && shoe.shadowStatus === 'error';
-      const displayRetail =
-        typeof shoe.retailValue === 'number' && shoe.retailValue > 0
-          ? Math.round(shoe.retailValue).toString()
-          : '--';
 
       return (
         <TouchableOpacity
@@ -549,54 +570,29 @@ const DashboardTabs = ({
         ListHeaderComponent={() => {
           const componentStyles = styles(colors);
           return (
-          <>
-            {/* Summary Statistics Cards - only show when collection has items */}
-            {allShoes.length > 0 && (
-              <View style={componentStyles.summaryCardsContainer}>
-                <View style={componentStyles.summaryCard}>
-                  <Text style={componentStyles.summaryCardValue}>{totalPairs}</Text>
-                  <Text style={componentStyles.summaryCardLabel}>Total Pairs</Text>
-                </View>
-                <View style={componentStyles.summaryCard}>
-                  <Text style={componentStyles.summaryCardValue}>{uniqueBrands.length}</Text>
-                  <Text style={componentStyles.summaryCardLabel}>Brands</Text>
-                </View>
-                <View style={componentStyles.summaryCard}>
-                  <Text style={componentStyles.summaryCardValue}>
-                    ${Math.round(totalValue).toLocaleString()}
-                  </Text>
-                  <Text style={componentStyles.summaryCardLabel}>Total Value</Text>
-                </View>
-              </View>
-            )}
-
-            {/* Brand Filter Buttons - only show when collection has items */}
-            {allShoes.length > 0 && (
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                style={componentStyles.brandFilterContainer}
-                contentContainerStyle={componentStyles.brandFilterContent}>
-                {availableBrandsForFilter.map((brand) => (
-                  <TouchableOpacity
-                    key={brand}
-                    style={[
-                      componentStyles.brandFilterButton,
-                      selectedBrand === brand && componentStyles.brandFilterButtonActive,
-                    ]}
-                    onPress={() => setSelectedBrand(brand)}>
-                    <Text
-                      style={[
-                        componentStyles.brandFilterButtonText,
-                        selectedBrand === brand && componentStyles.brandFilterButtonTextActive,
-                      ]}>
-                      {brand}
+            <>
+              {/* Summary Statistics Cards - only show when collection has items */}
+              {allShoes.length > 0 && (
+                <View style={componentStyles.summaryCardsContainer}>
+                  <View style={componentStyles.summaryCard}>
+                    <Text style={componentStyles.summaryCardValue} numberOfLines={1} adjustsFontSizeToFit>{totalPairs}</Text>
+                    <Text style={componentStyles.summaryCardLabel}>Total Pairs</Text>
+                  </View>
+                  <View style={componentStyles.summaryCard}>
+                    <Text style={componentStyles.summaryCardValue} numberOfLines={1} adjustsFontSizeToFit>
+                      {Math.max(realStats.brandCount, uniqueBrands.length)}
                     </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            )}
-          </>
+                    <Text style={componentStyles.summaryCardLabel}>Brands</Text>
+                  </View>
+                  <View style={componentStyles.summaryCard}>
+                    <Text style={componentStyles.summaryCardValue} numberOfLines={1} adjustsFontSizeToFit>
+                      ${Math.round(totalValue).toLocaleString()}
+                    </Text>
+                    <Text style={componentStyles.summaryCardLabel}>Total Value</Text>
+                  </View>
+                </View>
+              )}
+            </>
           );
         }}
         renderItem={renderShoeItem}
@@ -616,6 +612,32 @@ const DashboardTabs = ({
 
   return (
     <View style={componentStyles.container}>
+      {/* Brand filter - lives outside FlatList so scroll position is preserved on re-renders */}
+      {allShoes.length > 0 && !loading && !error && (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={componentStyles.brandFilterContainer}
+          contentContainerStyle={componentStyles.brandFilterContent}>
+          {availableBrandsForFilter.map((brand) => (
+            <TouchableOpacity
+              key={brand}
+              style={[
+                componentStyles.brandFilterButton,
+                selectedBrand === brand && componentStyles.brandFilterButtonActive,
+              ]}
+              onPress={() => setSelectedBrand(brand)}>
+              <Text
+                style={[
+                  componentStyles.brandFilterButtonText,
+                  selectedBrand === brand && componentStyles.brandFilterButtonTextActive,
+                ]}>
+                {brand}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      )}
       {/* Content */}
       <View style={componentStyles.contentContainer}>{renderTabContent()}</View>
     </View>
@@ -663,19 +685,24 @@ const styles = (colors: any) => StyleSheet.create({
     opacity: 0.7,
   },
   brandFilterContainer: {
+    flexGrow: 0,
+    flexShrink: 0,
     marginTop: 8,
     marginBottom: 12,
   },
   brandFilterContent: {
     paddingHorizontal: 16,
-    gap: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   brandFilterButton: {
+    height: 36,
     paddingHorizontal: 20,
-    paddingVertical: 8,
-    borderRadius: 20,
+    borderRadius: 18,
     backgroundColor: colors.card,
     marginRight: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   brandFilterButtonActive: {
     backgroundColor: colors.success,
