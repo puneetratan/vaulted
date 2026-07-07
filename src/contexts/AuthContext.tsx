@@ -12,6 +12,7 @@ type AuthContextType = {
   signInWithGoogle: () => Promise<void>;
   signInWithApple: () => Promise<void>;
   logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType>({
@@ -21,6 +22,7 @@ const AuthContext = createContext<AuthContextType>({
   signInWithGoogle: async () => {},
   signInWithApple: async () => {},
   logout: async () => {},
+  refreshUser: async () => {},
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -252,6 +254,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => unsubscribe();
   }, []);
 
+  // ✅ Force-sync user after profile updates (photoURL etc.)
+  // onAuthStateChanged doesn't fire for updateProfile, so call this manually
+  const refreshUser = async () => {
+    const authInstance = getAuth();
+    if (authInstance.currentUser) {
+      await authInstance.currentUser.reload();
+      setUser(Object.assign(Object.create(Object.getPrototypeOf(authInstance.currentUser)), authInstance.currentUser));
+    }
+  };
+
   // ✅ Logout
   const logout = async () => {
     try {
@@ -279,7 +291,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAuthenticated: !!user,
         signInWithGoogle,
         signInWithApple,
-        logout
+        logout,
+        refreshUser,
       }}>
       {children}
     </AuthContext.Provider>

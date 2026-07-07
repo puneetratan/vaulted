@@ -32,7 +32,7 @@ import ShoeSizeModal from '../components/ShoeSizeModal';
 
 const ProfileScreen = () => {
   const navigation = useNavigation();
-  const {user, logout} = useAuth();
+  const {user, logout, refreshUser} = useAuth();
   const {colors} = useTheme();
   const {isSubscribed, subscriptionStatus} = useSubscription();
   const [shoeSize, setShoeSize] = useState<string | undefined>(undefined);
@@ -316,9 +316,9 @@ const ProfileScreen = () => {
       // Update Firestore user document
       await updateUserData(user.uid, {photoURL: uploadedImageUrl});
 
-      // Update local state immediately for better UX
-      // The useEffect will also update it when user.photoURL changes after reload
+      // Update local state immediately and force AuthContext to sync the new photoURL
       setLocalPhotoURL(uploadedImageUrl);
+      await refreshUser();
 
       Alert.alert('Success', 'Profile image updated successfully!');
     } catch (error: any) {

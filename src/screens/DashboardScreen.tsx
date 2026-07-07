@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {Platform, PermissionsAndroid} from 'react-native';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useFocusEffect} from '@react-navigation/native';
 import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useAuth} from '../contexts/AuthContext';
 import {useTheme} from '../contexts/ThemeContext';
@@ -68,7 +68,7 @@ const DashboardScreen = () => {
   const navigation = useNavigation();
   const {logout, user} = useAuth();
   const {colors} = useTheme();
-  const {isSubscribed} = useSubscription();
+  const {isSubscribed, isLoading: subscriptionLoading} = useSubscription();
   const [itemCount, setItemCount] = useState(0);
   const [showShoeSizeModal, setShowShoeSizeModal] = useState(false);
   const [shoeSize, setShoeSize] = useState('');
@@ -93,6 +93,12 @@ const DashboardScreen = () => {
   const triggerInventoryRefresh = useCallback(() => {
     setInventoryRefreshToken(prev => prev + 1);
   }, []);
+
+  // Refresh inventory list whenever this screen comes into focus
+  // Ensures count and items update after returning from Import, Add, Edit, etc.
+  useFocusEffect(useCallback(() => {
+    triggerInventoryRefresh();
+  }, [triggerInventoryRefresh]));
 
   const handleAvailableFiltersChange = useCallback((data: {brands: string[], colors: string[], silhouettes: string[], sizes: string[], years: string[]}) => {
     setAvailableBrands(data.brands);
@@ -517,7 +523,7 @@ const DashboardScreen = () => {
         <TouchableOpacity
           style={componentStyles.addButton}
           onPress={() => {
-            if (!isSubscribed && itemCount >= FREE_TIER_ITEM_LIMIT) {
+            if (!subscriptionLoading && !isSubscribed && itemCount >= FREE_TIER_ITEM_LIMIT) {
               navigation.navigate('Paywall' as never, {reason: 'limit'} as never);
               return;
             }

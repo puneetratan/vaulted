@@ -265,7 +265,7 @@ const DashboardTabs = ({
         onItemCountChange(stats.count > 0 ? stats.count : allShoes.length);
       }
     });
-  }, [allShoes.length, onItemCountChange]);
+  }, [allShoes.length, onItemCountChange, refreshToken]);
 
   useEffect(() => {
     if (selectedBrand === 'All') {

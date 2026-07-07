@@ -82,6 +82,7 @@ export const SubscriptionProvider: React.FC<{children: React.ReactNode}> = ({
   const processedTransactions = useRef<Set<string>>(new Set());
   const requestedProductId = useRef<string | null>(null);
   const validatePurchaseRef = useRef<(purchase: SubscriptionPurchase) => Promise<void>>(() => Promise.resolve());
+  const autoRestoreAttempted = useRef(false);
 
   // ---------------------------------------------------------------------------
   // Read subscription status from Firestore
@@ -112,16 +113,36 @@ export const SubscriptionProvider: React.FC<{children: React.ReactNode}> = ({
         const expiresAt: Date | undefined = data.expiresAt?.toDate();
         const isActive =
           data.isActive === true &&
-          (expiresAt ? expiresAt > new Date() : false);
+          (!expiresAt || expiresAt > new Date());
         setSubscriptionStatus({
           isActive,
           productId: data.productId,
           expiresAt,
           platform: data.platform,
         });
-      } else {
-        setSubscriptionStatus({isActive: false});
+        if (isActive) return; // done — skip auto-restore
       }
+
+      // Firestore shows no active subscription — silently check IAP once per session
+      if (!autoRestoreAttempted.current) {
+        autoRestoreAttempted.current = true;
+        try {
+          const iapPurchases = await getAvailablePurchases();
+          const activeSub = iapPurchases.find(p =>
+            ALL_PRODUCT_IDS.includes(p.productId),
+          ) as SubscriptionPurchase | undefined;
+          if (activeSub) {
+            console.log('[IAP] Auto-restoring subscription:', activeSub.productId);
+            validatePurchaseRef.current(activeSub).catch(err =>
+              console.warn('[IAP] Auto-restore validation failed:', err),
+            );
+            return; // state will be updated by validatePurchaseWithServer
+          }
+        } catch {
+          // IAP may not be connected yet — skip silently
+        }
+      }
+      setSubscriptionStatus({isActive: false});
     } catch (err) {
       console.warn('Failed to read subscription status:', err);
       setSubscriptionStatus({isActive: false});

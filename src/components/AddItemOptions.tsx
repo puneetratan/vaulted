@@ -53,7 +53,7 @@ const AddItemOptions = ({
   onImageAnalysisError,
 }: AddItemOptionsProps) => {
   const {user} = useAuth();
-  const {isSubscribed} = useSubscription();
+  const {isSubscribed, isLoading: subscriptionLoading} = useSubscription();
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const {colors} = useTheme();
 
@@ -88,7 +88,7 @@ const AddItemOptions = ({
 
   const handleXLSImport = () => {
     onClose();
-    if (!isSubscribed) {
+    if (!subscriptionLoading && !isSubscribed) {
       navigation.navigate('Paywall' as never);
       return;
     }
@@ -279,13 +279,13 @@ const AddItemOptions = ({
       onPress: handleImageUpload,
       color: '#FF9500',
     },
-    {
+    ...(isSubscribed ? [{
       id: 'import',
-      title: isSubscribed ? 'Import CSV / XLS' : 'Import CSV / XLS 🔒',
+      title: 'Import CSV / XLS',
       icon: 'upload-file',
       onPress: handleXLSImport,
       color: '#FF2D55',
-    },
+    }] : []),
   ];
 
   return (

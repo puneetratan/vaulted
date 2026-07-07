@@ -16,7 +16,7 @@ import RNFS from 'react-native-fs';
 import {useNavigation} from '@react-navigation/native';
 import {useTheme} from '../contexts/ThemeContext';
 import {useAuth} from '../contexts/AuthContext';
-import {getFunctions, getFirestore} from '../services/firebase';
+import {getFunctions, getFirestore, getStorage} from '../services/firebase';
 
 type ImportStatus =
   | 'idle'
@@ -70,6 +70,7 @@ const ImportScreen = () => {
   const [fileName, setFileName] = useState('');
   const [validation, setValidation] = useState<ValidationResult | null>(null);
   const [fileBase64, setFileBase64] = useState('');
+  const fileLocalUriRef = useRef('');
   const unsubscribeRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
@@ -88,9 +89,10 @@ const ImportScreen = () => {
       .collection('importJobs')
       .doc(jobId)
       .onSnapshot((snap: any) => {
-        if (!snap.exists) return;
-        const data = snap.data() as ImportJob;
-        setJob(data);
+        if (!snap?.exists) return;
+        const data = snap.data();
+        if (!data) return;
+        setJob(data as ImportJob);
         if (data.status === 'complete') setStatus('complete');
         if (data.status === 'failed') setStatus('failed');
       });
@@ -120,6 +122,10 @@ const ImportScreen = () => {
           ? decodeURIComponent(localUri.replace('file://', ''))
           : localUri;
 
+      // Store local URI for later Storage upload (avoids large base64 in bridge)
+      fileLocalUriRef.current = cleanUri;
+
+      // Read as base64 only for the lightweight header validation call
       const base64Content = await RNFS.readFile(cleanUri, 'base64');
       setFileBase64(base64Content);
       setStatus('validating');
@@ -145,23 +151,33 @@ const ImportScreen = () => {
 
   const handleStartImport = async () => {
     try {
+      if (!user?.uid) throw new Error('Not authenticated');
+
+      const storage = getStorage();
+      if (!storage) throw new Error('Storage unavailable');
       const functions = getFunctions();
       if (!functions) throw new Error('Cloud Functions unavailable');
-      if (!user?.uid) throw new Error('Not authenticated');
 
       const newJobId = `${user.uid}_${Date.now()}`;
       setJobId(newJobId);
       setStatus('processing');
 
+      // Upload file to Storage using the base64 we already have from the validate step
+      // putString avoids all URI/platform file-path issues
+      if (!fileBase64) throw new Error('File not available. Please pick the file again.');
+      const ext = fileName.split('.').pop()?.toLowerCase() ?? '';
+      const contentType =
+        ext === 'csv' ? 'text/csv' :
+        ext === 'xlsx' ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' :
+        'application/vnd.ms-excel';
+      const storagePath = `imports/${user.uid}/${newJobId}_${fileName}`;
+      const storageRef = storage.ref(storagePath);
+      await storageRef.putString(fileBase64, 'base64', {contentType});
+
+      // Call the function with just the storage path
       const importFn = functions.httpsCallable('importInventory');
-      importFn({
-        jobId: newJobId,
-        fileContent: fileBase64,
-        fileName,
-      }).catch((err: any) => {
+      importFn({jobId: newJobId, storagePath, fileName}).catch((err: any) => {
         console.error('[Import] Function error:', err);
-        // Ignore client-side timeout — the server keeps running and
-        // Firestore will update the job status when it finishes.
         const isTimeout =
           err?.code === 'functions/deadline-exceeded' ||
           err?.message?.toLowerCase().includes('timeout') ||
@@ -172,6 +188,7 @@ const ImportScreen = () => {
         }
       });
     } catch (err: any) {
+      console.error('[Import] Start error:', err);
       setStatus('preview');
       Alert.alert('Error', err?.message || 'Failed to start import.');
     }
@@ -180,6 +197,7 @@ const ImportScreen = () => {
   const handleReset = () => {
     unsubscribeRef.current?.();
     unsubscribeRef.current = null;
+    fileLocalUriRef.current = '';
     setStatus('idle');
     setJobId(null);
     setJob(null);
@@ -538,7 +556,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FF2D55',
+    backgroundColor: '#34C759',
     paddingVertical: 14,
     paddingHorizontal: 32,
     borderRadius: 12,
