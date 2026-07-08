@@ -948,11 +948,11 @@ const OPTIONAL_COLUMNS = [
   { key: "quantity",    aliases: ["quantity", "qty"] },
   { key: "releaseDate", aliases: ["releasedate", "release date", "date"] },
   { key: "retailValue", aliases: ["retailvalue", "retail value", "retail", "price"] },
-  { key: "imageUrl",    aliases: ["imageurl", "image url", "image"] },
+  { key: "imageUrl",    aliases: ["imageurl", "image url", "image", "photo", "photo url", "photourl", "img", "img url", "imgurl", "picture", "thumbnail", "pic", "imagelink", "image link"] },
 ];
 
 function normalizeHeader(s) {
-  return String(s || "").toLowerCase().replace(/[\s_-]+/g, "");
+  return String(s || "").replace(/^﻿/, '').toLowerCase().replace(/[\s_\-\.]+/g, "");
 }
 
 async function parseWorkbook(buffer, fileName) {
@@ -1076,20 +1076,46 @@ exports.importInventory = functions
         throw new functions.https.HttpsError("invalid-argument", msg);
       }
 
+      const foundCols = Object.entries(found).filter(([, v]) => v !== null).map(([k]) => k);
+      console.log(`[importInventory] Detected columns: ${foundCols.join(", ")}`);
+
+      // Build a map of rowNumber (1-indexed) → embedded image buffer for XLSX files
+      const embeddedImageMap = {};
+      try {
+        console.log(`[importInventory] workbook.media count: ${workbook.media.length}`);
+        const wsImages = worksheet.getImages();
+        console.log(`[importInventory] worksheet.getImages() count: ${wsImages.length}`);
+        for (const img of wsImages) {
+          const rowNum = Math.floor(img.range.tl.nativeRow) + 1;
+          const imageData = workbook.getImage(img.imageId);
+          console.log(`[importInventory] img imageId=${img.imageId} rowNum=${rowNum} ext=${imageData && imageData.extension} hasBuffer=${!!(imageData && imageData.buffer)}`);
+          if (imageData && imageData.buffer && !embeddedImageMap[rowNum]) {
+            embeddedImageMap[rowNum] = {
+              buffer: Buffer.isBuffer(imageData.buffer) ? imageData.buffer : Buffer.from(imageData.buffer),
+              extension: imageData.extension || 'png',
+            };
+          }
+        }
+        console.log(`[importInventory] Mapped embedded images to rows: ${Object.keys(embeddedImageMap).join(", ") || "none"}`);
+      } catch (imgErr) {
+        console.warn("[importInventory] Could not extract embedded images:", imgErr.message, imgErr.stack);
+      }
+
       const rows = [];
       worksheet.eachRow((row, rowNumber) => {
         if (rowNumber === 1) return;
         const get = (key) => (found[key] ? row.getCell(found[key]).value : null);
         rows.push({
-          brand:       String(get("brand")       || "").trim(),
-          silhouette:  String(get("silhouette")  || "").trim(),
-          styleId:     String(get("styleId")     || "").trim(),
-          color:       String(get("color")       || "").trim(),
-          size:        String(get("size")        || "").trim(),
-          quantity:    parseInt(String(get("quantity") || "1")) || 1,
-          releaseDate: String(get("releaseDate") || "").trim(),
-          retailValue: parseFloat(String(get("retailValue") || "0").replace(/[$,]/g, "")) || 0,
-          imageUrl:    String(get("imageUrl")    || "").trim(),
+          brand:             String(get("brand")       || "").trim(),
+          silhouette:        String(get("silhouette")  || "").trim(),
+          styleId:           String(get("styleId")     || "").trim(),
+          color:             String(get("color")       || "").trim(),
+          size:              String(get("size")        || "").trim(),
+          quantity:          parseInt(String(get("quantity") || "1")) || 1,
+          releaseDate:       String(get("releaseDate") || "").trim(),
+          retailValue:       parseFloat(String(get("retailValue") || "0").replace(/[$,]/g, "")) || 0,
+          imageUrl:          String(get("imageUrl")    || "").trim(),
+          embeddedImage:     embeddedImageMap[rowNumber] || null,
         });
       });
 
@@ -1097,13 +1123,58 @@ exports.importInventory = functions
       await jobRef.update({ total: validRows.length });
 
       const errors = [];
+      let createdCount = 0;
+      let updatedCount = 0;
+
+      // Build a lookup of existing items for this user so we can upsert
+      const existingSnap = await db.collection("inventory").where("userId", "==", uid).get();
+      const existingItems = [];
+      existingSnap.forEach(doc => existingItems.push({ id: doc.id, ...doc.data() }));
+
+      const normalize = (s) => String(s || "").toLowerCase().trim();
+
+      const findExisting = (row) => {
+        // Primary match: styleId (most reliable)
+        if (row.styleId) {
+          const match = existingItems.find(
+            item => normalize(item.styleId) === normalize(row.styleId)
+          );
+          if (match) return match;
+        }
+        // Fallback match: brand + silhouette + size + color
+        return existingItems.find(item =>
+          normalize(item.brand) === normalize(row.brand) &&
+          normalize(item.silhouette) === normalize(row.silhouette) &&
+          normalize(item.size) === normalize(row.size) &&
+          normalize(item.color) === normalize(row.color)
+        ) || null;
+      };
 
       for (let i = 0; i < validRows.length; i++) {
         const row = validRows[i];
         try {
           let imageUrl = row.imageUrl;
 
-          if (imageUrl) {
+          if (row.embeddedImage) {
+            // Image embedded directly in the XLSX file — upload the buffer
+            try {
+              const { buffer, extension } = row.embeddedImage;
+              const contentType = extension === 'jpg' || extension === 'jpeg' ? 'image/jpeg'
+                : extension === 'png' ? 'image/png'
+                : extension === 'gif' ? 'image/gif'
+                : 'image/jpeg';
+              const timestamp = Date.now();
+              const storagePath = `inventory/${uid}/${timestamp}_import_row${i + 1}.${extension}`;
+              const bucket = admin.storage().bucket();
+              const file = bucket.file(storagePath);
+              await file.save(buffer, { metadata: { contentType } });
+              await file.makePublic();
+              imageUrl = `https://storage.googleapis.com/${bucket.name}/${storagePath}`;
+              console.log(`[importInventory] Uploaded embedded image for row ${i + 1}: ${imageUrl}`);
+            } catch (embErr) {
+              console.warn(`[importInventory] Failed to upload embedded image for row ${i + 1}:`, embErr.message);
+            }
+          } else if (imageUrl) {
             // Image URL present in CSV — copy to Firebase Storage so it's permanent
             const uploaded = await downloadAndUploadImageToStorage(imageUrl, uid);
             if (uploaded) {
@@ -1131,23 +1202,48 @@ exports.importInventory = functions
           }
 
           const itemName = [row.brand, row.silhouette].filter(Boolean).join(" ");
-          await db.collection("inventory").add({
-            name:        itemName || "Imported Item",
-            brand:       row.brand,
-            silhouette:  row.silhouette,
-            styleId:     row.styleId,
-            color:       row.color,
-            size:        row.size,
-            quantity:    row.quantity,
-            releaseDate: row.releaseDate,
-            retailValue: row.retailValue,
-            value:       0,
-            imageUrl:    imageUrl || "",
-            userId:      uid,
-            source:      "import",
-            createdAt:   admin.firestore.FieldValue.serverTimestamp(),
-            updatedAt:   admin.firestore.FieldValue.serverTimestamp(),
-          });
+          const existing = findExisting(row);
+
+          if (existing) {
+            // Update existing item — preserve quantity (user may have changed it manually)
+            const updateData = {
+              name:        itemName || existing.name,
+              brand:       row.brand || existing.brand,
+              silhouette:  row.silhouette || existing.silhouette,
+              styleId:     row.styleId || existing.styleId,
+              color:       row.color || existing.color,
+              size:        row.size || existing.size,
+              releaseDate: row.releaseDate || existing.releaseDate,
+              retailValue: row.retailValue || existing.retailValue,
+              updatedAt:   admin.firestore.FieldValue.serverTimestamp(),
+            };
+            // Only update imageUrl if we have a new one (don't overwrite a user-set image with empty)
+            if (imageUrl) updateData.imageUrl = imageUrl;
+            await db.collection("inventory").doc(existing.id).update(updateData);
+            updatedCount++;
+          } else {
+            // Create new item
+            const newDoc = await db.collection("inventory").add({
+              name:        itemName || "Imported Item",
+              brand:       row.brand,
+              silhouette:  row.silhouette,
+              styleId:     row.styleId,
+              color:       row.color,
+              size:        row.size,
+              quantity:    row.quantity,
+              releaseDate: row.releaseDate,
+              retailValue: row.retailValue,
+              value:       0,
+              imageUrl:    imageUrl || "",
+              userId:      uid,
+              source:      "import",
+              createdAt:   admin.firestore.FieldValue.serverTimestamp(),
+              updatedAt:   admin.firestore.FieldValue.serverTimestamp(),
+            });
+            // Add to in-memory list so later rows in same import can match it
+            existingItems.push({ id: newDoc.id, ...row, imageUrl: imageUrl || "" });
+            createdCount++;
+          }
 
           await jobRef.update({
             processed: i + 1,
@@ -1165,6 +1261,8 @@ exports.importInventory = functions
       await jobRef.update({
         status: "complete",
         completedAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdCount,
+        updatedCount,
       });
 
       // Clean up the uploaded file from Storage
@@ -1194,7 +1292,13 @@ async function downloadAndUploadImageToStorage(imageUrl, userId) {
 
     // Clean the image URL (remove trailing quotes if any)
     const cleanImageUrl = imageUrl.trim().replace(/['"]+$/, '').replace(/^['"]+/, '');
-    
+
+    // Skip local file paths — they can't be fetched from a cloud function
+    if (!cleanImageUrl.startsWith('http://') && !cleanImageUrl.startsWith('https://')) {
+      console.warn(`Skipping non-HTTP image URL: ${cleanImageUrl}`);
+      return undefined;
+    }
+
     console.log(`Downloading image from URL: ${cleanImageUrl}`);
     
     // Download the image

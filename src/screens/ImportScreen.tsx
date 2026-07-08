@@ -42,6 +42,8 @@ interface ImportJob {
   processed: number;
   currentItem: string;
   errors: {row: number; error: string}[];
+  createdCount?: number;
+  updatedCount?: number;
 }
 
 const COLUMN_LABELS: Record<string, string> = {
@@ -423,7 +425,18 @@ const ImportScreen = () => {
 
             <View style={[styles.card, {backgroundColor: colors.surfaceSecondary, borderColor: colors.border}]}>
               <SummaryRow label="Total rows" value={String(job.total)} textColor={colors.text} secondaryColor={colors.textSecondary} />
-              <SummaryRow label="Successfully imported" value={String(job.processed)} textColor={colors.text} secondaryColor={colors.textSecondary} />
+              {job.createdCount != null || job.updatedCount != null ? (
+                <>
+                  {(job.createdCount ?? 0) > 0 && (
+                    <SummaryRow label="New items added" value={String(job.createdCount)} textColor={colors.text} secondaryColor={colors.textSecondary} valueColor="#34C759" />
+                  )}
+                  {(job.updatedCount ?? 0) > 0 && (
+                    <SummaryRow label="Existing items updated" value={String(job.updatedCount)} textColor={colors.text} secondaryColor={colors.textSecondary} valueColor="#007AFF" />
+                  )}
+                </>
+              ) : (
+                <SummaryRow label="Successfully imported" value={String(job.processed)} textColor={colors.text} secondaryColor={colors.textSecondary} />
+              )}
               {job.errors.length > 0 && (
                 <SummaryRow label="Rows skipped" value={String(job.errors.length)} textColor={colors.text} secondaryColor={colors.textSecondary} valueColor="#FF9500" />
               )}
