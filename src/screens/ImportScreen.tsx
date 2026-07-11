@@ -8,6 +8,9 @@ import {
   Alert,
   ActivityIndicator,
   Platform,
+  TextInput,
+  Modal,
+  KeyboardAvoidingView,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -72,6 +75,9 @@ const ImportScreen = () => {
   const [fileName, setFileName] = useState('');
   const [validation, setValidation] = useState<ValidationResult | null>(null);
   const [fileBase64, setFileBase64] = useState('');
+  const [importMode, setImportMode] = useState<'file' | 'google-sheet'>('file');
+  const [sheetUrl, setSheetUrl] = useState('');
+  const [showUrlInput, setShowUrlInput] = useState(false);
   const fileLocalUriRef = useRef('');
   const unsubscribeRef = useRef<(() => void) | null>(null);
 
@@ -103,18 +109,66 @@ const ImportScreen = () => {
     return () => unsub();
   }, [jobId]);
 
+  const handleGoogleSheetValidate = async () => {
+    const trimmedUrl = sheetUrl.trim();
+    if (!trimmedUrl) {
+      Alert.alert('Enter URL', 'Please paste your Google Sheets URL.');
+      return;
+    }
+    if (!trimmedUrl.includes('docs.google.com/spreadsheets')) {
+      Alert.alert('Invalid URL', 'Please paste a valid Google Sheets link (e.g. https://docs.google.com/spreadsheets/d/...).');
+      return;
+    }
+
+    setFileName('Google Sheets');
+    setImportMode('google-sheet');
+    setStatus('validating');
+
+    try {
+      const functions = getFunctions();
+      if (!functions) throw new Error('Cloud Functions unavailable');
+      const validateFn = functions.httpsCallable('validateGoogleSheetUrl');
+      const res = await validateFn({sheetUrl: trimmedUrl});
+      const v = res.data as ValidationResult;
+      setValidation(v);
+      setStatus('preview');
+    } catch (err: any) {
+      console.error('[Import] Google Sheet validate error:', err);
+      setStatus('idle');
+      const code = err?.code || '';
+      const msg = code.includes('unavailable') || code.includes('internal')
+        ? 'Server is warming up — please try again in a few seconds.'
+        : err?.message?.length > 5 && !err.message.includes('UNAVAILABLE')
+          ? err.message
+          : 'Make sure the sheet is shared as "Anyone with the link can view", then try again.';
+      Alert.alert('Could Not Load Sheet', msg);
+    }
+  };
+
   const handlePickFile = async () => {
     try {
       const result = await DocumentPicker.pickSingle({
-        type: [
-          DocumentPicker.types.xls,
-          DocumentPicker.types.xlsx,
-          DocumentPicker.types.csv,
-        ],
+        type: [DocumentPicker.types.allFiles],
         copyTo: 'cachesDirectory',
       });
 
       const pickedName = result.name || 'file';
+
+      // Validate file type by extension or MIME type
+      const ext = pickedName.split('.').pop()?.toLowerCase() ?? '';
+      const mime = (result.type ?? '').toLowerCase();
+      const isExcel =
+        ext === 'xls' || ext === 'xlsx' || ext === 'csv' ||
+        mime.includes('excel') || mime.includes('spreadsheet') ||
+        mime.includes('csv') || mime.includes('text/plain');
+      // Also accept files with no extension (e.g. Google Drive exports without extension)
+      const hasNoExt = !pickedName.includes('.');
+      if (!isExcel && !hasNoExt) {
+        Alert.alert('Unsupported File', 'Please pick a CSV or Excel (.xls / .xlsx) file.');
+        setStatus('idle');
+        return;
+      }
+
       setFileName(pickedName);
       setStatus('reading');
 
@@ -155,14 +209,31 @@ const ImportScreen = () => {
     try {
       if (!user?.uid) throw new Error('Not authenticated');
 
-      const storage = getStorage();
-      if (!storage) throw new Error('Storage unavailable');
       const functions = getFunctions();
       if (!functions) throw new Error('Cloud Functions unavailable');
 
       const newJobId = `${user.uid}_${Date.now()}`;
       setJobId(newJobId);
       setStatus('processing');
+
+      if (importMode === 'google-sheet') {
+        const importFn = functions.httpsCallable('importFromGoogleSheet');
+        importFn({jobId: newJobId, sheetUrl: sheetUrl.trim()}).catch((err: any) => {
+          console.error('[Import] Google Sheet function error:', err);
+          const isTimeout =
+            err?.code === 'functions/deadline-exceeded' ||
+            err?.message?.toLowerCase().includes('timeout') ||
+            err?.message?.toLowerCase().includes('deadline');
+          if (!isTimeout) {
+            setStatus('failed');
+            Alert.alert('Import Failed', err?.message || 'Something went wrong.');
+          }
+        });
+        return;
+      }
+
+      const storage = getStorage();
+      if (!storage) throw new Error('Storage unavailable');
 
       // Upload file to Storage using the base64 we already have from the validate step
       // putString avoids all URI/platform file-path issues
@@ -206,6 +277,9 @@ const ImportScreen = () => {
     setFileName('');
     setValidation(null);
     setFileBase64('');
+    setImportMode('file');
+    setSheetUrl('');
+    setShowUrlInput(false);
   };
 
   const progress = job && job.total > 0 ? job.processed / job.total : 0;
@@ -225,15 +299,29 @@ const ImportScreen = () => {
         {/* ── IDLE ── */}
         {status === 'idle' && (
           <View style={styles.centerContainer}>
-            <View style={[styles.iconCircle, {backgroundColor: colors.surfaceSecondary}]}>
-              <Icon name="upload-file" size={48} color="#FF2D55" />
-            </View>
             <Text style={[styles.title, {color: colors.text}]}>Import Your Collection</Text>
-            <Text style={[styles.subtitle, {color: colors.textSecondary}]}>
-              Upload a CSV or Excel file to bulk-add items. Missing images will be auto-generated.
-            </Text>
 
-            <View style={[styles.card, {backgroundColor: colors.surfaceSecondary, borderColor: colors.border}]}>
+            {/* Buttons first — always visible without scrolling */}
+            <TouchableOpacity style={styles.primaryButton} onPress={handlePickFile}>
+              <Icon name="folder-open" size={20} color="#fff" />
+              <Text style={styles.primaryButtonText}>Choose File (CSV / Excel)</Text>
+            </TouchableOpacity>
+
+            <View style={styles.orDivider}>
+              <View style={[styles.orLine, {backgroundColor: colors.border}]} />
+              <Text style={[styles.orText, {color: colors.textSecondary}]}>OR</Text>
+              <View style={[styles.orLine, {backgroundColor: colors.border}]} />
+            </View>
+
+            <TouchableOpacity
+              style={[styles.primaryButton, {backgroundColor: '#4285F4'}]}
+              onPress={() => setShowUrlInput(true)}>
+              <Icon name="link" size={20} color="#fff" />
+              <Text style={styles.primaryButtonText}>Import from Google Sheets</Text>
+            </TouchableOpacity>
+
+            {/* Column reference card below buttons */}
+            <View style={[styles.card, {backgroundColor: colors.surfaceSecondary, borderColor: colors.border, marginTop: 24}]}>
               <Text style={[styles.cardTitle, {color: colors.text}]}>Required Columns</Text>
               {REQUIRED_KEYS.map(k => (
                 <View key={k} style={styles.colRow}>
@@ -252,11 +340,6 @@ const ImportScreen = () => {
                 Column order doesn't matter. Export your current vault to get the exact format.
               </Text>
             </View>
-
-            <TouchableOpacity style={styles.primaryButton} onPress={handlePickFile}>
-              <Icon name="folder-open" size={20} color="#fff" />
-              <Text style={styles.primaryButtonText}>Choose File</Text>
-            </TouchableOpacity>
           </View>
         )}
 
@@ -484,6 +567,47 @@ const ImportScreen = () => {
         )}
 
       </ScrollView>
+
+      {/* Google Sheets URL modal */}
+      <Modal
+        visible={showUrlInput}
+        transparent
+        animationType="fade"
+        onRequestClose={() => { setShowUrlInput(false); setSheetUrl(''); }}>
+        <KeyboardAvoidingView
+          style={styles.modalOverlay}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          <View style={[styles.modalCard, {backgroundColor: colors.surface, borderColor: colors.border}]}>
+            <Text style={[styles.modalTitle, {color: colors.text}]}>Import from Google Sheets</Text>
+            <Text style={[styles.modalHint, {color: colors.textSecondary}]}>
+              Make sure the sheet is shared as "Anyone with the link can view"
+            </Text>
+            <TextInput
+              style={[styles.urlInput, {color: colors.text, borderColor: colors.border, backgroundColor: colors.surfaceSecondary}]}
+              placeholder="Paste Google Sheets URL…"
+              placeholderTextColor={colors.textSecondary}
+              value={sheetUrl}
+              onChangeText={setSheetUrl}
+              autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType="url"
+              autoFocus
+            />
+            <TouchableOpacity
+              style={[styles.primaryButton, {backgroundColor: '#4285F4', marginTop: 12}]}
+              onPress={() => { setShowUrlInput(false); handleGoogleSheetValidate(); }}>
+              <Icon name="cloud-download" size={20} color="#fff" />
+              <Text style={styles.primaryButtonText}>Load Sheet</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.secondaryButton}
+              onPress={() => { setShowUrlInput(false); setSheetUrl(''); }}>
+              <Text style={[styles.secondaryButtonText, {color: colors.textSecondary}]}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
     </SafeAreaView>
   );
 };
@@ -564,6 +688,31 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 6,
   },
+
+  orDivider: {flexDirection: 'row', alignItems: 'center', width: '100%', marginVertical: 16},
+  orLine: {flex: 1, height: 1},
+  orText: {marginHorizontal: 12, fontSize: 12, fontWeight: '600'},
+  urlInput: {
+    width: '100%',
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 14,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+  },
+  modalCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 24,
+  },
+  modalTitle: {fontSize: 18, fontWeight: '700', marginBottom: 6},
+  modalHint: {fontSize: 13, lineHeight: 18, marginBottom: 16},
 
   primaryButton: {
     flexDirection: 'row',

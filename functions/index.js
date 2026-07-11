@@ -957,13 +957,43 @@ function normalizeHeader(s) {
 
 async function parseWorkbook(buffer, fileName) {
   const workbook = new ExcelJS.Workbook();
-  const isCSV = fileName.toLowerCase().endsWith(".csv");
+  const ext = (fileName.split('.').pop() || '').toLowerCase();
+  const isCSV = ext === 'csv';
+
   if (isCSV) {
     const { Readable } = require("stream");
     await workbook.csv.read(Readable.from(buffer.toString("utf8")));
-  } else {
-    await workbook.xlsx.load(buffer);
+    return workbook;
   }
+
+  // Detect format from magic bytes so extensionless files work
+  // XLSX is a ZIP file: starts with PK\x03\x04 (50 4B 03 04)
+  // Old XLS is OLE compound doc: starts with D0 CF 11 E0
+  const isZip = buffer[0] === 0x50 && buffer[1] === 0x4B;
+  const isOLE = buffer[0] === 0xD0 && buffer[1] === 0xCF && buffer[2] === 0x11 && buffer[3] === 0xE0;
+  const looksLikeText = buffer[0] >= 0x20 && buffer[0] < 0x80;
+
+  if (isOLE || (!isZip && !looksLikeText)) {
+    // Old .xls binary format — ExcelJS can't read it, use SheetJS
+    const XLSX = require("xlsx");
+    const wb = XLSX.read(buffer, { type: "buffer" });
+    const sheetName = wb.SheetNames[0];
+    const sheet = wb.Sheets[sheetName];
+    const csvData = XLSX.utils.sheet_to_csv(sheet);
+    const { Readable } = require("stream");
+    await workbook.csv.read(Readable.from(csvData));
+    return workbook;
+  }
+
+  if (!isZip && looksLikeText) {
+    // Looks like plain text / CSV despite extension
+    const { Readable } = require("stream");
+    await workbook.csv.read(Readable.from(buffer.toString("utf8")));
+    return workbook;
+  }
+
+  // XLSX (ZIP-based)
+  await workbook.xlsx.load(buffer);
   return workbook;
 }
 
@@ -1282,6 +1312,323 @@ exports.importInventory = functions
 // ===========================================================================
 // END IMPORT FUNCTIONS
 // ===========================================================================
+
+// ===========================================================================
+// GOOGLE SHEETS IMPORT
+// ===========================================================================
+
+function extractSheetInfo(url) {
+  const idMatch = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+  if (!idMatch) return null;
+  const spreadsheetId = idMatch[1];
+  const gidMatch = url.match(/[?&#]gid=(\d+)/);
+  const gid = gidMatch ? gidMatch[1] : "0";
+  return { spreadsheetId, gid };
+}
+
+async function downloadGoogleSheetAsCsv(spreadsheetId, gid) {
+  return downloadGoogleSheet(spreadsheetId, gid, "csv");
+}
+
+async function downloadGoogleSheet(spreadsheetId, gid, format) {
+  const exportUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=${format}&gid=${gid}`;
+  console.log(`[googleSheet] Downloading as ${format}: ${exportUrl}`);
+  const response = await fetch(exportUrl, { redirect: "follow" });
+  if (!response.ok) {
+    if (response.status === 403 || response.status === 401) {
+      throw new Error('This Google Sheet is not publicly accessible. Please set sharing to "Anyone with the link can view".');
+    }
+    throw new Error(`Failed to download Google Sheet: ${response.status} ${response.statusText}`);
+  }
+  const arrayBuffer = await response.arrayBuffer();
+  return Buffer.from(arrayBuffer);
+}
+
+// Convert Google Drive share links to direct download URLs
+function toDirectDownloadUrl(url) {
+  if (!url || !url.includes("drive.google.com")) return url;
+  const fileIdMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) ||
+                      url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if (fileIdMatch) {
+    return `https://drive.google.com/uc?export=download&id=${fileIdMatch[1]}`;
+  }
+  return url;
+}
+
+exports.validateGoogleSheetUrl = functions.https.onCall(async (data, context) => {
+  if (!context.auth?.uid) {
+    throw new functions.https.HttpsError("unauthenticated", "Login required.");
+  }
+
+  const { sheetUrl } = data;
+  if (!sheetUrl) {
+    throw new functions.https.HttpsError("invalid-argument", "sheetUrl is required.");
+  }
+
+  const sheetInfo = extractSheetInfo(sheetUrl);
+  if (!sheetInfo) {
+    throw new functions.https.HttpsError("invalid-argument", "Invalid Google Sheets URL. Make sure you copy the full URL from your browser.");
+  }
+
+  let buffer;
+  try {
+    buffer = await downloadGoogleSheetAsCsv(sheetInfo.spreadsheetId, sheetInfo.gid);
+  } catch (err) {
+    throw new functions.https.HttpsError("failed-precondition", err.message);
+  }
+
+  const workbook = await parseWorkbook(buffer, "sheet.csv");
+  const worksheet = workbook.worksheets[0];
+
+  if (!worksheet) {
+    return { valid: false, error: "No worksheet found in the sheet." };
+  }
+
+  const { found } = mapColumns(worksheet);
+
+  let rowCount = 0;
+  worksheet.eachRow((_, rowNumber) => { if (rowNumber > 1) rowCount++; });
+
+  const missing = REQUIRED_COLUMNS.filter(c => !found[c.key]).map(c => c.key);
+  const presentRequired = REQUIRED_COLUMNS.filter(c => !!found[c.key]).map(c => c.key);
+  const presentOptional = OPTIONAL_COLUMNS.filter(c => !!found[c.key]).map(c => c.key);
+
+  return { valid: missing.length === 0, rowCount, missing, presentRequired, presentOptional };
+});
+
+exports.importFromGoogleSheet = functions
+  .runWith({ secrets: ["OPENAI_API_KEY"], memory: "512MB", timeoutSeconds: 540 })
+  .https.onCall(async (data, context) => {
+    const uid = context.auth?.uid;
+    if (!uid) throw new functions.https.HttpsError("unauthenticated", "Login required.");
+
+    const { jobId, sheetUrl } = data;
+    if (!jobId || !sheetUrl) {
+      throw new functions.https.HttpsError("invalid-argument", "jobId and sheetUrl are required.");
+    }
+
+    const sheetInfo = extractSheetInfo(sheetUrl);
+    if (!sheetInfo) {
+      throw new functions.https.HttpsError("invalid-argument", "Invalid Google Sheets URL.");
+    }
+
+    const jobRef = db.collection("importJobs").doc(jobId);
+    await jobRef.set({
+      status: "processing",
+      total: 0,
+      processed: 0,
+      currentItem: "",
+      errors: [],
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    try {
+      let buffer;
+      try {
+        // Download as XLSX so embedded cell images are preserved (CSV strips them)
+        buffer = await downloadGoogleSheet(sheetInfo.spreadsheetId, sheetInfo.gid, "xlsx");
+      } catch (err) {
+        await jobRef.update({ status: "failed", error: err.message });
+        throw new functions.https.HttpsError("failed-precondition", err.message);
+      }
+
+      const workbook = await parseWorkbook(buffer, "sheet.xlsx");
+      const worksheet = workbook.worksheets[0];
+
+      if (!worksheet) {
+        await jobRef.update({ status: "failed", error: "No worksheet found." });
+        throw new functions.https.HttpsError("invalid-argument", "No worksheet found.");
+      }
+
+      const { found } = mapColumns(worksheet);
+
+      const missing = REQUIRED_COLUMNS.filter(c => !found[c.key]).map(c => c.key);
+      if (missing.length > 0) {
+        const msg = `Missing required columns: ${missing.join(", ")}`;
+        await jobRef.update({ status: "failed", error: msg });
+        throw new functions.https.HttpsError("invalid-argument", msg);
+      }
+
+      const foundCols = Object.entries(found).filter(([, v]) => v !== null).map(([k]) => k);
+      console.log(`[importFromGoogleSheet] Detected columns: ${foundCols.join(", ")}`);
+
+      // Extract embedded images (in-cell images exported from Google Sheets)
+      const embeddedImageMap = {};
+      try {
+        const wsImages = worksheet.getImages();
+        console.log(`[importFromGoogleSheet] worksheet.getImages() count: ${wsImages.length}`);
+        for (const img of wsImages) {
+          const rowNum = Math.floor(img.range.tl.nativeRow) + 1;
+          const imageData = workbook.getImage(img.imageId);
+          if (imageData && imageData.buffer && !embeddedImageMap[rowNum]) {
+            embeddedImageMap[rowNum] = {
+              buffer: Buffer.isBuffer(imageData.buffer) ? imageData.buffer : Buffer.from(imageData.buffer),
+              extension: imageData.extension || "png",
+            };
+          }
+        }
+        console.log(`[importFromGoogleSheet] Embedded images mapped to rows: ${Object.keys(embeddedImageMap).join(", ") || "none"}`);
+      } catch (imgErr) {
+        console.warn("[importFromGoogleSheet] Could not extract embedded images:", imgErr.message);
+      }
+
+      const rows = [];
+      worksheet.eachRow((row, rowNumber) => {
+        if (rowNumber === 1) return;
+        const get = (key) => (found[key] ? row.getCell(found[key]).value : null);
+        rows.push({
+          brand:         String(get("brand")       || "").trim(),
+          silhouette:    String(get("silhouette")  || "").trim(),
+          styleId:       String(get("styleId")     || "").trim(),
+          color:         String(get("color")       || "").trim(),
+          size:          String(get("size")        || "").trim(),
+          quantity:      parseInt(String(get("quantity") || "1")) || 1,
+          releaseDate:   String(get("releaseDate") || "").trim(),
+          retailValue:   parseFloat(String(get("retailValue") || "0").replace(/[$,]/g, "")) || 0,
+          imageUrl:      String(get("imageUrl")    || "").trim(),
+          embeddedImage: embeddedImageMap[rowNumber] || null,
+        });
+      });
+
+      const validRows = rows.filter(r => r.brand || r.silhouette);
+      await jobRef.update({ total: validRows.length });
+
+      const errors = [];
+      let createdCount = 0;
+      let updatedCount = 0;
+
+      const existingSnap = await db.collection("inventory").where("userId", "==", uid).get();
+      const existingItems = [];
+      existingSnap.forEach(doc => existingItems.push({ id: doc.id, ...doc.data() }));
+
+      const normalize = (s) => String(s || "").toLowerCase().trim();
+
+      const findExisting = (row) => {
+        if (row.styleId) {
+          const match = existingItems.find(item => normalize(item.styleId) === normalize(row.styleId));
+          if (match) return match;
+        }
+        return existingItems.find(item =>
+          normalize(item.brand) === normalize(row.brand) &&
+          normalize(item.silhouette) === normalize(row.silhouette) &&
+          normalize(item.size) === normalize(row.size) &&
+          normalize(item.color) === normalize(row.color)
+        ) || null;
+      };
+
+      for (let i = 0; i < validRows.length; i++) {
+        const row = validRows[i];
+        try {
+          let imageUrl = row.imageUrl;
+
+          if (row.embeddedImage) {
+            // In-cell image from Google Sheets XLSX export — upload buffer directly
+            try {
+              const { buffer, extension } = row.embeddedImage;
+              const contentType = extension === "jpg" || extension === "jpeg" ? "image/jpeg"
+                : extension === "png" ? "image/png"
+                : extension === "gif" ? "image/gif"
+                : "image/jpeg";
+              const timestamp = Date.now();
+              const storagePath = `inventory/${uid}/${timestamp}_gs_row${i + 1}.${extension}`;
+              const bucket = admin.storage().bucket();
+              const file = bucket.file(storagePath);
+              await file.save(buffer, { metadata: { contentType } });
+              await file.makePublic();
+              imageUrl = `https://storage.googleapis.com/${bucket.name}/${storagePath}`;
+              console.log(`[importFromGoogleSheet] Uploaded embedded image for row ${i + 1}: ${imageUrl}`);
+            } catch (embErr) {
+              console.warn(`[importFromGoogleSheet] Failed to upload embedded image for row ${i + 1}:`, embErr.message);
+            }
+          } else if (imageUrl) {
+            // URL in sheet — convert Google Drive share links to direct download URLs first
+            const directUrl = toDirectDownloadUrl(imageUrl);
+            const uploaded = await downloadAndUploadImageToStorage(directUrl, uid);
+            if (uploaded) imageUrl = uploaded;
+          } else if (row.brand || row.silhouette) {
+            try {
+              const openai = getOpenAI();
+              const prompt = `Professional studio product photo of ${[row.brand, row.silhouette, row.color].filter(Boolean).join(" ")} sneaker, clean white background, high resolution`;
+              const imgResponse = await openai.images.generate({
+                model: "dall-e-3",
+                prompt,
+                n: 1,
+                size: "1024x1024",
+              });
+              const tempUrl = imgResponse.data[0]?.url;
+              if (tempUrl) {
+                imageUrl = await downloadAndUploadImageToStorage(tempUrl, uid) || "";
+              }
+            } catch (imgErr) {
+              console.warn(`[importFromGoogleSheet] DALL-E failed for row ${i + 1}:`, imgErr.message);
+            }
+          }
+
+          const itemName = [row.brand, row.silhouette].filter(Boolean).join(" ");
+          const existing = findExisting(row);
+
+          if (existing) {
+            const updateData = {
+              name:        itemName || existing.name,
+              brand:       row.brand || existing.brand,
+              silhouette:  row.silhouette || existing.silhouette,
+              styleId:     row.styleId || existing.styleId,
+              color:       row.color || existing.color,
+              size:        row.size || existing.size,
+              releaseDate: row.releaseDate || existing.releaseDate,
+              retailValue: row.retailValue || existing.retailValue,
+              updatedAt:   admin.firestore.FieldValue.serverTimestamp(),
+            };
+            if (imageUrl) updateData.imageUrl = imageUrl;
+            await db.collection("inventory").doc(existing.id).update(updateData);
+            updatedCount++;
+          } else {
+            const newDoc = await db.collection("inventory").add({
+              name:        itemName || "Imported Item",
+              brand:       row.brand,
+              silhouette:  row.silhouette,
+              styleId:     row.styleId,
+              color:       row.color,
+              size:        row.size,
+              quantity:    row.quantity,
+              releaseDate: row.releaseDate,
+              retailValue: row.retailValue,
+              value:       0,
+              imageUrl:    imageUrl || "",
+              userId:      uid,
+              source:      "import",
+              createdAt:   admin.firestore.FieldValue.serverTimestamp(),
+              updatedAt:   admin.firestore.FieldValue.serverTimestamp(),
+            });
+            existingItems.push({ id: newDoc.id, ...row, imageUrl: imageUrl || "" });
+            createdCount++;
+          }
+
+          await jobRef.update({ processed: i + 1, currentItem: itemName || "Item" });
+        } catch (rowErr) {
+          console.error(`[importFromGoogleSheet] Row ${i + 1} failed:`, rowErr);
+          errors.push({ row: i + 1, error: rowErr.message });
+          await jobRef.update({
+            errors: admin.firestore.FieldValue.arrayUnion({ row: i + 1, error: rowErr.message }),
+          });
+        }
+      }
+
+      await jobRef.update({
+        status: "complete",
+        completedAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdCount,
+        updatedCount,
+      });
+
+      return { success: true, total: validRows.length, errors };
+    } catch (err) {
+      if (!(err instanceof functions.https.HttpsError)) {
+        await jobRef.update({ status: "failed", error: err.message }).catch(() => {});
+      }
+      throw err;
+    }
+  });
 
 async function downloadAndUploadImageToStorage(imageUrl, userId) {
   try {
