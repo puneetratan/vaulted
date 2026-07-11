@@ -346,7 +346,7 @@ const ImportScreen = () => {
         {/* ── READING / VALIDATING ── */}
         {(status === 'reading' || status === 'validating') && (
           <View style={styles.centerContainer}>
-            <ActivityIndicator size="large" color="#FF2D55" style={styles.spinner} />
+            <ActivityIndicator size="large" color="#34C759" style={styles.spinner} />
             <Text style={[styles.title, {color: colors.text}]}>
               {status === 'reading' ? 'Reading file…' : 'Checking columns…'}
             </Text>
@@ -472,7 +472,7 @@ const ImportScreen = () => {
         {/* ── PROCESSING ── */}
         {status === 'processing' && (
           <View style={styles.centerContainer}>
-            <ActivityIndicator size="large" color="#FF2D55" style={styles.spinner} />
+            <ActivityIndicator size="large" color="#34C759" style={styles.spinner} />
             <Text style={[styles.title, {color: colors.text}]}>Importing items…</Text>
             <Text style={[styles.subtitle, {color: colors.textSecondary}]}>{fileName}</Text>
 
@@ -679,7 +679,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     marginBottom: 8,
   },
-  progressFill: {height: '100%', backgroundColor: '#FF2D55', borderRadius: 3},
+  progressFill: {height: '100%', backgroundColor: '#34C759', borderRadius: 3},
   progressText: {fontSize: 14, marginBottom: 8},
   currentItem: {fontSize: 13, fontWeight: '500', textAlign: 'center'},
 
