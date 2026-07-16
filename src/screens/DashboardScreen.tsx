@@ -154,20 +154,20 @@ const DashboardScreen = () => {
   };
 
   async function requestAndroidPermissions() {
-    if (Platform.OS === 'android') {
-      const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-        {
-          title: 'Storage Permission Required',
-          message: 'App needs access to your storage to save Excel files',
-          buttonNeutral: 'Ask Me Later',
-          buttonNegative: 'Cancel',
-          buttonPositive: 'OK',
-        }
-      );
-      return granted === PermissionsAndroid.RESULTS.GRANTED;
-    }
-    return true;
+    if (Platform.OS !== 'android') return true;
+    // WRITE_EXTERNAL_STORAGE was removed in Android 10 (API 29) — always skip on modern devices
+    if ((Platform.Version as number) >= 29) return true;
+    const granted = await PermissionsAndroid.request(
+      PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+      {
+        title: 'Storage Permission Required',
+        message: 'App needs access to your storage to save Excel files',
+        buttonNeutral: 'Ask Me Later',
+        buttonNegative: 'Cancel',
+        buttonPositive: 'OK',
+      }
+    );
+    return granted === PermissionsAndroid.RESULTS.GRANTED;
   }
 
   const parseNumericValue = (value: any): number => {

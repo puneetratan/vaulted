@@ -130,7 +130,7 @@ exports.exportInventoryToExcel = functions.runWith({ secrets: ["SMTP_USER", "SMT
           });
 
           sheet.addImage(imageId, {
-            tl: { col: 8, row: rowIndex - 1 },
+            tl: { col: 7, row: rowIndex - 1 },
             ext: { width: 40, height: 40 },
           });
 

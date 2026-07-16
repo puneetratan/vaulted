@@ -73,6 +73,10 @@ storage.rules
 # Uncomment the line below if you want to exclude firebaseConfig.json from git
 # firebaseConfig.json
 
+# Firebase service account keys (sensitive credentials — never commit)
+*firebase-adminsdk*.json
+firestore-export/
+
 # Logs and temporary files
 *.log
 replay_pid*.log
