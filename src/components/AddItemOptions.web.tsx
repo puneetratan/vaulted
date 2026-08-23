@@ -16,15 +16,6 @@ interface AddItemOptionsProps {
 }
 
 const AddItemOptions = ({visible, onClose, onAddManually}: AddItemOptionsProps) => {
-  const handleBarcodeReader = () => {
-    onClose();
-    Alert.alert(
-      'Barcode Reader',
-      'Barcode scanner is available on mobile devices only',
-      [{text: 'OK'}],
-    );
-  };
-
   const handleXLSImport = async () => {
     onClose();
     // Web implementation - use HTML5 file input
@@ -78,13 +69,6 @@ const AddItemOptions = ({visible, onClose, onAddManually}: AddItemOptionsProps) 
       icon: '✏️',
       onPress: handleAddManually,
       color: '#5856D6',
-    },
-    {
-      id: 'barcode',
-      title: 'Barcode Reader',
-      icon: '🔍',
-      onPress: handleBarcodeReader,
-      color: '#007AFF',
     },
     {
       id: 'xls',

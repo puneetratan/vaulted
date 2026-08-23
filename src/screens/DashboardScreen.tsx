@@ -94,6 +94,13 @@ const DashboardScreen = () => {
     setInventoryRefreshToken(prev => prev + 1);
   }, []);
 
+  // Refresh inventory whenever Dashboard regains focus (e.g. returning from
+  // the Import screen after a successful import).
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', triggerInventoryRefresh);
+    return unsubscribe;
+  }, [navigation, triggerInventoryRefresh]);
+
   const handleAvailableFiltersChange = useCallback((data: {brands: string[], colors: string[], silhouettes: string[], sizes: string[], years: string[]}) => {
     setAvailableBrands(data.brands);
     setAvailableColors(data.colors);

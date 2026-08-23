@@ -9,6 +9,7 @@ const ExcelJS = require("exceljs");
 const nodemailer = require("nodemailer");
 const OpenAI = require("openai");
 const {google} = require("googleapis");
+const {parse: parseCsv} = require("csv-parse/sync");
 
 // ---------------------------------------------------------------------------
 // Subscription constants
@@ -249,14 +250,15 @@ const pruneUndefined = (obj) => {
   return obj;
 };
 
+const normalizeFieldKey = (key) => String(key ?? "").trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+
 const normalizeMetadataFields = (metadata = {}) => {
   const normalized = {};
   Object.keys(metadata).forEach((key) => {
     if (!key) {
       return;
     }
-    const normalizedKey = key.trim().toLowerCase().replace(/[^a-z0-9]/g, "");
-    normalized[normalizedKey] = metadata[key];
+    normalized[normalizeFieldKey(key)] = metadata[key];
   });
   return normalized;
 };
@@ -269,7 +271,7 @@ const buildInventoryDocFromMetadata = (metadata, imageUrl, uid, index) => {
   const canonical = normalizeMetadataFields(metadata);
   const getField = (...keys) => {
     for (const key of keys) {
-      const normalizedKey = key.trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+      const normalizedKey = normalizeFieldKey(key);
       if (canonical[normalizedKey] !== undefined && canonical[normalizedKey] !== null) {
         return canonical[normalizedKey];
       }
@@ -327,6 +329,139 @@ const persistMetadataDocs = async (docs) => {
   });
   await batch.commit();
 };
+
+// ---------------------------------------------------------------------------
+// Inventory import (CSV/XLS file + Google Sheets)
+// ---------------------------------------------------------------------------
+// Required columns mirror exportInventoryToExcel's sheet.columns headers so a
+// file exported from Vaulted can be re-imported without edits.
+const IMPORT_REQUIRED_COLUMNS = ["Brand", "Silhouette", "Name", "Size", "Color", "Quantity"];
+
+const aoaToRowObjects = (values) => {
+  if (!Array.isArray(values) || values.length < 2) {
+    return {headers: [], rows: []};
+  }
+  const [headerRow, ...dataRows] = values;
+  const headers = (headerRow || []).map((h) => String(h ?? "").trim());
+  const rows = dataRows
+    .filter((r) => Array.isArray(r) && r.some((c) => c !== undefined && c !== null && String(c).trim() !== ""))
+    .map((r) => {
+      const obj = {};
+      headers.forEach((h, i) => {
+        if (h) {
+          obj[h] = r[i];
+        }
+      });
+      return obj;
+    });
+  return {headers, rows};
+};
+
+const missingImportColumns = (headers) => {
+  const normalizedHeaders = new Set(headers.map(normalizeFieldKey));
+  return IMPORT_REQUIRED_COLUMNS.filter((col) => !normalizedHeaders.has(normalizeFieldKey(col)));
+};
+
+const parseCsvBuffer = (buffer) =>
+  parseCsv(buffer.toString("utf-8"), {skip_empty_lines: true, relax_column_count: true});
+
+const parseXlsxBuffer = async (buffer) => {
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.load(buffer);
+  const sheet = workbook.worksheets[0];
+  if (!sheet) {
+    return [];
+  }
+  // ExcelJS's getSheetValues() is 1-indexed with an undefined leading
+  // sentinel for both rows and columns; slice(1) on each drops it.
+  const raw = sheet.getSheetValues();
+  return raw.slice(1).map((row) => (row || []).slice(1));
+};
+
+const importRowsToInventory = async (values, uid) => {
+  const {headers, rows} = aoaToRowObjects(values);
+  const missingColumns = missingImportColumns(headers);
+  if (missingColumns.length > 0) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      `Missing required column(s): ${missingColumns.join(", ")}. Expected columns: ${IMPORT_REQUIRED_COLUMNS.join(", ")}.`,
+    );
+  }
+  if (rows.length === 0) {
+    throw new functions.https.HttpsError("invalid-argument", "No data rows found to import.");
+  }
+
+  const errors = [];
+  const docs = [];
+  rows.forEach((row, index) => {
+    const canonicalRow = normalizeMetadataFields(row);
+    const doc = buildInventoryDocFromMetadata(row, canonicalRow.image, uid, index);
+    if (!doc) {
+      errors.push({row: index + 2, reason: "Missing required Name or Brand value."});
+      return;
+    }
+    docs.push({...doc, source: "import"});
+  });
+
+  await persistMetadataDocs(docs);
+
+  return {success: true, imported: docs.length, skipped: errors.length, errors};
+};
+
+exports.importInventoryFromFile = functions.https.onCall(async (data, context) => {
+  const uid = context.auth?.uid;
+  if (!uid) {
+    throw new functions.https.HttpsError("unauthenticated", "User must be logged in.");
+  }
+
+  const fileName = data?.fileName;
+  const fileData = data?.fileData;
+  if (!fileName || !fileData) {
+    throw new functions.https.HttpsError("invalid-argument", "fileName and fileData are required.");
+  }
+
+  const extension = String(fileName).split(".").pop()?.toLowerCase();
+  const buffer = Buffer.from(fileData, "base64");
+
+  let values;
+  try {
+    if (extension === "csv") {
+      values = parseCsvBuffer(buffer);
+    } else if (extension === "xlsx" || extension === "xls") {
+      values = await parseXlsxBuffer(buffer);
+    } else {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "Unsupported file type. Please upload a .csv, .xls, or .xlsx file.",
+      );
+    }
+  } catch (err) {
+    if (err instanceof functions.https.HttpsError) {
+      throw err;
+    }
+    console.error("Error parsing import file:", err);
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "Could not read this file. Please make sure it's a valid CSV or Excel (.xlsx) file.",
+    );
+  }
+
+  return importRowsToInventory(values, uid);
+});
+
+exports.importInventoryFromDriveSheet = functions.https.onCall(async (data, context) => {
+  const uid = context.auth?.uid;
+  if (!uid) {
+    throw new functions.https.HttpsError("unauthenticated", "User must be logged in.");
+  }
+
+  const values = data?.values;
+  if (!Array.isArray(values) || values.length === 0) {
+    throw new functions.https.HttpsError("invalid-argument", "No sheet data provided.");
+  }
+
+  return importRowsToInventory(values, uid);
+});
 
 exports.analyzeShoeMetadata = functions.runWith({ secrets: ["OPENAI_API_KEY"] }).https.onCall(async (data, context) => {
   const uid = context.auth?.uid;

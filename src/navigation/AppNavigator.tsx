@@ -33,6 +33,9 @@ const PhotoCaptureScreen = Platform.OS === 'web'
 const PaywallScreen = Platform.OS === 'web'
   ? require('../screens/PaywallScreen.web').default
   : require('../screens/PaywallScreen').default;
+const ImportScreen = Platform.OS === 'web'
+  ? require('../screens/ImportScreen.web').default
+  : require('../screens/ImportScreen').default;
 
 interface ShoeItem {
   id: string;
@@ -58,6 +61,7 @@ export type RootStackParamList = {
   PrivacyPolicy: undefined;
   EditItem: {item: ShoeItem} | undefined;
   AddItem: {barcode?: string} | undefined;
+  Import: undefined;
   BarcodeScanner: undefined;
   PhotoCapture: {
     onPhotoCapture?: (uri: string, fileName: string, mimeType: string) => void;
@@ -145,6 +149,11 @@ const AppNavigator = () => {
         <Stack.Screen
           name="AddItem"
           component={AddItemScreen}
+          options={{headerShown: false}}
+        />
+        <Stack.Screen
+          name="Import"
+          component={ImportScreen}
           options={{headerShown: false}}
         />
         <Stack.Screen

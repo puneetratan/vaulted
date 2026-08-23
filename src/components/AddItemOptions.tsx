@@ -10,7 +10,6 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {launchImageLibrary, ImagePickerResponse} from 'react-native-image-picker';
-import DocumentPicker from 'react-native-document-picker';
 import {useNavigation} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {RootStackParamList} from '../navigation/AppNavigator';
@@ -80,34 +79,9 @@ const AddItemOptions = ({
     return [];
   };
 
-  const handleBarcodeReader = () => {
+  const handleImportItem = () => {
     onClose();
-    navigation.navigate('BarcodeScanner' as never);
-  };
-
-  const handleXLSImport = async () => {
-    try {
-      onClose();
-      const pickerResult = await DocumentPicker.pick({
-        type: [
-          DocumentPicker.types.xls,
-          DocumentPicker.types.xlsx,
-          DocumentPicker.types.csv,
-        ],
-      });
-      Alert.alert(
-        'XLS Import',
-        `File selected: ${pickerResult[0].name}`,
-        [{text: 'OK'}],
-      );
-      // TODO: Process the XLS file
-    } catch (err) {
-      if (DocumentPicker.isCancel(err)) {
-        // User cancelled
-      } else {
-        Alert.alert('Error', 'Failed to pick file');
-      }
-    }
+    navigation.navigate('Import');
   };
 
   const uploadImagesAndAnalyze = async (assets: Exclude<ImagePickerResponse['assets'], undefined>) => {
@@ -271,13 +245,6 @@ const AddItemOptions = ({
       color: '#5856D6',
     },
     {
-      id: 'barcode',
-      title: 'Barcode Reader',
-      icon: 'qr-code-scanner',
-      onPress: handleBarcodeReader,
-      color: '#007AFF',
-    },
-    {
       id: 'camera',
       title: 'Take Photo',
       icon: 'camera-alt',
@@ -290,6 +257,13 @@ const AddItemOptions = ({
       icon: 'image',
       onPress: handleImageUpload,
       color: '#FF9500',
+    },
+    {
+      id: 'import',
+      title: 'Import Item',
+      icon: 'file-upload',
+      onPress: handleImportItem,
+      color: '#30B0C7',
     },
   ];
 
