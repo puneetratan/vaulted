@@ -1,4 +1,4 @@
-package com.vault.dev;
+package com.vaultedapp;
 
 import com.facebook.react.ReactActivity;
 import com.facebook.react.ReactActivityDelegate;

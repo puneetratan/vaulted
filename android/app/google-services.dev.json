@@ -1,0 +1,79 @@
+{
+  "project_info": {
+    "project_number": "872715867979",
+    "firebase_url": "https://dev-vaultapp-default-rtdb.firebaseio.com",
+    "project_id": "dev-vaultapp",
+    "storage_bucket": "dev-vaultapp.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:872715867979:android:b705436009174393db7ace",
+        "android_client_info": {
+          "package_name": "com.vault.dev"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "872715867979-0n95d618b0gbgtmrn9eb0cnl6am8uh6o.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.vault.dev",
+            "certificate_hash": "f2d62f7afcf4fa429ace65e781158cd799e9d9ab"
+          }
+        },
+        {
+          "client_id": "872715867979-5i6op4dhpp1eo24lniiooms21b57c4su.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.vault.dev",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "872715867979-71jug22kcb53uomgbto8dsmm2k2boatv.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.vault.dev",
+            "certificate_hash": "ec22eeecb719f1c64ff28d0f32091598e832d30a"
+          }
+        },
+        {
+          "client_id": "872715867979-l0f2rqaco2ch4vuhhgovj7udqsa1k96v.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.vault.dev",
+            "certificate_hash": "c78346d04cd51ffc2549a1da42dd5b1cbd6abf6e"
+          }
+        },
+        {
+          "client_id": "872715867979-rmth3jpbic8jorgksr6i9r6j83vjqpdo.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCh5BE4bBehSGkrO3y8LVhO_ymwT12zUjk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "872715867979-rmth3jpbic8jorgksr6i9r6j83vjqpdo.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "872715867979-gqmqscns9e54q6e345p4fvp3tvehecn8.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.vaulted.dev"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

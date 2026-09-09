@@ -1,4 +1,4 @@
-package com.vault.dev;
+package com.vaultedapp;
 
 import android.app.Application;
 import com.facebook.react.PackageList;

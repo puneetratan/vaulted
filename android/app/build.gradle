@@ -20,7 +20,7 @@ react {
     //   The list of variants to that are debuggable. For those we're going to
     //   skip the bundling of the JS bundle and the assets. By default is just 'debug'.
     //   If you add flavors like lite, prod, etc. you'll have to list your debuggableVariants.
-    // debuggableVariants = ["liteDebug", "prodDebug"]
+    debuggableVariants = ["devDebug", "prodDebug"]
 
     /* Bundling */
     //   A list containing the node command and its flags. Default is just 'node'.
@@ -73,16 +73,26 @@ android {
 
     compileSdkVersion rootProject.ext.compileSdkVersion
 
-    namespace "com.vault.dev"
+    namespace "com.vaultedapp"
     defaultConfig {
-        applicationId "com.vault.dev"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 31
-        versionName "2.9"
+        versionCode 1
+        versionName "1.0"
         missingDimensionStrategy 'store', 'play'
         ndk {
             abiFilters "armeabi-v7a", "arm64-v8a"
+        }
+    }
+    flavorDimensions "environment"
+    productFlavors {
+        dev {
+            dimension "environment"
+            applicationId "com.vault.dev"
+        }
+        prod {
+            dimension "environment"
+            applicationId "com.vaultedapp"
         }
     }
     buildFeatures {
@@ -90,8 +100,7 @@ android {
     }
     signingConfigs {
         debug {
-            // storeFile file('debug.keystore')
-            storeFile file("${System.getProperty("user.home")}/.android/debug.keystore")
+            storeFile file('debug.keystore')
             storePassword 'android'
             keyAlias 'androiddebugkey'
             keyPassword 'android'
