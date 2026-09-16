@@ -1,8 +1,23 @@
 import React, {useEffect} from 'react';
-import {NavigationContainer} from '@react-navigation/native';
+import {NavigationContainer, DarkTheme} from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack';
 import {Platform, View, ActivityIndicator, StyleSheet} from 'react-native';
 import {useAuth} from '../contexts/AuthContext';
+import {darkTheme} from '../contexts/ThemeContext';
+
+// React Navigation defaults to a light theme background when none is given,
+// which flashes white during screen transitions on this dark-only app.
+const navigationTheme = {
+  ...DarkTheme,
+  colors: {
+    ...DarkTheme.colors,
+    background: darkTheme.background,
+    card: darkTheme.card,
+    text: darkTheme.text,
+    border: darkTheme.border,
+    primary: darkTheme.primary,
+  },
+};
 import SplashScreen from '../screens/SplashScreen';
 // Use web-compatible versions on web
 const LoginScreen = Platform.OS === 'web' 
@@ -115,11 +130,12 @@ const AppNavigator = () => {
   }
 
   return (
-    <NavigationContainer ref={navigationRef}>
+    <NavigationContainer ref={navigationRef} theme={navigationTheme}>
       <Stack.Navigator
         initialRouteName="Splash"
         screenOptions={{
           headerShown: false,
+          cardStyle: {backgroundColor: darkTheme.background},
         }}>
         <Stack.Screen name="Splash" component={SplashScreen} />
         <Stack.Screen name="Login" component={LoginScreen} />
@@ -179,7 +195,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: darkTheme.background,
   },
 });
 
