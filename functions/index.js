@@ -17,7 +17,8 @@ const sharp = require("sharp");
 const FREE_TIER_ITEM_LIMIT = 10;
 const APPLE_VERIFY_URL_PROD = "https://buy.itunes.apple.com/verifyReceipt";
 const APPLE_VERIFY_URL_SANDBOX = "https://sandbox.itunes.apple.com/verifyReceipt";
-const BUNDLE_ID = "com.vaulted.dev";
+// Set via Firebase environment: BUNDLE_ID secret, or fall back per project
+const BUNDLE_ID = process.env.BUNDLE_ID || "com.vaulted.dev";
 
 // Lazy-initialized so the module loads cleanly during Firebase CLI analysis
 let _openai = null;
@@ -34,7 +35,7 @@ const fetch = (...args) => import("node-fetch").then(({ default: f }) => f(...ar
 admin.initializeApp();
 const db = admin.firestore();
 
-exports.exportInventoryToExcel = functions.runWith({ secrets: ["SMTP_USER", "SMTP_PASS"], memory: "512MB" }).https.onCall(async (data, context) => {
+exports.exportInventoryToExcel = functions.runWith({ secrets: ["SMTP_USER", "SMTP_PASS"], memory: "512MB", timeoutSeconds: 300 }).https.onCall(async (data, context) => {
   const uid = context.auth?.uid;
   const tokenEmail = context.auth?.token?.email;
   const isRelayEmail = !!(tokenEmail && tokenEmail.endsWith("@privaterelay.appleid.com"));
@@ -81,6 +82,7 @@ exports.exportInventoryToExcel = functions.runWith({ secrets: ["SMTP_USER", "SMT
       { header: "Retail Value", key: "retailValue", width: 10 },
       { header: "Image", key: "imageUrl", width: 30 },
     ];
+    const pendingImages = [];
     for (const doc of snapshot.docs) {
       const item = doc.data();
       const {
@@ -109,35 +111,35 @@ exports.exportInventoryToExcel = functions.runWith({ secrets: ["SMTP_USER", "SMT
         quantity,
         releaseDate,
         retailValue: retailValueDisplay,
-        imageUrl: "",
+        imageUrl: imageUrl || "",
       });
+      pendingImages.push({ rowNumber: row.number, imageUrl });
+    }
 
-      const rowIndex = row.number;
-
-      // ✅ fixed variable name
-      if (imageUrl && imageUrl.startsWith("https")) {
-        try {
-          const response = await fetch(imageUrl);
-          const rawBuffer = Buffer.from(await response.arrayBuffer());
-          const thumbBuffer = await sharp(rawBuffer)
-            .resize(80, 80, { fit: "cover" })
-            .jpeg({ quality: 70 })
-            .toBuffer();
-
-          const imageId = workbook.addImage({
-            buffer: thumbBuffer,
-            extension: "jpeg",
-          });
-
-          sheet.addImage(imageId, {
-            tl: { col: 7, row: rowIndex - 1 },
-            ext: { width: 40, height: 40 },
-          });
-
-          sheet.getRow(rowIndex).height = 40;
-        } catch (err) {
-          console.warn(`Image fetch failed:`, err.message);
-        }
+    // Download thumbnails in parallel batches of 10, then embed into sheet
+    const BATCH = 10;
+    const downloadThumb = async ({ rowNumber, imageUrl: url }) => {
+      if (!url || !url.startsWith("https")) return null;
+      try {
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), 8000);
+        const res = await fetch(url, { signal: ctrl.signal });
+        clearTimeout(timer);
+        if (!res.ok) return null;
+        const raw = Buffer.from(await res.arrayBuffer());
+        const thumb = await sharp(raw).resize(80, 80, { fit: "cover" }).jpeg({ quality: 70 }).toBuffer();
+        return { rowNumber, thumb };
+      } catch (_) {
+        return null;
+      }
+    };
+    for (let i = 0; i < pendingImages.length; i += BATCH) {
+      const results = await Promise.all(pendingImages.slice(i, i + BATCH).map(downloadThumb));
+      for (const r of results) {
+        if (!r) continue;
+        const imgId = workbook.addImage({ buffer: r.thumb, extension: "jpeg" });
+        sheet.addImage(imgId, { tl: { col: 7, row: r.rowNumber - 1 }, ext: { width: 40, height: 40 } });
+        sheet.getRow(r.rowNumber).height = 40;
       }
     }
 

@@ -20,7 +20,7 @@ import {
   SubscriptionPurchase,
   PurchaseError,
   IapIosSk2,
-} from 'react-native-iap';
+} from '../services/iap';
 import {httpsCallable} from '@react-native-firebase/functions';
 import {useAuth} from './AuthContext';
 import {getFunctions, getFirestore} from '../services/firebase';

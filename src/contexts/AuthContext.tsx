@@ -4,6 +4,7 @@ import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import { appleAuth } from "@invertase/react-native-apple-authentication";
 import { getAuth } from "../services/firebase";
 import { AppleAuthProvider, GoogleAuthProvider, onAuthStateChanged, signInWithCredential, signOut } from "@react-native-firebase/auth";
+import AppConfig from "../config";
 
 type AuthContextType = {
   user: any | null;
@@ -36,7 +37,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       GoogleSignin.configure({
         iosClientId: "872715867979-r9b7b05lutnkblrstufbrh00aaqehgb8.apps.googleusercontent.com",
-        webClientId: "872715867979-rmth3jpbic8jorgksr6i9r6j83vjqpdo.apps.googleusercontent.com",
+        webClientId: AppConfig.googleWebClientId,
         offlineAccess: false,
         // For Android, ensure the package name matches
         forceCodeForRefreshToken: false,
