@@ -8,8 +8,10 @@ import { Platform } from "react-native";
 import firebaseConfigData from '../../firebaseConfig.json';
 
 
-// Get platform-specific config
-const platformConfig = Platform.OS === 'ios' ? firebaseConfigData.ios : firebaseConfigData.android;
+// Get platform- and environment-specific config (dev vs prod), matching the
+// native config split (google-services.json flavors / GoogleService-Info.plist).
+const platformEnvConfig = Platform.OS === 'ios' ? firebaseConfigData.ios : firebaseConfigData.android;
+const platformConfig = __DEV__ ? platformEnvConfig.dev : platformEnvConfig.prod;
 const firebaseConfig = {
   apiKey: platformConfig.apiKey,
   authDomain: platformConfig.authDomain,

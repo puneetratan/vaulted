@@ -9,9 +9,12 @@ import {
 } from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import DeviceInfo from 'react-native-device-info';
 import {useTheme} from '../contexts/ThemeContext';
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const {version: appVersion} = require('../../package.json');
+// Reads the actual native versionName (Android) / CFBundleShortVersionString
+// (iOS) so this never drifts from what's really installed, unlike
+// package.json's version field which is a separate, manually-maintained number.
+const appVersion = DeviceInfo.getVersion();
 
 interface HamburgerMenuProps {
   visible: boolean;

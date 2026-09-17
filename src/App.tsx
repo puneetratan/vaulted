@@ -5,6 +5,7 @@ import AppNavigator from './navigation/AppNavigator';
 import {AuthProvider} from './contexts/AuthContext';
 import {ThemeProvider} from './contexts/ThemeContext';
 import {SubscriptionProvider} from './contexts/SubscriptionContext';
+import UpdateChecker from './components/UpdateChecker';
 import './services/firebase'; // Initialize Firebase on import
 
 const App = () => {
@@ -13,6 +14,7 @@ const App = () => {
       <ThemeProvider>
         <AuthProvider>
           <SubscriptionProvider>
+            <UpdateChecker />
             <AppNavigator />
           </SubscriptionProvider>
         </AuthProvider>

@@ -162,7 +162,11 @@ const AddItemOptions = ({
         const message = uploadErr?.message || 'Failed to upload one of the images.';
         console.error('Image upload failed:', uploadErr);
         Alert.alert('Upload Error', message);
-        onImageAnalysisError?.(message);
+        // Clear the "processing" shadow item without a message — the alert
+        // above already covers this; passing message here would trigger a
+        // second, wrongly-titled "Analysis Error" alert for what's really an
+        // upload failure, not an AI analysis failure.
+        onImageAnalysisError?.();
         return;
       }
     }

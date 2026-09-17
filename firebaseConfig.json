@@ -1,23 +1,47 @@
 {
   "ios": {
-    "apiKey": "AIzaSyBZuRY5RIdwCG7TmI81u8tOmX5-dG8h1IM",
-    "authDomain": "dev-vaultapp.firebaseapp.com",
-    "projectId": "dev-vaultapp",
-    "storageBucket": "dev-vaultapp.firebasestorage.app",
-    "messagingSenderId": "872715867979",
-    "appId": "1:872715867979:ios:5a876d48f392bdf0db7ace",
-    "measurementId": "G-PNKEGHHYSF",
-    "databaseURL": "https://dev-vaultapp-default-rtdb.firebaseio.com"
+    "dev": {
+      "apiKey": "AIzaSyBZuRY5RIdwCG7TmI81u8tOmX5-dG8h1IM",
+      "authDomain": "dev-vaultapp.firebaseapp.com",
+      "projectId": "dev-vaultapp",
+      "storageBucket": "dev-vaultapp.firebasestorage.app",
+      "messagingSenderId": "872715867979",
+      "appId": "1:872715867979:ios:5a876d48f392bdf0db7ace",
+      "measurementId": "G-PNKEGHHYSF",
+      "databaseURL": "https://dev-vaultapp-default-rtdb.firebaseio.com"
+    },
+    "prod": {
+      "apiKey": "AIzaSyB7UTdiadNHrXVzl5vJRuivR3N2KpWlsI4",
+      "authDomain": "vaulted-6b9b9.firebaseapp.com",
+      "projectId": "vaulted-6b9b9",
+      "storageBucket": "vaulted-6b9b9.firebasestorage.app",
+      "messagingSenderId": "899300491798",
+      "appId": "1:899300491798:ios:999169cec99b36bb896b37",
+      "measurementId": "",
+      "databaseURL": "https://vaulted-6b9b9-default-rtdb.firebaseio.com"
+    }
   },
   "android": {
-    "apiKey": "AIzaSyBZuRY5RIdwCG7TmI81u8tOmX5-dG8h1IM",
-    "authDomain": "dev-vaultapp.firebaseapp.com",
-    "projectId": "dev-vaultapp",
-    "storageBucket": "dev-vaultapp.firebasestorage.app",
-    "messagingSenderId": "872715867979",
-    "appId": "1:872715867979:android:b705436009174393db7ace",
-    "measurementId": "G-PNKEGHHYSF",
-    "databaseURL": "https://dev-vaultapp-default-rtdb.firebaseio.com"
+    "dev": {
+      "apiKey": "AIzaSyBZuRY5RIdwCG7TmI81u8tOmX5-dG8h1IM",
+      "authDomain": "dev-vaultapp.firebaseapp.com",
+      "projectId": "dev-vaultapp",
+      "storageBucket": "dev-vaultapp.firebasestorage.app",
+      "messagingSenderId": "872715867979",
+      "appId": "1:872715867979:android:b705436009174393db7ace",
+      "measurementId": "G-PNKEGHHYSF",
+      "databaseURL": "https://dev-vaultapp-default-rtdb.firebaseio.com"
+    },
+    "prod": {
+      "apiKey": "AIzaSyBMMmDwCtRY1XKKEeLs_oP1cdcVa6H-Yto",
+      "authDomain": "vaulted-6b9b9.firebaseapp.com",
+      "projectId": "vaulted-6b9b9",
+      "storageBucket": "vaulted-6b9b9.firebasestorage.app",
+      "messagingSenderId": "899300491798",
+      "appId": "1:899300491798:android:1b1c782f273a3e1a896b37",
+      "measurementId": "",
+      "databaseURL": "https://vaulted-6b9b9-default-rtdb.firebaseio.com"
+    }
   }
 }
 
