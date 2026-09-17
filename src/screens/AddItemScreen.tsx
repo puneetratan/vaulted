@@ -26,6 +26,7 @@ import {getUserData} from '../services/userService';
 import {Picker} from '@react-native-picker/picker';
 import DateTimePicker, {DateTimePickerEvent} from '@react-native-community/datetimepicker';
 import {RootStackParamList} from '../navigation/AppNavigator';
+import {withDownloadUrlRetry} from '../utils/storageRetry';
 
 type AddItemScreenRouteProp = RouteProp<RootStackParamList, 'AddItem'>;
 type AddItemScreenNavigationProp = StackNavigationProp<RootStackParamList, 'AddItem'>;
@@ -303,7 +304,7 @@ const AddItemScreen = () => {
             await uploadBytes(storageRef, blob, {
               contentType: imageAsset.type ?? 'image/jpeg',
             });
-            uploadedImageUrl = await getDownloadURL(storageRef);
+            uploadedImageUrl = await withDownloadUrlRetry(() => getDownloadURL(storageRef));
           } else {
             if (storageInstance.ref) {
               const storageRef = storageInstance.ref(storagePath);
@@ -314,7 +315,7 @@ const AddItemScreen = () => {
               await storageRef.putFile(fileUri, {
                 contentType: imageAsset.type ?? 'image/jpeg',
               });
-              uploadedImageUrl = await storageRef.getDownloadURL();
+              uploadedImageUrl = await withDownloadUrlRetry(() => storageRef.getDownloadURL());
             } else {
               const { ref, uploadBytes, getDownloadURL } = await import('firebase/storage');
               const response = await fetch(imageAsset.uri);
@@ -323,7 +324,7 @@ const AddItemScreen = () => {
               await uploadBytes(storageRef, blob, {
                 contentType: imageAsset.type ?? 'image/jpeg',
               });
-              uploadedImageUrl = await getDownloadURL(storageRef);
+              uploadedImageUrl = await withDownloadUrlRetry(() => getDownloadURL(storageRef));
             }
           }
         } catch (uploadError: any) {

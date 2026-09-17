@@ -18,6 +18,7 @@ import {useAuth} from '../contexts/AuthContext';
 import {useSubscription} from '../contexts/SubscriptionContext';
 import {useTheme} from '../contexts/ThemeContext';
 import {getUserData} from '../services/userService';
+import {withDownloadUrlRetry} from '../utils/storageRetry';
 
 type AnalyzedMetadata = {
   name?: string;
@@ -156,7 +157,7 @@ const AddItemOptions = ({
           contentType: asset.type ?? 'image/jpeg',
         });
 
-        const downloadUrl = await storageRef.getDownloadURL();
+        const downloadUrl = await withDownloadUrlRetry(() => storageRef.getDownloadURL());
         uploadedUris.push(downloadUrl);
       } catch (uploadErr: any) {
         const message = uploadErr?.message || 'Failed to upload one of the images.';
