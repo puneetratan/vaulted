@@ -104,10 +104,17 @@ const AppNavigator = () => {
     if (!loading && navigationRef.current?.isReady()) {
       if (isAuthenticated) {
         wasAuthenticated.current = true;
-        navigationRef.current.reset({
-          index: 0,
-          routes: [{name: 'Dashboard'}],
-        });
+        // Only reset to Dashboard when coming from the unauthenticated flow.
+        // If the user is already deep in the authenticated app (e.g. mid
+        // photo capture), a redundant/spurious re-fire of isAuthenticated
+        // shouldn't wipe out their navigation stack.
+        const currentRoute = navigationRef.current.getCurrentRoute()?.name;
+        if (!currentRoute || currentRoute === 'Login' || currentRoute === 'Splash') {
+          navigationRef.current.reset({
+            index: 0,
+            routes: [{name: 'Dashboard'}],
+          });
+        }
       } else if (wasAuthenticated.current) {
         // User explicitly signed out — navigate to Login
         wasAuthenticated.current = false;

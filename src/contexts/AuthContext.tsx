@@ -240,19 +240,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Using modular API (onAuthStateChanged) instead of deprecated instance method
   useEffect(() => {
     const authInstance = getAuth();
+    // The native Firebase Auth SDK can emit a transient null on this listener
+    // when the Activity backgrounds/foregrounds (e.g. a runtime permission
+    // dialog while the camera is open), immediately followed by the real
+    // user again. Debounce the "signed out" case so a brief blip doesn't get
+    // treated as a real sign-out — AppNavigator resets the whole navigation
+    // stack on every isAuthenticated change, so a spurious flip there wipes
+    // out wherever the user actually was. Sign-in stays immediate.
+    let signOutTimer: ReturnType<typeof setTimeout> | null = null;
     const unsubscribe = onAuthStateChanged(authInstance, (usr: any) => {
-      setUser(usr);
-      setLoading(false);
-      // Log auth state changes for debugging
+      if (signOutTimer) {
+        clearTimeout(signOutTimer);
+        signOutTimer = null;
+      }
       if (usr) {
+        setUser(usr);
+        setLoading(false);
         console.log("✅ User authenticated:", usr.email);
       } else {
-        console.log("❌ User signed out");
+        signOutTimer = setTimeout(() => {
+          setUser(null);
+          setLoading(false);
+          console.log("❌ User signed out");
+        }, 700);
       }
     });
-    
+
     // Cleanup subscription on unmount
-    return () => unsubscribe();
+    return () => {
+      if (signOutTimer) clearTimeout(signOutTimer);
+      unsubscribe();
+    };
   }, []);
 
   // ✅ Force-sync user after profile updates (photoURL etc.)
