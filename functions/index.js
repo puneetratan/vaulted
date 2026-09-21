@@ -1335,15 +1335,36 @@ async function downloadGoogleSheetAsCsv(spreadsheetId, gid) {
 async function downloadGoogleSheet(spreadsheetId, gid, format) {
   const exportUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=${format}&gid=${gid}`;
   console.log(`[googleSheet] Downloading as ${format}: ${exportUrl}`);
-  const response = await fetch(exportUrl, { redirect: "follow" });
-  if (!response.ok) {
-    if (response.status === 403 || response.status === 401) {
-      throw new Error('This Google Sheet is not publicly accessible. Please set sharing to "Anyone with the link can view".');
+
+  // Google's export redirect (googleusercontent.com) occasionally drops the
+  // connection mid-stream on larger files ("Premature close") — retry a few
+  // times before giving up, but not for permission errors, which won't
+  // resolve themselves.
+  const maxAttempts = 3;
+  let lastErr;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const response = await fetch(exportUrl, { redirect: "follow" });
+      if (!response.ok) {
+        if (response.status === 403 || response.status === 401) {
+          throw new Error('This Google Sheet is not publicly accessible. Please set sharing to "Anyone with the link can view".');
+        }
+        throw new Error(`Failed to download Google Sheet: ${response.status} ${response.statusText}`);
+      }
+      const arrayBuffer = await response.arrayBuffer();
+      return Buffer.from(arrayBuffer);
+    } catch (err) {
+      lastErr = err;
+      if (err.message?.includes("not publicly accessible")) {
+        throw err;
+      }
+      console.warn(`[googleSheet] Download attempt ${attempt}/${maxAttempts} failed: ${err.message}`);
+      if (attempt < maxAttempts) {
+        await new Promise(resolve => setTimeout(resolve, 1500 * attempt));
+      }
     }
-    throw new Error(`Failed to download Google Sheet: ${response.status} ${response.statusText}`);
   }
-  const arrayBuffer = await response.arrayBuffer();
-  return Buffer.from(arrayBuffer);
+  throw lastErr;
 }
 
 // Convert Google Drive share links to direct download URLs

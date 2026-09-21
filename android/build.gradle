@@ -8,8 +8,10 @@ buildscript {
         targetSdkVersion = 36
         kotlinVersion = "1.9.22"
 
-        // NDK 27 required for 16 KB memory page size support (Android 15+)
-        ndkVersion = "27.0.12077973"
+        // NDK 28+ compiles 16 KB-page-aligned native libraries by default —
+        // r27 requires linker flags React Native's CMake build doesn't
+        // propagate to all native modules, so r28 is required, not optional.
+        ndkVersion = "28.0.13004108"
     }
     repositories {
         google()
