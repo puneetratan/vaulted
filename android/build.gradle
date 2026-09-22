@@ -8,10 +8,17 @@ buildscript {
         targetSdkVersion = 36
         kotlinVersion = "1.9.22"
 
-        // NDK 28+ compiles 16 KB-page-aligned native libraries by default —
-        // r27 requires linker flags React Native's CMake build doesn't
-        // propagate to all native modules, so r28 is required, not optional.
-        ndkVersion = "28.0.13004108"
+        // Reverted from 28.0.13004108: versionCode 12 (the only build using
+        // NDK 28) crashed on launch during Play Store review ("Vaulted keeps
+        // stopping"), most likely an ABI mismatch between our own
+        // NDK-28-compiled native modules and React Native's NDK-27-era
+        // precompiled core libraries (libhermes.so etc. don't get rebuilt
+        // locally — see the 16KB investigation notes). r27 was proven stable
+        // across versionCodes 1-11. Full 16KB compliance needs a React
+        // Native upgrade to 0.77+ instead (see earlier discussion) — don't
+        // re-attempt an NDK-only bump without confirming RN's own core
+        // binaries are rebuilt for the new NDK.
+        ndkVersion = "27.0.12077973"
     }
     repositories {
         google()
