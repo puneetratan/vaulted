@@ -121,17 +121,14 @@ subprojects { subproject ->
             }
         }
 
-        // Fix react-native-gesture-handler dependency resolution
-        if (subproject.name == 'react-native-gesture-handler') {
-            subproject.configurations.all {
-                resolutionStrategy.eachDependency { details ->
-                    if (details.requested.group == 'com.facebook.react' && details.requested.name == 'react-native') {
-                        details.useTarget("com.facebook.react:react-android:0.72.6")
-                        details.because("React Native 0.72 uses react-android instead of react-native")
-                    }
-                }
-            }
-        }
+        // (Removed a hardcoded gesture-handler -> react-android:0.72.6 redirect
+        // that used to live here. Verified unnecessary: React Native's own
+        // Gradle plugin already substitutes the legacy react-native artifact
+        // coordinate for react-android at whatever version the app actually
+        // uses — confirmed via `./gradlew :app:dependencies` showing a single
+        // consistent resolved version tree-wide. The hardcoded pin was stale
+        // even at 0.73.11 and would have caused a real ABI mismatch once
+        // upgraded further.)
     }
 }
 

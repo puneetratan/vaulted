@@ -3,6 +3,7 @@
   "version": "2.2.0",
   "main": "index.js",
   "scripts": {
+    "postinstall": "patch-package",
     "android": "react-native run-android --mode devDebug",
     "android:prod": "react-native run-android --mode prodDebug",
     "android:release": "react-native run-android --mode prodRelease",
