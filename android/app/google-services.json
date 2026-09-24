@@ -14,11 +14,35 @@
       },
       "oauth_client": [
         {
+          "client_id": "899300491798-1h7gqrp2581j13t9fk7ksk0shs3shsd8.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.vaultedapp",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "899300491798-3uogd564lev2jrtdo7uv0bs1hofh89rk.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.vaultedapp",
+            "certificate_hash": "b882877fa39f792ce73159d6e0a8ab70ba8da25c"
+          }
+        },
+        {
           "client_id": "899300491798-g3jalg79lh7vrb2mvgi9qu6e6q0tvo9p.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.vaultedapp",
             "certificate_hash": "c78346d04cd51ffc2549a1da42dd5b1cbd6abf6e"
+          }
+        },
+        {
+          "client_id": "899300491798-vf1ee1blde0dhjtlt1ckhcl1pk5e4j3r.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.vaultedapp",
+            "certificate_hash": "20318f51fd93691be36382d8e174b291b55f1b73"
           }
         },
         {

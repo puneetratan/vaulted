@@ -255,7 +255,7 @@ const DashboardTabs = ({
     }
   }, [availableBrands, availableColors, availableSilhouettes, availableSizes, availableYears, onAvailableFiltersChange]);
 
-  const [realStats, setRealStats] = useState<{count: number; totalValue: number; brandCount: number}>({count: 0, totalValue: 0, brandCount: 0});
+  const [realStats, setRealStats] = useState<{count: number; totalValue: number; brandCount: number; brands: string[]}>({count: 0, totalValue: 0, brandCount: 0, brands: []});
   const [brandStats, setBrandStats] = useState<{count: number; totalValue: number}>({count: 0, totalValue: 0});
 
   useEffect(() => {
@@ -348,9 +348,14 @@ const DashboardTabs = ({
     });
   }, [filters]);
 
-  // Get available brands for filter buttons
+  // Get available brands for filter buttons. Uses the full-collection brand list from
+  // getTotalInventoryStats (realStats.brands) as the source of truth, not just allShoes --
+  // allShoes only holds whatever pages have been paginated in so far, so on first load (before
+  // the user has scrolled/filtered far enough to trigger more pages) it only reflects brands
+  // present in the first page, undercounting the filter chips shown.
   const availableBrandsForFilter = useMemo(() => {
     const brands = new Set<string>();
+    realStats.brands.forEach(b => brands.add(b));
     allShoes.forEach(shoe => {
       if (shoe.brand && shoe.brand.trim() !== '' && shoe.brand.toLowerCase() !== 'unknown brand') {
         brands.add(shoe.brand);
@@ -360,13 +365,13 @@ const DashboardTabs = ({
     const commonBrands = ['Nike', 'Adidas', 'Converse', 'Puma'];
     const result = ['All', ...commonBrands.filter(b => brands.has(b))];
     // Add other brands
-    Array.from(brands).forEach(b => {
+    Array.from(brands).sort().forEach(b => {
       if (!commonBrands.includes(b) && !result.includes(b)) {
         result.push(b);
       }
     });
     return result;
-  }, [allShoes]);
+  }, [allShoes, realStats.brands]);
 
   const filteredDisplayShoes = useMemo(() => {
     let result = combinedShoes;

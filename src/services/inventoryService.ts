@@ -241,13 +241,13 @@ export const getTotalItemCount = async (): Promise<number> => {
   }
 };
 
-export const getTotalInventoryStats = async (): Promise<{count: number; totalValue: number; brandCount: number}> => {
+export const getTotalInventoryStats = async (): Promise<{count: number; totalValue: number; brandCount: number; brands: string[]}> => {
   try {
     const user = getAuth().currentUser;
-    if (!user) return {count: 0, totalValue: 0, brandCount: 0};
+    if (!user) return {count: 0, totalValue: 0, brandCount: 0, brands: []};
 
     const firestoreDb = getFirestore();
-    if (!firestoreDb) return {count: 0, totalValue: 0, brandCount: 0};
+    if (!firestoreDb) return {count: 0, totalValue: 0, brandCount: 0, brands: []};
 
     const isWebSDK = !firestoreDb.collection || typeof firestoreDb.collection !== 'function';
 
@@ -266,12 +266,13 @@ export const getTotalInventoryStats = async (): Promise<{count: number; totalVal
     }
 
     const totalValue = docs.reduce((sum, data) => sum + (Number(data.value || data.retailValue || 0) || 0), 0);
-    const brandCount = new Set(docs.map(d => (d.brand ?? '').trim()).filter(Boolean)).size;
+    const brandSet = new Set(docs.map(d => (d.brand ?? '').trim()).filter(Boolean));
+    const brands = Array.from(brandSet).sort();
 
-    return {count: docs.length, totalValue, brandCount};
+    return {count: docs.length, totalValue, brandCount: brandSet.size, brands};
   } catch (err) {
     console.warn('[getTotalInventoryStats] error:', err);
-    return {count: 0, totalValue: 0, brandCount: 0};
+    return {count: 0, totalValue: 0, brandCount: 0, brands: []};
   }
 };
 
