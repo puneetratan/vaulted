@@ -6,26 +6,26 @@ buildscript {
         minSdkVersion = 24
         compileSdkVersion = 36
         targetSdkVersion = 36
-        kotlinVersion = "1.9.22"
+        kotlinVersion = "2.0.21"
 
-        // Reverted from 28.0.13004108: versionCode 12 (the only build using
-        // NDK 28) crashed on launch during Play Store review ("Vaulted keeps
-        // stopping"), most likely an ABI mismatch between our own
-        // NDK-28-compiled native modules and React Native's NDK-27-era
-        // precompiled core libraries (libhermes.so etc. don't get rebuilt
-        // locally — see the 16KB investigation notes). r27 was proven stable
-        // across versionCodes 1-11. Full 16KB compliance needs a React
-        // Native upgrade to 0.77+ instead (see earlier discussion) — don't
-        // re-attempt an NDK-only bump without confirming RN's own core
-        // binaries are rebuilt for the new NDK.
-        ndkVersion = "27.0.12077973"
+        // NDK and Kotlin versions match React Native 0.78.3's own template
+        // exactly (verified by extracting @react-native/gradle-plugin@0.78.3
+        // and react-native@0.78.3's template files directly) — this is what
+        // actually resolves the 16KB page-size issue, since Meta's own
+        // react-android/hermes-android prebuilt binaries for this RN version
+        // are genuinely 16KB-aligned (verified empirically with llvm-readelf
+        // against the real published AARs). The earlier NDK-28-only attempt
+        // crashed because it mismatched RN's own NDK-27-era prebuilts; the
+        // rule going forward is to match RN's exact NDK per release, not
+        // independently pick "the newest NDK".
+        ndkVersion = "27.1.12297006"
     }
     repositories {
         google()
         mavenCentral()
     }
     dependencies {
-        classpath("com.android.tools.build:gradle:8.7.0")
+        classpath("com.android.tools.build:gradle:8.8.0")
         classpath("com.facebook.react:react-native-gradle-plugin")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion")
         classpath("com.google.gms:google-services:4.4.2")

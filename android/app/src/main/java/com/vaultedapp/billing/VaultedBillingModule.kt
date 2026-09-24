@@ -113,9 +113,10 @@ class VaultedBillingModule(private val reactContext: ReactApplicationContext) :
       return
     }
 
-    val products = (0 until skus.size()).map { i ->
+    val products = (0 until skus.size()).mapNotNull { i ->
+      val productId = skus.getString(i) ?: return@mapNotNull null
       QueryProductDetailsParams.Product.newBuilder()
-        .setProductId(skus.getString(i))
+        .setProductId(productId)
         .setProductType(BillingClient.ProductType.SUBS)
         .build()
     }
