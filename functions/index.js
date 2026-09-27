@@ -1324,7 +1324,11 @@ function extractSheetInfo(url) {
   if (!idMatch) return null;
   const spreadsheetId = idMatch[1];
   const gidMatch = url.match(/[?&#]gid=(\d+)/);
-  const gid = gidMatch ? gidMatch[1] : "0";
+  // null when the link doesn't name a tab (e.g. a plain "share" link). Don't default to
+  // "0": gid=0 only exists if the spreadsheet's original first tab was never deleted, and
+  // Google answers 400 Bad Request for a gid that doesn't exist. Omitting gid exports the
+  // first tab instead.
+  const gid = gidMatch ? gidMatch[1] : null;
   return { spreadsheetId, gid };
 }
 
@@ -1333,7 +1337,7 @@ async function downloadGoogleSheetAsCsv(spreadsheetId, gid) {
 }
 
 async function downloadGoogleSheet(spreadsheetId, gid, format) {
-  const exportUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=${format}&gid=${gid}`;
+  const exportUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=${format}${gid ? `&gid=${gid}` : ""}`;
   console.log(`[googleSheet] Downloading as ${format}: ${exportUrl}`);
 
   // Google's export redirect (googleusercontent.com) occasionally drops the

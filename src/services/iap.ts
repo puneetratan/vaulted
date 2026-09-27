@@ -1,6 +1,5 @@
 import {Platform} from 'react-native';
 import * as RNIap from 'react-native-iap';
-import * as AndroidBilling from './androidBilling';
 
 /**
  * Unified in-app-purchase surface: iOS goes through react-native-iap/StoreKit
@@ -8,6 +7,16 @@ import * as AndroidBilling from './androidBilling';
  * ./androidBilling (see that file for why). SubscriptionContext.tsx imports
  * everything from here instead of 'react-native-iap' directly so the two
  * platforms can diverge without duplicating its purchase-flow logic.
+ *
+ * NOTE: ./androidBilling is loaded via a platform-conditional require(), not a
+ * static import. A static `import * as AndroidBilling from './androidBilling'`
+ * would execute unconditionally on both platforms (ES module imports always run
+ * at load time, regardless of any later runtime ternary), which on iOS crashes
+ * immediately: androidBilling.ts constructs `new NativeEventEmitter(VaultedBilling)`
+ * at module scope, and VaultedBilling (the Android-only native module) is undefined
+ * there -- "Invariant Violation: `new NativeEventEmitter()` requires a non-null
+ * argument." require() genuinely defers evaluation, so androidBilling.ts's
+ * module-scope code never runs on iOS.
  */
 
 export type {
@@ -16,7 +25,7 @@ export type {
   PurchaseError,
 } from 'react-native-iap';
 
-const impl = Platform.OS === 'android' ? AndroidBilling : RNIap;
+const impl = Platform.OS === 'android' ? require('./androidBilling') : RNIap;
 
 export const initConnection = impl.initConnection;
 export const endConnection = impl.endConnection;
