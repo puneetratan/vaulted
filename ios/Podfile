@@ -278,8 +278,40 @@ target 'VaultTemp' do
       if target.name == 'RNScreens'
         target.build_configurations.each do |config|
           config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
-        end  
+        end
       end
+    end
+
+    # Fix: App Store Connect/TestFlight rejects archives with "did not include a dSYM for
+    # hermes.framework" -- Meta's prebuilt Hermes Release tarball genuinely ships without one
+    # (react-native/scripts/hermes/hermes-utils.js strips dSYMs when Meta packages the
+    # artifact), and since hermes.framework is vendored rather than compiled from source,
+    # Xcode's normal per-target DEBUG_INFORMATION_FORMAT setting can't generate one for it
+    # either. Regenerate it at archive time by running dsymutil directly against the vendored
+    # binary (works as long as the binary keeps its embedded symbol table, which it does --
+    # only the separate .dSYM companion was stripped, not the binary's own debug info).
+    installer.aggregate_targets.each do |aggregate_target|
+      next unless aggregate_target.label == 'Pods-VaultTemp'
+      aggregate_target.user_project.native_targets.each do |native_target|
+        next unless native_target.name == 'VaultTemp'
+        phase_name = 'Generate Hermes dSYM'
+        next if native_target.shell_script_build_phases.any? { |p| p.name == phase_name }
+        phase = native_target.new_shell_script_build_phase(phase_name)
+        phase.shell_script = <<-SCRIPT.gsub(/^ {10}/, '')
+          if [ "${CONFIGURATION}" = "Release" ]; then
+            HERMES_XCFRAMEWORK="${PODS_ROOT}/hermes-engine/destroot/Library/Frameworks/universal/hermes.xcframework"
+            HERMES_BINARY="${HERMES_XCFRAMEWORK}/ios-arm64/hermes.framework/hermes"
+            if [ -f "$HERMES_BINARY" ]; then
+              mkdir -p "${DWARF_DSYM_FOLDER_PATH}"
+              dsymutil "$HERMES_BINARY" -o "${DWARF_DSYM_FOLDER_PATH}/hermes.framework.dSYM"
+              echo "Generated hermes.framework.dSYM at ${DWARF_DSYM_FOLDER_PATH}"
+            else
+              echo "warning: hermes binary not found at $HERMES_BINARY -- skipping dSYM generation"
+            fi
+          fi
+        SCRIPT
+      end
+      aggregate_target.user_project.save
     end
 
   end
