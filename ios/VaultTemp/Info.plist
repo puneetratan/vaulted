@@ -54,24 +54,6 @@
 	<string>We need access to save photos to your photo library</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>We need access to your photo library to select item photos</string>
-	<!--
-	  Minimal scene manifest: only declares scene support (required by newer SDKs --
-	  without this, "UIScene life cycle is required for apps built with this SDK" is a
-	  launch-blocking failure, not just a warning). Deliberately does NOT set
-	  UISceneConfigurations/UISceneDelegateClassName: RCTAppDelegate (which our AppDelegate
-	  extends) creates its window the legacy way, directly in
-	  application:didFinishLaunchingWithOptions:, and never implements
-	  scene:willConnectToSession:options:. Naming a scene delegate class here tells UIKit
-	  to expect window setup via that callback instead, and since it's never implemented,
-	  nothing happens on that path while the legacy path creates an unconnected window --
-	  producing "Unbalanced calls to begin/end appearance transitions" and a launch screen
-	  that never transitions to real content.
-	-->
-	<key>UIApplicationSceneManifest</key>
-	<dict>
-		<key>UIApplicationSupportsMultipleScenes</key>
-		<false/>
-	</dict>
 	<key>UIAppFonts</key>
 	<array>
 		<string>MaterialIcons.ttf</string>
@@ -94,6 +76,23 @@
 		<string>SimpleLineIcons.ttf</string>
 		<string>Zocial.ttf</string>
 	</array>
+	<key>UIApplicationSceneManifest</key>
+	<dict>
+		<key>UIApplicationSupportsMultipleScenes</key>
+		<false/>
+		<key>UISceneConfigurations</key>
+		<dict>
+			<key>UIWindowSceneSessionRoleApplication</key>
+			<array>
+				<dict>
+					<key>UISceneConfigurationName</key>
+					<string>Default Configuration</string>
+					<key>UISceneDelegateClassName</key>
+					<string>AppDelegate</string>
+				</dict>
+			</array>
+		</dict>
+	</dict>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIRequiredDeviceCapabilities</key>
