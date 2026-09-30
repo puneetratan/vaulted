@@ -37,22 +37,29 @@
   }
   UIWindowScene *windowScene = (UIWindowScene *)scene;
 
+  // UIKit creates a SEPARATE instance of AppDelegate for the scene-delegate role named by
+  // UISceneDelegateClassName in Info.plist -- `self` here is NOT the same object that ran
+  // application:didFinishLaunchingWithOptions:, so its reactNativeFactory/moduleName/
+  // initialProps are all still nil (confirmed via logging: rootViewFactory was nil here).
+  // Route through the real app delegate singleton instead, which has them properly set up.
+  AppDelegate *appDelegate = (AppDelegate *)UIApplication.sharedApplication.delegate;
+
   // Same window/root-view setup RCTAppDelegate's own (private, not declared in its public
   // header -- loadReactNativeWindow: -- so not safely callable from here) legacy-path method
   // does, reimplemented using only the documented overridable API (rootViewFactory,
   // createRootViewController, setRootView:toRootViewController:), and using
   // initWithWindowScene: (explicit) rather than initWithFrame: + relying on implicit
   // scene auto-association, which is what iOS 27+ actually requires.
-  UIView *rootView = [self.rootViewFactory viewWithModuleName:self.moduleName
-                                            initialProperties:self.initialProps
-                                                launchOptions:nil];
+  UIView *rootView = [appDelegate.rootViewFactory viewWithModuleName:appDelegate.moduleName
+                                                   initialProperties:appDelegate.initialProps
+                                                       launchOptions:nil];
 
-  self.window = [[UIWindow alloc] initWithWindowScene:windowScene];
-  UIViewController *rootViewController = [self createRootViewController];
-  [self setRootView:rootView toRootViewController:rootViewController];
-  self.window.windowScene.delegate = self;
-  self.window.rootViewController = rootViewController;
-  [self.window makeKeyAndVisible];
+  appDelegate.window = [[UIWindow alloc] initWithWindowScene:windowScene];
+  UIViewController *rootViewController = [appDelegate createRootViewController];
+  [appDelegate setRootView:rootView toRootViewController:rootViewController];
+  appDelegate.window.windowScene.delegate = appDelegate;
+  appDelegate.window.rootViewController = rootViewController;
+  [appDelegate.window makeKeyAndVisible];
 }
 
 - (BOOL)application:(UIApplication *)app openURL:(NSURL *)url options:(NSDictionary<UIApplicationOpenURLOptionsKey,id> *)options
