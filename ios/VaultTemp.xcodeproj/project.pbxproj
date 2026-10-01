@@ -201,6 +201,7 @@
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
+				7E2A9F1B4C8D3E6F0A1B2C3D /* Select GoogleService-Info.plist for Configuration */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				DDEC10052F8AF4D600449E4A /* ShellScript */,
 				1F79D7694EFB03FA89F71A94 /* [CP] Embed Pods Frameworks */,
@@ -415,6 +416,22 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-VaultTemp/Pods-VaultTemp-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
+		7E2A9F1B4C8D3E6F0A1B2C3D /* Select GoogleService-Info.plist for Configuration */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${SRCROOT}/VaultTemp/GoogleService-Info.plist",
+				"${SRCROOT}/GoogleService-Info-prod.plist",
+			);
+			name = "Select GoogleService-Info.plist for Configuration";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# The Resources phase always copies the dev VaultTemp/GoogleService-Info.plist\n# into the bundle first. For Release builds (archives/TestFlight/App Store),\n# overwrite it with the prod config so the app actually talks to the vaulted-6b9b9\n# Firebase project instead of dev-vaultapp.\nif [ \"${CONFIGURATION}\" = \"Release\" ]; then\n  PROD_PLIST=\"${SRCROOT}/GoogleService-Info-prod.plist\"\n  DEST=\"${BUILT_PRODUCTS_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/GoogleService-Info.plist\"\n  if [ -f \"${PROD_PLIST}\" ]; then\n    cp \"${PROD_PLIST}\" \"${DEST}\"\n    echo \"Copied prod GoogleService-Info.plist for Release build\"\n  else\n    echo \"error: ${PROD_PLIST} not found -- Release build would ship with the dev Firebase config\"\n    exit 1\n  fi\nfi\n";
+		};
 		DDEC10052F8AF4D600449E4A /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -586,6 +603,7 @@
 				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = SSG67RLT9S;
 				ENABLE_BITCODE = NO;
+				GOOGLE_REVERSED_CLIENT_ID = "com.googleusercontent.apps.872715867979-r9b7b05lutnkblrstufbrh00aaqehgb8";
 				INFOPLIST_FILE = VaultTemp/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Vaulted;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.lifestyle";
@@ -617,6 +635,7 @@
 				CODE_SIGN_ENTITLEMENTS = VaultTemp/VaultTemp.entitlements;
 				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = SSG67RLT9S;
+				GOOGLE_REVERSED_CLIENT_ID = "com.googleusercontent.apps.899300491798-jepucsko6qk160vnf84ej7m0b2nmph0c";
 				INFOPLIST_FILE = VaultTemp/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Vaulted;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.lifestyle";
@@ -631,7 +650,7 @@
 					"-ObjC",
 					"-lc++",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.vaulted.dev;
+				PRODUCT_BUNDLE_IDENTIFIER = com.vaultedapp;
 				PRODUCT_NAME = Vaulted;
 				SWIFT_VERSION = 5.0;
 				VERSIONING_SYSTEM = "apple-generic";
