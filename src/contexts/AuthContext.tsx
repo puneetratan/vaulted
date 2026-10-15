@@ -36,7 +36,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     try {
       GoogleSignin.configure({
-        iosClientId: "872715867979-r9b7b05lutnkblrstufbrh00aaqehgb8.apps.googleusercontent.com",
+        iosClientId: AppConfig.googleIosClientId,
         webClientId: AppConfig.googleWebClientId,
         offlineAccess: false,
         // For Android, ensure the package name matches
