@@ -9,6 +9,7 @@ import {
   Alert,
   Modal,
   Platform,
+  Linking,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -22,6 +23,14 @@ import {RootStackParamList} from '../navigation/AppNavigator';
 type PaywallRouteProp = RouteProp<RootStackParamList, 'Paywall'>;
 type PaywallNavProp = StackNavigationProp<RootStackParamList, 'Paywall'>;
 
+const APPLE_STANDARD_EULA_URL =
+  'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/';
+
+const PLAN_DETAILS = {
+  monthly: {title: 'Vaulted Premium Monthly', length: '1 month'},
+  annual: {title: 'Vaulted Premium Annual', length: '1 year'},
+};
+
 const FEATURES = [
   {icon: 'all-inclusive', text: 'Unlimited items in your vault'},
   {icon: 'unarchive', text: 'Export inventory to Excel'},
@@ -34,8 +43,16 @@ const PaywallScreen = () => {
   const navigation = useNavigation<PaywallNavProp>();
   const route = useRoute<PaywallRouteProp>();
   const {colors} = useTheme();
-  const {subscribe, restorePurchases, isLoading, isSubscribed} =
+  const {subscribe, restorePurchases, isLoading, isSubscribed, availableProducts} =
     useSubscription();
+
+  // Prefer the App Store's localized price over the hardcoded fallback.
+  const priceFor = (key: 'monthly' | 'annual') => {
+    const product = availableProducts.find(
+      p => p.productId === PRICING[key].productId,
+    ) as {localizedPrice?: string} | undefined;
+    return product?.localizedPrice || PRICING[key].price;
+  };
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'annual'>(
     'annual',
   );
@@ -145,19 +162,26 @@ const PaywallScreen = () => {
                   },
                 ]}
                 onPress={() => setSelectedPlan(key)}>
-                <View style={styles.planLeft}>
-                  <Text style={[styles.planLabel, {color: colors.text}]}>
-                    {plan.label}
+                <View style={styles.planInfo}>
+                  <View style={styles.planLeft}>
+                    <Text style={[styles.planLabel, {color: colors.text}]}>
+                      {plan.label}
+                    </Text>
+                    {plan.savings && (
+                      <View style={styles.savingsBadge}>
+                        <Text style={styles.savingsText}>{plan.savings}</Text>
+                      </View>
+                    )}
+                  </View>
+                  <Text
+                    style={[styles.planSubtitle, {color: colors.textSecondary}]}>
+                    {PLAN_DETAILS[key].title} · {PLAN_DETAILS[key].length},
+                    auto-renews
                   </Text>
-                  {plan.savings && (
-                    <View style={styles.savingsBadge}>
-                      <Text style={styles.savingsText}>{plan.savings}</Text>
-                    </View>
-                  )}
                 </View>
                 <View style={styles.planPriceRow}>
                   <Text style={[styles.planPrice, {color: colors.text}]}>
-                    {plan.price}
+                    {priceFor(key)}
                   </Text>
                   <Text style={[styles.planPeriod, {color: colors.textSecondary}]}>
                     {plan.period}
@@ -205,10 +229,29 @@ const PaywallScreen = () => {
 
         {/* Legal */}
         <Text style={[styles.legal, {color: colors.textSecondary}]}>
-          Subscription automatically renews unless cancelled at least 24 hours
-          before the end of the current period. Manage or cancel in your
-          App Store / Google Play account settings.
+          {PLAN_DETAILS[selectedPlan].title}: {priceFor(selectedPlan)} per{' '}
+          {PLAN_DETAILS[selectedPlan].length}. Payment is charged to your{' '}
+          {Platform.OS === 'ios' ? 'Apple ID' : 'Google Play'} account at
+          confirmation of purchase. Subscription automatically renews unless
+          cancelled at least 24 hours before the end of the current period.
+          Manage or cancel in your{' '}
+          {Platform.OS === 'ios' ? 'App Store' : 'Google Play'} account
+          settings.
         </Text>
+        <View style={styles.legalLinks}>
+          <TouchableOpacity
+            onPress={() => Linking.openURL(APPLE_STANDARD_EULA_URL)}>
+            <Text style={[styles.legalLink, {color: colors.textSecondary}]}>
+              Terms of Use (EULA)
+            </Text>
+          </TouchableOpacity>
+          <Text style={[styles.legal, {color: colors.textSecondary}]}>  ·  </Text>
+          <TouchableOpacity onPress={() => navigation.navigate('PrivacyPolicy')}>
+            <Text style={[styles.legalLink, {color: colors.textSecondary}]}>
+              Privacy Policy
+            </Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
 
       {/* Full-screen loading overlay during purchase */}
@@ -301,11 +344,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
   },
-  planLeft: {
+  planInfo: {
     flex: 1,
+    gap: 4,
+  },
+  planLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+  },
+  planSubtitle: {
+    fontSize: 12,
   },
   planLabel: {
     fontSize: 16,
@@ -368,6 +417,16 @@ const styles = StyleSheet.create({
     fontSize: 11,
     textAlign: 'center',
     lineHeight: 16,
+  },
+  legalLinks: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  legalLink: {
+    fontSize: 12,
+    textDecorationLine: 'underline',
   },
   loadingOverlay: {
     flex: 1,
